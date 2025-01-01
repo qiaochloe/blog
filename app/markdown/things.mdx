@@ -1,0 +1,43 @@
+---
+title: "Things"
+summary: "Quality of life improvements for Things 3"
+publishedAt: "2024-12-31"
+tags:
+  - "technical"
+---
+
+# Changing the modification date
+
+1. In the folder ~/Library/Containers/com.culturedcode.ThingsMac/Data/Library/Application Support/Cultured Code/, create a folder called "Things Scripts"
+2. In the "Things Scripts" folder, create a file called "Change-Modification Date.scpt" with the following content:
+
+```applescript
+tell application "Things3"
+	set theToDos to selected to dos
+
+	if theToDos is {} then
+		display alert "No to dos selected"
+	else
+		display dialog "Yesterday?" with title "Date Completed" default answer short date string of ((current date) - (1 * days))
+
+		set theCompletionDate to (text returned of result)
+
+		repeat with theToDo in theToDos
+			set status of theToDo to open
+			set completion date of theToDo to date theCompletionDate
+		end repeat
+	end if
+
+end tell
+```
+
+This script might not work if you set the date to a future date. You'll have to delete the to-do and recreate it.
+
+3. Set a custom shortcut for the script
+1. Go to System Preferences > Keyboard > Shortcuts > App Shortcuts > +
+1. Select Things from the Application dropdown and type the exact name of the script in the Menu Title box.
+1. Set the shortcut. I use `Cmd-Y` for "Yesterday".
+
+More details about using AppleScript with Things [here](https://culturedcode.com/things/support/articles/2803572/). Credits for this script go to [this Reddit post](https://www.reddit.com/r/thingsapp/comments/drjuod/back_dating_todo_items/).
+
+<!-- TODO: Insert the spaced repetition script here -->

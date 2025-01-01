@@ -1,0 +1,76 @@
+---
+title: Fall 2024 Postmortem
+summary: Sophomore year of college, fall semester. Updated 12/24/24.
+publishedAt: "2024-12-24"
+tags:
+  - "archive"
+---
+
+## Introduction
+
+For the purposes of this post, I will break down time into two categories: mandatory and discretionary time. Mandatory time is time that is budgeted and automatically spent each week, with little flexibility. In my status as an undergraduate, my only true responsibilities are my coursework and my student jobs.
+
+I took five courses this semester:[^1]
+
+1. EGYT 1310: Middle Egyptian I
+2. MATH 1530: Abstract Algebra
+3. CSCI 1680: Networks
+4. CSCI 2952R: Systems Transforming Systems
+5. CSCI 1970: Independent Study
+
+And worked two jobs:
+
+1. CSCI 1951x TA
+2. Sunlab Consultant
+
+But altogether, these responsibilities only took was only 20 hours a week on average, and no more than 40 hours a week max.
+
+This must mean that I had a lot of free time, right?
+
+Right???
+
+## Work expands to fill the time...
+
+Brown Puzzlehunt, like a lot of online puzzlehunts, has one great problem, and that is load-balancing. Every year, the site crashes or slows down to a crawl during the hunt.
+
+Our site is a fork of [GPH-site](https://github.com/galacticpuzzlehunt/gph-site), which is what the folks on the ✈✈✈ Galactic Trendsetters ✈✈✈ use for [Galactic Puzzlehunt](https://galacticpuzzlehunt.com) every year. The site has unpredictable load-balancing issues mostly caused by Django channels, which are used to handle real-time communication between the server and the client. This is a known issue that hit [GPH 2022](https://2022.galacticpuzzlehunt.com/wrapup) and [BPH 2024](https://www.brownpuzzlehunt.com) particularly hard.
+
+> After our experiences with Django Channels in previous years, we were particularly wary of using Django Channels in any large capacity. (In fact, we still don’t have a definitive answer to what went wrong last year, though we have a few more ideas from our experience with load testing this year.)
+>
+> - GPH 2023 wrap-up
+
+After reading through the wrap-ups of other puzzlehunts, I found that the web team usually worked around this limitation through extensive load-testing and horizontal scaling; see the [GPH 2023 wrap-up](https://2023.galacticpuzzlehunt.com/wrapup), [ECPH wrap-up](https://ecph.site/wrapup), and [Huntinality 2022 wrap-up](https://2022.huntinality.com/wrapup#website-development).
+
+I... convinced the web team to rewrite the site from scratch.
+
+This was probably a moral failing on my part.[^2] I didn't want to work with Python, with its weak types and dependency hell. (We couldn't even get bph-site or [tph-site](https://github.com/teammatehunt/tph-site) to build locally on our machines.) I was not excited to work on someone else's code base and deal with someone else's design decisions. Like a lot of engineers, I want to do things well, and I want to do things myself.
+
+For the first month, I worked in secret to deliver a minimum viable product. I knew the hunt lead would be hesitant to approve a rewrite, given the issues we faced last year, so I wanted to show them a working prototype first. By the second month, I convinced the rest of the web team to work on the new site. By the third month, we ran [Puzzlethon](https://puzzlethon.brownpuzzle.club) on this site.
+
+So... that was probably where all of my time went.[^3]
+
+**Before Puzzle Club**
+
+![Picture of Google Calendar for Oct 6, 2024](/fall-2024-postmortem/oct-6-2024-calendar.png)
+
+**After Puzzle Club**
+
+![Picture of Google Calendar for Oct 20, 2024](/fall-2024-postmortem/oct-20-2024-calendar.png)
+
+The new site is public [here](https://github.com/brown-puzzle-hq/bph-site). There are many UI changes I want to make before the big end-of-year hunt, but the site is stable and ready to go!
+
+## Not coding
+
+I love having a project to work on. But my obsessive behavior also felt unsustainable and unhealthy. My other work felt a little meaningless, school felt a little boring,[^4] and I grew increasingly introverted and lonely throughout the semester. There were some weeks where I did up to 50 hours of work on the puzzle hunt site or up to 30 hours on a networks project. There were some weeks where I desperately needed a break and lazed around all week instead. Unsurprisingly, I am quite burnt out.
+
+I want my next semester to be more balanced between work, sleep, and play, so that I feel excited and fresh every day.
+
+(This winter break, I'm going to cut coding down to a minimum and spend more of my time reading, climbing, learning Chinese, and playing DDR.)
+
+[^1]: More details on the [courses](/courses) page.
+
+[^2]: Also known as the "the single worst strategic mistake that any software company can make" [Things You Should Never Do, Part I](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/).
+
+[^3]: The HTA for one of my courses last semester, who I admired very much, would track how he spent every hour of the day on Google Calendar. He told me that at CMU, if he did not block out his time, it would be impossible to get everything done.
+
+[^4]: I dreamed about finding a job and dropping out of school. My advisor told me that I was probably searching for a sense of meaning.

@@ -1,0 +1,83 @@
+---
+title: "Dance Dance Revolution"
+summary: "Getting Windows applications to run on MacOS."
+publishedAt: "2024-07-11"
+tags:
+  - "technical"
+---
+
+## The situation
+
+My roommates and I have been playing Dance Dance Revolution (DDR) on a Windows computer for a while now. The setup is not too complicated: we run a DDR simulator called [StepMania](https://www.stepmania.com/download/), which receives input from USB dance pad controllers connected to the computer.
+
+![Picture of the DDR setup](/ddr/ddr-setup.png)
+
+Now we just want this whole thing to work with an M1 chip Macbook instead of a Windows computer. The problem is two-fold:
+1. StepMania does not have a MacOS version.[^1]
+2. The dance pads were not meant to work on MacOS.
+
+---
+
+## Attempt 1: StepMania with a compatibility layer
+
+I first tried running all of the Windows software through a compatibility layer. A compatibility layer basically converts all of the Windows system calls into POSIX system calls on the fly.
+
+An easy way to do this is to use Porting Kit, which will do all of the heavy lifting for you.
+
+1. Download the Windows application and open it with Porting Kit
+2. Create a new port in Porting Kit with the following settings:
+	- Engine: WS11WineCX21.2.0
+	- Operating System: Windows 10
+	- Windows Driver: XQuartz (X11)
+	- Dependencies: None
+3. Run the install script `StepMania-5.0.12-win32.exe` with the following settings:
+	- Install into the default directory C:\Games\StepMania 5*
+	- Do not create a desktop shortcut
+	- Launch the application
+
+*Note that the default directory is important because the wrapper will look for the application in that directory. Don't download the app to a different directory on your computer like Z:\Downloads\StepMania 5.0.12.
+
+Beneath the hood, the full stack that Porting Kit uses is as follows:
+| Software | Purpose |
+|---|---|
+| Porting Kit | A user-friendly frontend for creating Wineskin wrappers |
+| Wineskin | A user-friendly interface for packaging Windows applications and Wine components together |
+| Wine | The compatibility layer |
+| StepMania | The Windows application |
+
+The problem with this approach was that the dance pad inputs were not correctly recognized by the program. I thought this might have been a limitation with the compatibility layer. VMs and emulators are quite troublesome to set up, so I decided to try...
+
+---
+
+### Attempt 2: Project OutFox
+
+[Project OutFox](https://projectoutfox.com) is similar to StepMania, but it supports MacOS out of the box. Like the compatibility layer, this approach solves problem (1), leaving us with problem (2).
+
+Problem (2) is either a hardware or software issue. There are a few reasons why I think it is a software problem:
+1. The dance pad was recognized in System Settings under Game Controllers
+1. The dance pad was also recognized in Project OutFox
+1. The dance pad inputs were recognized in the [SDL2 Gamepad Tool](https://www.generalarcade.com/gamepadtool/)
+
+The problem is that the dance pad inputs are not correctly parsed *on OutFox*. A quick diagram:
+
+![Picture of the DDR input](/ddr/ddr-input.png)
+
+I tested this in Options → Input & Calibration → Test Input. According to the OutFox [controller guide](https://projectoutfox.com/help/controllers), the issue seems to be that XInput just... does not work well on Mac.
+
+Some miscellaneous things I tried:
+- Creating a new controller mapping with SDL2 Gamepad Tool and pasting it in Data/gamecontrollerdb.txt and Data/manualmapping.txt did not change anything. Not even deleting the files changed anything.
+- Toggling Options → Input & Calibration → Input Settings → Automap Joysticks did not change anything.
+- Toggling Options → Experimental settings → Enable XInput just gave me different input names (e.g. "Button A" instead of "Button 1"). They are all still mapped to the down key.
+- Manually setting the mappings in ~/Library/Prefereces/Project Outfox/keymaps.ini mapped the right inputs to the right commands but did not fix the issue.
+
+---
+
+### Attempt 3: Enjoyable
+
+Okay. I tried really hard to find a native solution to the problem. But in the end, I suspect it was a bug in OutFox itself, as per this [Reddit thread](https://www.reddit.com/r/OutFox/comments/18t6p3o/macos_m1_and_usb_gamepad/).
+
+Last resort. [Enjoyable](https://yukkurigames.com/enjoyable/).
+
+Enjoyable maps the dance pad inputs to MacOS keyboard inputs. It's a bit of a hack, but it works.
+
+[^1]: There *was* a MacOS version of StepMania, but it no longer runs on MacOS 10.15 "Catalina" or higher.
