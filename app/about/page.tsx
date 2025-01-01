@@ -22,6 +22,14 @@ export default function Page() {
         . I take responsibility for only the things written after{" "}
         {new Date(new Date().getTime() + 24 * 60 * 60).toUTCString()}.
       </p>
+      <br />
+      <p>
+        For what I'm up to now, see{" "}
+        <Link href="/now" className="text-neutral-600 underline">
+          here
+        </Link>
+        .
+      </p>
     </section>
   );
 }
