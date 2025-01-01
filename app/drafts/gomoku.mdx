@@ -1,0 +1,1131 @@
+---
+title: Infinite Gomoku
+summary: A Pyret project.
+publishedAt: "2023-10-20"
+tags:
+  - "projects"
+---
+
+```pyret
+# Here's why this is neat:
+# This is a version of Gomoku (five in a row) that is played on a board of
+# INFINITE SIZE!!
+# The user has the choice of using either the keyboard or the mouse to play.
+# When designing the graphics of this game, we made sure to choose colors that
+# were colorblind-friendly to make the game more accessible.
+# The tests are configuration-agnostic, which means that the constants in the
+# "Configuration" section can be edited to change how the program behaves, and
+# the tests will not break.
+# For example, if you wanted extra difficulty, you can change it so that you
+# need 6 marks in a row to win instead of 5.
+# If we had more time, we could've added an interface to allow the user to edit
+# these settings too. (But that would've been another ~500 lines of code.)
+
+include reactors
+include image
+
+# DATA DEFINITIONS
+
+data Player: X | O end
+data Board-Coords: bc(x :: Number, y :: Number) end
+data Screen-Coords: sc(x :: Number, y :: Number) end
+
+data World:
+  | instructions
+  | gameplay(
+      x-marks :: List<Board-Coords>,
+      o-marks :: List<Board-Coords>,
+      current-player :: Player,
+      selector-posn :: Board-Coords,
+      camera-posn :: Board-Coords,
+      zoom-level :: Number,
+      mouse-last-posn :: Screen-Coords,
+      mouse-dragging :: Boolean)
+  | victory(
+      x-marks :: List<Board-Coords>,
+      o-marks :: List<Board-Coords>,
+      who-won :: Player,
+      win-line-start :: Board-Coords,
+      win-line-end :: Board-Coords,
+      camera-posn :: Board-Coords,
+      zoom-level :: Number)
+  | exit
+end
+
+# CONSTANTS
+
+# Configuration
+TITLE = "Infinite Gomoku"
+
+GRIDLINE-COLOR = "light-sky-blue"
+X-MARK-COLOR = "blue"
+O-MARK-COLOR = "red"
+SELECTOR-VALID-COLOR = "black"
+SELECTOR-INVALID-COLOR = "light-slate-grey"
+
+TEXT-COLOR = "black"
+FONT-SIZE = 18
+TEXT-LEFT-MARGIN = 10
+TEXT-TOP-MARGIN = 10
+TEXT-LINE-SPACING = FONT-SIZE * 1.5
+TEXTBOX-OUTLINE-COLOR = "black"
+TEXTBOX-OUTLINE-THICKNESS = 2
+TEXTBOX-BACKGROUND-COLOR = "white"
+
+GAMEPLAY-AREA-HEIGHT = 600
+MESSAGEBOX-HEIGHT = (TEXT-LINE-SPACING * 2) + (TEXT-TOP-MARGIN * 1.5)
+SCREEN-WIDTH = 800
+INITIAL-ZOOM = 25
+MAX-ZOOM = INITIAL-ZOOM * 10
+MIN-ZOOM = INITIAL-ZOOM * 0.5
+ZOOM-SPEED = 1
+CAMERA-SPEED = 5
+
+INITIAL-CIRCLE-RADIUS = 0.2
+INITIAL-CROSS-LENGTH = INITIAL-CIRCLE-RADIUS * 2
+
+NUM-IN-ROW-FOR-VICTORY = 5
+
+PLACE-MARK-KEY = "enter"
+MOVE-SELECTOR-UP-KEY = "w"
+MOVE-SELECTOR-DOWN-KEY = "s"
+MOVE-SELECTOR-LEFT-KEY = "a"
+MOVE-SELECTOR-RIGHT-KEY = "d"
+PAN-UP-KEY = "up"
+PAN-DOWN-KEY = "down"
+PAN-LEFT-KEY = "left"
+PAN-RIGHT-KEY = "right"
+RESET-VIEW-KEY = "o"
+ZOOM-IN-KEY = "="
+ZOOM-OUT-KEY = "-"
+ZOOM-OUT-KEY-BUG-WORKAROUND = string-from-code-point(173)
+
+INSTRUCTIONS = [list:
+  "Welcome to " + TITLE + "!",
+  "",
+  "This is a two-player game of Gomoku on a board of infinite size.",
+  "Players X and O will alternate placing marks on the board.",
+  "The first player with "
+    + num-to-string(NUM-IN-ROW-FOR-VICTORY)
+    + " marks in a row wins!",
+  "",
+  "Keyboard controls:",
+  "- Use " + MOVE-SELECTOR-UP-KEY + ", " + MOVE-SELECTOR-LEFT-KEY
+    + ", " + MOVE-SELECTOR-DOWN-KEY + ", " + MOVE-SELECTOR-RIGHT-KEY
+    + " to move your selector.",
+  "- Press " + PLACE-MARK-KEY + " to place a mark at your selector.",
+  "- Use the arrow keys to pan across the screen.",
+  "- Press " + ZOOM-IN-KEY
+    + " or " + ZOOM-OUT-KEY + " to zoom in and out.",
+  "- Press " + RESET-VIEW-KEY
+    + " to reset your view and selector to the origin.",
+  "",
+  "Mouse controls:",
+  "- Click on the intersection between two gridlines to place a mark.",
+  "- Drag the board to pan.",
+  "",
+  "Press any key or click anywhere to start and have fun!"]
+
+# Program Constants
+ADD = lam(n1, n2): n1 + n2 end
+SUBTRACT = lam(n1, n2): n1 - n2 end
+
+UP = bc(0, 1)
+DOWN = bc(0, -1)
+LEFT = bc(-1, 0)
+RIGHT = bc(1, 0)
+
+HORIZONTAL = bc(1, 0)
+VERTICAL = bc(0, 1)
+DIAG-POS = bc(1, 1)
+DIAG-NEG = bc(1, -1)
+ALL-DIRECTIONS = [list: HORIZONTAL, VERTICAL, DIAG-POS, DIAG-NEG]
+
+SCREEN-HEIGHT = GAMEPLAY-AREA-HEIGHT + MESSAGEBOX-HEIGHT
+SCREEN-CENTER = sc(SCREEN-WIDTH / 2, GAMEPLAY-AREA-HEIGHT / 2)
+GAMEPLAY-START = gameplay(empty, empty, X, bc(0, 0), bc(0, 0), INITIAL-ZOOM,
+  sc(0, 0), false)
+BASE-SCENE = rectangle(SCREEN-WIDTH, SCREEN-HEIGHT, "solid", "white")
+
+# Test Definitions
+unit-points = [list:
+  bc(0, 0),
+  bc(0, 1),
+  bc(1, 0),
+  bc(1, 1),
+  bc(0, -1),
+  bc(-1, 0),
+  bc(-1, 1),
+  bc(1, -1),
+  bc(-1, -1)]
+row-points = [list:
+  bc(0, 0),
+  bc(0, 1),
+  bc(0, 2),
+  bc(0, 3),
+  bc(0, 4)]
+five-marks-diag-pos = [list:
+  bc(7, 9),
+  bc(6, 8),
+  bc(5, 7),
+  bc(8, 10),
+  bc(9, 11)]
+five-marks-diag-neg = [list:
+  bc(63, 81),
+  bc(64, 80),
+  bc(62, 82),
+  bc(61, 83),
+  bc(65, 79)]
+five-marks-horizontal = map(lam(n): bc(19 + n, 368) end, range(0, 5))
+five-marks-vertical = map(lam(n): bc(10, 71 + n) end, range(0, 5))
+only-four-consecutive = [list:
+  bc(63, 81),
+  bc(64, 80),
+  bc(62, 82),
+  bc(61, 83),
+  bc(66, 78)]
+o-won = victory(only-four-consecutive, five-marks-diag-pos, O,
+  bc(5, 7), bc(9, 11), bc(0, 0), INITIAL-ZOOM)
+initial-frame-top = GAMEPLAY-AREA-HEIGHT / 2 / INITIAL-ZOOM
+initial-frame-right = SCREEN-WIDTH / 2 / INITIAL-ZOOM
+initial-frame-bottom = -1 * (GAMEPLAY-AREA-HEIGHT / 2 / INITIAL-ZOOM)
+initial-frame-left = -1 * (SCREEN-WIDTH / 2 / INITIAL-ZOOM)
+
+# FUNCTIONS
+
+# Internal Logic
+fun displaying-board(w :: World) -> Boolean:
+  doc: "Determines whether the board is being displayed."
+  is-gameplay(w) or is-victory(w)
+where:
+  instructions violates displaying-board
+  exit violates displaying-board
+  GAMEPLAY-START satisfies displaying-board
+  o-won satisfies displaying-board
+end
+
+fun process-bcs(bc1 :: Board-Coords, bc2 :: Board-Coords,
+    f :: (Number, Number -> Number)) -> Board-Coords:
+  doc: ```Passes the components of bc1 and bc2 to f, returns a new Board-Coords
+       whose components are the respective results of f.```
+  bc(f(bc1.x, bc2.x), f(bc1.y, bc2.y))
+where:
+  process-bcs(bc(0, 0), bc(0, 0), ADD) is bc(0, 0)
+  process-bcs(bc(1, 7), bc(-2, 9), SUBTRACT) is bc(3, -2)
+  process-bcs(bc(1, 7), bc(-2, 9), ADD) is bc(-1, 16)
+end
+
+fun process-scs(sc1 :: Screen-Coords, sc2 :: Screen-Coords,
+    f :: (Number, Number -> Number)) -> Screen-Coords:
+  doc: ```Passes the components of bc1 and bc2 to f, returns a new Screen-Coords
+       whose components are the respective results of f.```
+  sc(f(sc1.x, sc2.x), f(sc1.y, sc2.y))
+where:
+  process-scs(sc(0, 0), sc(0, 0), ADD) is sc(0, 0)
+  process-scs(sc(100, 700), sc(-200, 900), SUBTRACT) is sc(300, -200)
+  process-scs(sc(100, 700), sc(-200, 900), ADD) is sc(-100, 1600)
+end
+
+fun board-vec-to-screen-vec(w :: World%(displaying-board),
+    board-vec :: Board-Coords) -> Screen-Coords:
+  doc: ```Given a vector in board coordinates, returns the corresponding vector
+       in screen coordinates.```
+  sc(board-vec.x * w.zoom-level, -1 * board-vec.y * w.zoom-level)
+where:
+  board-vec-to-screen-vec(GAMEPLAY-START, bc(0, 0)) is sc(0, 0)
+  board-vec-to-screen-vec(GAMEPLAY-START, bc(1, 1))
+    is sc(INITIAL-ZOOM, -1 * INITIAL-ZOOM)
+end
+
+fun board-to-screen-maker(w :: World%(displaying-board))
+  -> (Board-Coords -> Screen-Coords):
+  doc: ```Returns a function that converts a position on the board
+       to where it is on the screen.```
+  fun board-to-screen(board-position :: Board-Coords) -> Screen-Coords:
+    process-scs(SCREEN-CENTER, board-vec-to-screen-vec(w,
+        process-bcs(board-position, w.camera-posn, SUBTRACT)), ADD)
+  end
+
+  board-to-screen
+where:
+  converter = board-to-screen-maker(GAMEPLAY-START)
+  converter(bc(0, 0)) is SCREEN-CENTER
+  converter(bc(1, -1)) is sc(SCREEN-CENTER.x + INITIAL-ZOOM,
+    SCREEN-CENTER.y + INITIAL-ZOOM)
+  converter(bc(-5, 10)) is sc(SCREEN-CENTER.x - (INITIAL-ZOOM * 5),
+    SCREEN-CENTER.y - (INITIAL-ZOOM * 10))
+end
+
+fun screen-vec-to-board-vec(w :: World%(displaying-board),
+    screen-vec :: Screen-Coords) -> Board-Coords:
+  doc: ```Given a vector in screen coordinates, returns the corresponding
+       vector in board coordinates.```
+  bc(screen-vec.x / w.zoom-level, -1 * (screen-vec.y / w.zoom-level))
+where:
+  screen-vec-to-board-vec(GAMEPLAY-START, sc(0, 0)) is bc(0, 0)
+  screen-vec-to-board-vec(GAMEPLAY-START, sc(100, 100))
+    is bc(100 / INITIAL-ZOOM, -100 / INITIAL-ZOOM)
+  screen-vec-to-board-vec(GAMEPLAY-START, sc(-250, -250))
+    is bc(-250 / INITIAL-ZOOM, 250 / INITIAL-ZOOM)
+  screen-vec-to-board-vec(GAMEPLAY-START, sc(267, -139))
+    is bc(267 / INITIAL-ZOOM, 139 / INITIAL-ZOOM)
+end
+
+fun screen-to-board-maker(w :: World%(displaying-board))
+  -> (Screen-Coords -> Board-Coords):
+  doc: ```Returns a function that converts a screen position into the
+       corresponding board position.```
+  fun screen-to-board(screen-position :: Screen-Coords) -> Board-Coords:
+    process-bcs(w.camera-posn, screen-vec-to-board-vec(w,
+        process-scs(screen-position, SCREEN-CENTER, SUBTRACT)), ADD)
+  end
+
+  screen-to-board
+where:
+  converter = screen-to-board-maker(GAMEPLAY-START)
+  converter(SCREEN-CENTER) is bc(0, 0)
+  converter(sc(SCREEN-CENTER.x + INITIAL-ZOOM,
+      SCREEN-CENTER.y + INITIAL-ZOOM))
+    is bc(1, -1)
+  converter(sc(SCREEN-CENTER.x - (INITIAL-ZOOM * 5),
+      SCREEN-CENTER.y - (INITIAL-ZOOM * 10)))
+    is bc(-5, 10)
+end
+
+fun frame-bounds(w :: World%(displaying-board)) -> {Board-Coords; Board-Coords}:
+  doc: ```Given a world, returns the boundaries (top left and bottom right)
+       of the visible frame.```
+  sc-bc-converter = screen-to-board-maker(w)
+  frame-top-left = sc-bc-converter(sc(0, 0))
+  frame-bottom-right = sc-bc-converter(sc(SCREEN-WIDTH, GAMEPLAY-AREA-HEIGHT))
+  {frame-top-left; frame-bottom-right}
+where:
+  right-by-1 = move-camera(GAMEPLAY-START, sc(INITIAL-ZOOM, 0))
+  up-left-by-17 = move-camera(GAMEPLAY-START,
+    sc(-17 * INITIAL-ZOOM, -17 * INITIAL-ZOOM))
+
+  frame-bounds(GAMEPLAY-START)
+    is {bc(initial-frame-left, initial-frame-top);
+    bc(initial-frame-right, initial-frame-bottom)}
+  frame-bounds(right-by-1)
+    is {bc(initial-frame-left + 1, initial-frame-top);
+    bc(initial-frame-right + 1, initial-frame-bottom)}
+  frame-bounds(up-left-by-17)
+    is {bc(initial-frame-left - 17, initial-frame-top + 17);
+    bc(initial-frame-right - 17, initial-frame-bottom + 17)}
+end
+
+fun player-to-str(p :: Player) -> String:
+  doc: "Consumes a player and returns its corresponding string representation."
+  cases (Player) p:
+    | X => "Player X"
+    | O => "Player O"
+  end
+where:
+  player-to-str(X) is "Player X"
+  player-to-str(O) is "Player O"
+end
+
+fun place-mark(w :: World%(is-gameplay)) -> World:
+  doc: ```If the position of the selector is unoccupied, places a mark at that
+       position. If this causes the current player to win, returns the
+       corresponding victory case of the world; if not, moves the world on to
+       the next player. If the position of the selector is already occupied,
+       does nothing and returns w as-is.```
+  if member(w.x-marks + w.o-marks, w.selector-posn):
+    w
+  else:
+    {updated-x-marks; updated-o-marks; potential-win} =
+      cases (Player) w.current-player:
+        | X =>
+          updated-x-marks = link(w.selector-posn, w.x-marks)
+          potential-win = check-winner(w.selector-posn, updated-x-marks)
+          {updated-x-marks; w.o-marks; potential-win}
+        | O =>
+          updated-o-marks = link(w.selector-posn, w.o-marks)
+          potential-win = check-winner(w.selector-posn, updated-o-marks)
+          {w.x-marks; updated-o-marks; potential-win}
+      end
+    cases(Option) potential-win:
+      | none => gameplay(updated-x-marks, updated-o-marks,
+          next-player(w.current-player),
+          w.selector-posn, w.camera-posn, w.zoom-level,
+          w.mouse-last-posn, w.mouse-dragging)
+      | some({line-start; line-end}) =>
+        victory(updated-x-marks, updated-o-marks, w.current-player,
+          line-start, line-end, w.camera-posn, w.zoom-level)
+    end
+  end
+where:
+  x-at-origin = place-mark(GAMEPLAY-START)
+  x-at-origin is gameplay([list: bc(0, 0)], empty, O, bc(0, 0),
+    bc(0, 0), INITIAL-ZOOM, sc(0, 0), false)
+  place-mark(x-at-origin) is x-at-origin
+  place-mark(gameplay(only-four-consecutive, empty, X, bc(65, 79), bc(0, 0),
+      INITIAL-ZOOM, sc(0, 0), false))
+    is victory(link(bc(65, 79), only-four-consecutive),
+    empty, X, bc(61, 83), bc(66, 78), bc(0, 0), INITIAL-ZOOM)
+end
+
+fun move-camera(w :: World%(is-gameplay), screen-vec :: Screen-Coords)
+  -> World:
+  doc: "Moves the camera by the vector (in screen coordinates) provided."
+  board-vec = screen-vec-to-board-vec(w, screen-vec)
+  gameplay(w.x-marks,
+    w.o-marks,
+    w.current-player,
+    w.selector-posn,
+    process-bcs(w.camera-posn, board-vec, ADD),
+    w.zoom-level,
+    w.mouse-last-posn,
+    w.mouse-dragging)
+where:
+  move-camera(GAMEPLAY-START, sc(0, 0)) is GAMEPLAY-START
+  move-camera(GAMEPLAY-START, sc(INITIAL-ZOOM, INITIAL-ZOOM))
+    is gameplay(GAMEPLAY-START.x-marks,
+    GAMEPLAY-START.o-marks,
+    GAMEPLAY-START.current-player,
+    GAMEPLAY-START.selector-posn,
+    bc(1, -1),
+    GAMEPLAY-START.zoom-level,
+    sc(0, 0), false)
+end
+
+fun adjust-zoom(w :: World, d-zoom-level :: Number) -> World:
+  doc: "Changes the zoom level by d-zoom-level."
+  new-zoom-level = w.zoom-level + d-zoom-level
+  if (new-zoom-level <= MAX-ZOOM) and (new-zoom-level >= MIN-ZOOM):
+    gameplay(w.x-marks, w.o-marks, w.current-player, w.selector-posn,
+      w.camera-posn, new-zoom-level, w.mouse-last-posn, w.mouse-dragging)
+  else:
+    w
+  end
+where:
+  adjust-zoom(GAMEPLAY-START, 0) is GAMEPLAY-START
+  adjust-zoom(GAMEPLAY-START, 10) is gameplay(empty, empty, X,
+    bc(0, 0), bc(0, 0), INITIAL-ZOOM + 10, sc(0, 0), false)
+  adjust-zoom(GAMEPLAY-START, -10) is gameplay(empty, empty, X,
+    bc(0, 0), bc(0, 0), INITIAL-ZOOM - 10, sc(0, 0), false)
+  adjust-zoom(GAMEPLAY-START, MAX-ZOOM + 1) is GAMEPLAY-START
+  adjust-zoom(GAMEPLAY-START, (-1 * MAX-ZOOM) - 1) is GAMEPLAY-START
+end
+
+fun camera-in-view(w :: World%(displaying-board), board-posn :: Board-Coords)
+  -> Board-Coords:
+  doc: ```Returns the closest camera position where the provided board position
+       is visible and at least 1 board unit away from any edge of the frame.```
+  {frame-top-left; frame-bottom-right} = frame-bounds(w)
+  from-top-left = process-bcs(board-posn, frame-top-left, SUBTRACT)
+  from-bottom-right = process-bcs(board-posn, frame-bottom-right, SUBTRACT)
+
+  below-top = -1 * from-top-left.y
+  above-bottom = from-bottom-right.y
+  right-of-left = from-top-left.x
+  left-of-right = -1 * from-bottom-right.x
+
+  new-camera-x = ask:
+    | right-of-left < 1 then:
+      (w.camera-posn.x + right-of-left) - 1
+    | left-of-right < 1 then:
+      (w.camera-posn.x - left-of-right) + 1
+    | otherwise: w.camera-posn.x
+  end
+
+  new-camera-y = ask:
+    | above-bottom < 1 then:
+      (w.camera-posn.y + above-bottom) - 1
+    | below-top < 1 then:
+      (w.camera-posn.y - below-top) + 1
+    | otherwise: w.camera-posn.y
+  end
+
+  bc(new-camera-x, new-camera-y)
+where:
+  camera-in-view(GAMEPLAY-START, bc(0, 0)) is bc(0, 0)
+  camera-in-view(GAMEPLAY-START, bc(0, initial-frame-top + 1))
+    is bc(0, 2)
+  camera-in-view(GAMEPLAY-START, bc(0, initial-frame-top))
+    is bc(0, 1)
+end
+
+fun move-selector(w :: World%(is-gameplay), board-vec :: Board-Coords)
+  -> World:
+  doc: ```Moves the selector by the vector (in board coordinates) provided.
+       Also adjusts the camera position if the selector moves out of view.```
+  new-selector-bcs = process-bcs(w.selector-posn, board-vec, ADD)
+  new-camera-posn = camera-in-view(w, new-selector-bcs)
+  gameplay(w.x-marks,
+    w.o-marks,
+    w.current-player,
+    new-selector-bcs,
+    new-camera-posn,
+    w.zoom-level,
+    w.mouse-last-posn,
+    w.mouse-dragging)
+where:
+  move-selector(GAMEPLAY-START, bc(0, 1))
+    is gameplay(empty, empty, X, bc(0, 1), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  move-selector(
+    gameplay(empty, empty, X, bc(0, num-floor(initial-frame-top / 2)),
+      bc(0, 0), INITIAL-ZOOM, sc(0, 0), false), bc(1, 0))
+    is gameplay(empty, empty, X, bc(1, num-floor(initial-frame-top / 2)),
+    bc(0, 0), INITIAL-ZOOM, sc(0, 0), false)
+  # Adjust camera position
+  move-selector(
+    gameplay(empty, empty, X, bc(0, num-floor(initial-frame-top) - 1),
+      bc(0, 0), INITIAL-ZOOM, sc(0, 0), false), bc(0, 1))
+    is gameplay(empty, empty, X, bc(0, num-floor(initial-frame-top)),
+    bc(0, 1), INITIAL-ZOOM, sc(0, 0), false)
+end
+
+fun next-player(current-player :: Player) -> Player:
+  doc: "Consumes the current player and returns the next player."
+  cases (Player) current-player:
+    | X => O
+    | O => X
+  end
+where:
+  next-player(X) is O
+  next-player(O) is X
+end
+
+fun get-consecutive(start :: Board-Coords, marks-placed :: List<Board-Coords>,
+    vec-to-next :: Board-Coords) -> {Number; Board-Coords; Board-Coords}:
+  doc: ```Returns the number of consecutive marks starting at start and using
+       vec-to-next to go to each next mark, in both directions, as well as the
+       coordinates of the extremities of the consecutive marks. Raises an
+       exception if there is no mark at start.```
+  if member(marks-placed, start):
+    fun consecutive-in-ray-maker(operation :: (Number -> Number))
+      -> (Board-Coords -> {Number; Board-Coords}):
+      doc: ```Creates a function that returns the number of consecutive marks in
+         one direction, specified by operation (ADD or SUBTRACT), not including
+         the start, as well as the coordinates of the far end.```
+      fun consecutive-in-ray(current-mark-posn :: Board-Coords)
+        -> {Number; Board-Coords}:
+        next-mark = process-bcs(current-mark-posn, vec-to-next, operation)
+        if member(marks-placed, next-mark):
+          {consecutive-remaining; far-end-coords}
+          = consecutive-in-ray(next-mark)
+          {1 + consecutive-remaining; far-end-coords}
+        else:
+          {0; current-mark-posn}
+        end
+      end
+      consecutive-in-ray
+    end
+
+    pos-direction-counter = consecutive-in-ray-maker(ADD)
+    neg-direction-counter = consecutive-in-ray-maker(SUBTRACT)
+    {num-pos-consecutive; pos-far-end} = pos-direction-counter(start)
+    {num-neg-consecutive; neg-far-end} = neg-direction-counter(start)
+    {1 + num-pos-consecutive + num-neg-consecutive;
+      neg-far-end; pos-far-end}
+  else:
+    raise("No mark at start")
+  end
+where:
+  get-consecutive(bc(0, 0), empty, HORIZONTAL) raises "No mark at start"
+  get-consecutive(bc(0, 0), [list: bc(0, 0)], VERTICAL)
+    is {1; bc(0, 0); bc(0, 0)}
+  get-consecutive(bc(0, 0), [list: bc(0, 0), bc(1, 0)], HORIZONTAL)
+    is {2; bc(0, 0); bc(1, 0)}
+  get-consecutive(bc(5, 7), five-marks-diag-pos, DIAG-POS)
+    is {5; bc(5, 7); bc(9, 11)}
+  get-consecutive(bc(61, 83), five-marks-diag-neg, DIAG-NEG)
+    is {5; bc(61, 83); bc(65, 79)}
+  get-consecutive(bc(19, 368), five-marks-horizontal, HORIZONTAL)
+    is {5; bc(19, 368); bc(23, 368)}
+  get-consecutive(bc(10, 71), five-marks-vertical, VERTICAL)
+    is {5; bc(10, 71); bc(10, 75)}
+  get-consecutive(bc(63, 81), only-four-consecutive, DIAG-NEG)
+    is {4; bc(61, 83); bc(64, 80)}
+end
+
+fun check-winner(start :: Board-Coords, marks-placed :: List<Board-Coords>)
+  -> Option<{Board-Coords; Board-Coords}>:
+  doc: ```Checks if there exists a consecutive line of at least five marks from
+       start. If there is, returns the beginning and ending coordinates of this
+       line. If not, returns none.```
+  fun check-each-direction(directions :: List<Board-Coords>)
+    -> Option<{Board-Coords; Board-Coords}>:
+    cases (List) directions:
+      | empty => none
+      | link(direction, remaining-to-check) =>
+        {num-consecutive; beginning; ending} =
+          get-consecutive(start, marks-placed, direction)
+        if num-consecutive >= NUM-IN-ROW-FOR-VICTORY:
+          some({beginning; ending})
+        else:
+          check-each-direction(remaining-to-check)
+        end
+    end
+  end
+
+  check-each-direction(ALL-DIRECTIONS)
+where:
+  check-winner(bc(0, 0), [list: bc(0, 0)]) is none
+  check-winner(bc(0, 0), [list: bc(0, 0), bc(1, 0)]) is none
+  check-winner(bc(5, 7), five-marks-diag-pos)
+    is some({bc(5, 7); bc(9, 11)})
+  check-winner(bc(61, 83), five-marks-diag-neg)
+    is some({bc(61, 83); bc(65, 79)})
+  check-winner(bc(19, 368), five-marks-horizontal)
+    is some({bc(19, 368); bc(23, 368)})
+  check-winner(bc(10, 71), five-marks-vertical)
+    is some({bc(10, 71); bc(10, 75)})
+  check-winner(bc(63, 81), only-four-consecutive) is none
+end
+
+# Graphics
+
+# Display image
+fun draw-grid(w :: World%(displaying-board), base :: Image) -> Image:
+  doc: "Given a world and a scene, returns the scene with the gridlines drawn."
+  bc-sc-converter = board-to-screen-maker(w)
+
+  {frame-top-left; frame-bottom-right} = frame-bounds(w)
+
+  first-vertical-x = num-ceiling(frame-top-left.x)
+  last-vertical-x = num-floor(frame-bottom-right.x)
+
+  first-horizontal-y = num-ceiling(frame-bottom-right.y)
+  last-horizontal-y = num-floor(frame-top-left.y)
+
+  vertical-line-xs = range(first-vertical-x, last-vertical-x + 1)
+  horizontal-line-ys = range(first-horizontal-y, last-horizontal-y + 1)
+
+  with-verticals = fold(lam(acc, elt):
+      line-start = bc-sc-converter(bc(elt, frame-top-left.y))
+      line-end = bc-sc-converter(bc(elt, frame-bottom-right.y))
+      scene-line(acc, line-start.x, line-start.y, line-end.x, line-end.y,
+        GRIDLINE-COLOR)
+    end, base, vertical-line-xs)
+
+  with-horizontals = fold(lam(acc, elt):
+      line-start = bc-sc-converter(bc(frame-top-left.x, elt))
+      line-end = bc-sc-converter(bc(frame-bottom-right.x, elt))
+      scene-line(acc, line-start.x, line-start.y, line-end.x, line-end.y,
+        GRIDLINE-COLOR)
+    end, with-verticals, horizontal-line-ys)
+
+  with-horizontals
+where:
+  bc-sc-converter = board-to-screen-maker(GAMEPLAY-START)
+
+  initial-grid = fold(lam(acc, elt):
+      line-start = bc-sc-converter(bc(initial-frame-left, elt))
+      line-end = bc-sc-converter(bc(initial-frame-right, elt))
+      scene-line(acc, line-start.x, line-start.y, line-end.x, line-end.y,
+        GRIDLINE-COLOR)
+    end, fold(lam(acc, elt):
+        line-start = bc-sc-converter(bc(elt, initial-frame-top))
+        line-end = bc-sc-converter(bc(elt, initial-frame-bottom))
+        scene-line(acc, line-start.x, line-start.y, line-end.x, line-end.y,
+          GRIDLINE-COLOR)
+      end, BASE-SCENE, range(num-ceiling(initial-frame-left),
+        num-floor(initial-frame-right) + 1)),
+    range(num-ceiling(initial-frame-bottom), num-floor(initial-frame-top) + 1))
+
+  draw-grid(GAMEPLAY-START, BASE-SCENE) is initial-grid
+  draw-grid(move-camera(GAMEPLAY-START, sc(INITIAL-ZOOM, INITIAL-ZOOM)),
+    BASE-SCENE) is initial-grid
+  draw-grid(move-camera(GAMEPLAY-START, sc(INITIAL-ZOOM * -8,
+        INITIAL-ZOOM * 7)),
+    BASE-SCENE) is initial-grid
+end
+
+fun make-x-mark-img(zoom-level, color):
+  cross-length = INITIAL-CROSS-LENGTH * zoom-level
+  add-line(line(cross-length, cross-length, color),
+    0, cross-length, cross-length, 0, color)
+where:
+  make-x-mark-img(0, "black")
+    is add-line(line(0, 0, "black"), 0, 0, 0, 0, "black")
+  make-x-mark-img(INITIAL-ZOOM, "black")
+    is add-line(line(INITIAL-ZOOM * INITIAL-CROSS-LENGTH,
+      INITIAL-ZOOM * INITIAL-CROSS-LENGTH, "black"), 0,
+    INITIAL-ZOOM * INITIAL-CROSS-LENGTH,
+    INITIAL-ZOOM * INITIAL-CROSS-LENGTH, 0, "black")
+  make-x-mark-img(100, "blue")
+    is add-line(line(100 * INITIAL-CROSS-LENGTH, 100 * INITIAL-CROSS-LENGTH,
+      "blue"), 0, 100 * INITIAL-CROSS-LENGTH, 100 * INITIAL-CROSS-LENGTH,
+    0, "blue")
+end
+
+fun make-o-mark-img(zoom-level, color):
+  circle(INITIAL-CIRCLE-RADIUS * zoom-level, "outline", color)
+where:
+  make-o-mark-img(0, "black") is circle(0, "outline", "black")
+  make-o-mark-img(INITIAL-ZOOM, "black")
+    is circle(INITIAL-ZOOM * INITIAL-CIRCLE-RADIUS, "outline", "black")
+  make-o-mark-img(100, "blue")
+    is circle(100 * INITIAL-CIRCLE-RADIUS, "outline", "blue")
+end
+
+fun draw-marks(w :: World%(displaying-board), grid :: Image) -> Image:
+  doc: "Given a world and a scene, returns the scene with o and x marks drawn."
+  bc-to-sc = board-to-screen-maker(w)
+  x-marks-sc = map(bc-to-sc, w.x-marks)
+  o-marks-sc = map(bc-to-sc, w.o-marks)
+  x-mark-img = make-x-mark-img(w.zoom-level, X-MARK-COLOR)
+  o-mark-img = make-o-mark-img(w.zoom-level, O-MARK-COLOR)
+
+  with-o-marks = fold(lam(acc, elt):
+      place-image(o-mark-img, elt.x, elt.y, acc)
+    end, grid, o-marks-sc)
+
+  with-x-marks = fold(lam(acc, elt):
+      place-image(x-mark-img, elt.x, elt.y, acc)
+    end, with-o-marks, x-marks-sc)
+
+  with-x-marks
+where:
+  o-mark-img = circle(INITIAL-ZOOM * INITIAL-CIRCLE-RADIUS,
+    "outline", O-MARK-COLOR)
+  x-mark-img = add-line(line(INITIAL-ZOOM * INITIAL-CROSS-LENGTH,
+      INITIAL-ZOOM * INITIAL-CROSS-LENGTH, X-MARK-COLOR),
+    0, INITIAL-ZOOM * INITIAL-CROSS-LENGTH, INITIAL-ZOOM * INITIAL-CROSS-LENGTH,
+    0, X-MARK-COLOR)
+  draw-marks(gameplay([list: bc(0, 0)], empty, X, bc(0, 0), bc(0, 0),
+      INITIAL-ZOOM, sc(0, 0), false), BASE-SCENE)
+    is place-image(x-mark-img, SCREEN-CENTER.x, SCREEN-CENTER.y, BASE-SCENE)
+  draw-marks(gameplay(empty, row-points, O, bc(0, 0), bc(0, 0), INITIAL-ZOOM,
+      sc(0, 0), false), BASE-SCENE)
+    is place-image(o-mark-img, SCREEN-CENTER.x, SCREEN-CENTER.y,
+    place-image(o-mark-img, SCREEN-CENTER.x,
+      SCREEN-CENTER.y - INITIAL-ZOOM,
+      place-image(o-mark-img, SCREEN-CENTER.x,
+        SCREEN-CENTER.y - (INITIAL-ZOOM * 2),
+        place-image(o-mark-img, SCREEN-CENTER.x,
+          SCREEN-CENTER.y - (INITIAL-ZOOM * 3),
+          place-image(o-mark-img, SCREEN-CENTER.x,
+            SCREEN-CENTER.y - (INITIAL-ZOOM * 4),
+            BASE-SCENE)))))
+end
+
+fun draw-selector(w :: World%(is-gameplay), grid :: Image) -> Image:
+  doc: "Given a world and a scene, returns the scene with the selector drawn."
+  bc-to-sc = board-to-screen-maker(w)
+
+  selector-color =
+    if member(w.x-marks + w.o-marks, w.selector-posn):
+      SELECTOR-INVALID-COLOR
+    else:
+      SELECTOR-VALID-COLOR
+    end
+
+  selector-img =
+    cases (Player) w.current-player:
+      | X => make-x-mark-img(w.zoom-level, selector-color)
+      | O => make-o-mark-img(w.zoom-level, selector-color)
+    end
+  selector-sc = bc-to-sc(w.selector-posn)
+
+  place-image(selector-img, selector-sc.x, selector-sc.y, grid)
+where:
+  draw-selector(gameplay(empty, empty, O, bc(5, 5), bc(0, 0), INITIAL-ZOOM,
+      sc(0, 0), false), BASE-SCENE)
+    is place-image(circle(INITIAL-ZOOM * INITIAL-CIRCLE-RADIUS,
+      "outline", SELECTOR-VALID-COLOR),
+    SCREEN-CENTER.x + (INITIAL-ZOOM * 5), SCREEN-CENTER.y - (INITIAL-ZOOM * 5),
+    BASE-SCENE)
+  draw-selector(gameplay(empty, empty, X, bc(5, 5), bc(0, 0), 50,
+      sc(0, 0), false), BASE-SCENE)
+    is place-image(add-line(line(20, 20, SELECTOR-VALID-COLOR), 0, 20, 20, 0,
+      SELECTOR-VALID-COLOR),
+    SCREEN-CENTER.x + (50 * 5), SCREEN-CENTER.y - (50 * 5), BASE-SCENE)
+end
+
+fun textbox-generator(width :: Number, height :: Number)
+  -> (List<String>, Number -> Image):
+  doc: ```Returns a function that draws a text box of the given width and
+       height, displaying each string in alot on a separate line,
+       starting at the given line number (top line is line 0).```
+  fun draw-textbox(alot :: List<String>, line-num :: Number) -> Image:
+    cases (List) alot:
+      | empty => overlay(
+          rectangle(width - (2 * TEXTBOX-OUTLINE-THICKNESS),
+            height - (2 * TEXTBOX-OUTLINE-THICKNESS),
+            "solid", TEXTBOX-BACKGROUND-COLOR),
+          empty-color-scene(width, height,
+            TEXTBOX-OUTLINE-COLOR))
+      | link(f, r) =>
+        place-image-align(
+          text(f, FONT-SIZE, TEXT-COLOR),
+          TEXT-LEFT-MARGIN,
+          TEXT-TOP-MARGIN + (TEXT-LINE-SPACING * line-num),
+          "left", "top",
+          draw-textbox(r, line-num + 1))
+    end
+  end
+  draw-textbox
+end
+
+draw-fullscreen-textbox = textbox-generator(SCREEN-WIDTH, SCREEN-HEIGHT)
+draw-messagebox = textbox-generator(SCREEN-WIDTH, MESSAGEBOX-HEIGHT)
+
+check "draw fullscreen textbox":
+  fullscreen-empty-textbox = overlay(
+    rectangle(SCREEN-WIDTH - (2 * TEXTBOX-OUTLINE-THICKNESS),
+      SCREEN-HEIGHT - (2 * TEXTBOX-OUTLINE-THICKNESS),
+      "solid", TEXTBOX-BACKGROUND-COLOR),
+    empty-color-scene(SCREEN-WIDTH, SCREEN-HEIGHT,
+      TEXTBOX-OUTLINE-COLOR))
+
+  draw-fullscreen-textbox(empty, 0) is fullscreen-empty-textbox
+  draw-fullscreen-textbox([list: "Line 1", "Line 2", "Line 3"], 0)
+    is place-image-align(text("Line 1", FONT-SIZE, TEXT-COLOR),
+    TEXT-LEFT-MARGIN, TEXT-TOP-MARGIN + (TEXT-LINE-SPACING * 0),
+    "left", "top",
+    place-image-align(text("Line 2", FONT-SIZE, TEXT-COLOR),
+      TEXT-LEFT-MARGIN, TEXT-TOP-MARGIN + (TEXT-LINE-SPACING * 1),
+      "left", "top",
+      place-image-align(text("Line 3", FONT-SIZE, TEXT-COLOR),
+        TEXT-LEFT-MARGIN, TEXT-TOP-MARGIN + (TEXT-LINE-SPACING * 2),
+        "left", "top",
+        fullscreen-empty-textbox)))
+end
+
+check "draw message box":
+  empty-messagebox = overlay(
+    rectangle(SCREEN-WIDTH - (2 * TEXTBOX-OUTLINE-THICKNESS),
+      MESSAGEBOX-HEIGHT - (2 * TEXTBOX-OUTLINE-THICKNESS),
+      "solid", TEXTBOX-BACKGROUND-COLOR),
+    empty-color-scene(SCREEN-WIDTH, MESSAGEBOX-HEIGHT,
+      TEXTBOX-OUTLINE-COLOR))
+
+  draw-messagebox(empty, 0) is empty-messagebox
+  draw-messagebox([list: "Shriram is the best"], 0)
+    is place-image-align(
+    text("Shriram is the best", FONT-SIZE, TEXT-COLOR),
+    TEXT-LEFT-MARGIN,
+    TEXT-TOP-MARGIN,
+    "left", "top",
+    empty-messagebox)
+end
+
+fun draw-win-line(w :: World%(is-victory), grid :: Image) -> Image:
+  doc: ```Given a victorious world and a board, returns the board with the
+       winning line drawn.```
+  converter = board-to-screen-maker(w)
+  starting = converter(w.win-line-start)
+  ending = converter(w.win-line-end)
+  win-color = cases(Player) w.who-won:
+    | X => X-MARK-COLOR
+    | O => O-MARK-COLOR
+  end
+  scene-line(grid, starting.x, starting.y, ending.x, ending.y, win-color)
+where:
+  draw-win-line(victory(row-points, empty, X, bc(0, 0), bc(0, 4),
+      bc(0, 0), INITIAL-ZOOM), BASE-SCENE)
+    is scene-line(BASE-SCENE, SCREEN-CENTER.x, SCREEN-CENTER.y,
+    SCREEN-CENTER.x, SCREEN-CENTER.y - (INITIAL-ZOOM * 4), X-MARK-COLOR)
+  draw-win-line(victory(empty, row-points, O, bc(0, 0), bc(0, 4),
+      bc(0, 0), INITIAL-ZOOM), BASE-SCENE)
+    is scene-line(BASE-SCENE, SCREEN-CENTER.x, SCREEN-CENTER.y,
+    SCREEN-CENTER.x, SCREEN-CENTER.y - (INITIAL-ZOOM * 4), O-MARK-COLOR)
+end
+
+fun show(w :: World) -> Image:
+  doc: "Consumes a world and returns the image to be displayed to the user."
+  cases (World) w:
+    | instructions => draw-fullscreen-textbox(INSTRUCTIONS, 0)
+    | gameplay(_, _, current-player, _, _, _, _, _) =>
+      grid-drawn = draw-grid(w, BASE-SCENE)
+      marks-drawn = draw-marks(w, grid-drawn)
+      selector-drawn = draw-selector(w, marks-drawn)
+      messagebox = draw-messagebox([list:
+          "It's " + player-to-str(current-player) + "'s turn.",
+          "Choose a position and place a mark!"], 0)
+      place-image-align(messagebox, 0, GAMEPLAY-AREA-HEIGHT,
+        "left", "top", selector-drawn)
+    | victory(x-marks, o-marks, who-won, win-line-start, win-line-end,
+        camera-posn, zoom-level) =>
+      w-in-view-start = victory(
+        x-marks, o-marks, who-won, win-line-start, win-line-end,
+        camera-in-view(w, win-line-start),
+        zoom-level)
+      w-in-view-both = victory(
+        x-marks, o-marks, who-won, win-line-start, win-line-end,
+        camera-in-view(w-in-view-start, win-line-end),
+        zoom-level)
+      grid-drawn = draw-grid(w-in-view-both, BASE-SCENE)
+      marks-drawn = draw-marks(w-in-view-both, grid-drawn)
+      win-line-drawn = draw-win-line(w-in-view-both, marks-drawn)
+      messagebox = draw-messagebox([list:
+          player-to-str(who-won) + " won!",
+          "Would you like to play another round? Press y (Yes) or n (No)."], 0)
+      place-image-align(messagebox, 0, GAMEPLAY-AREA-HEIGHT,
+        "left", "top", win-line-drawn)
+    | exit => BASE-SCENE
+  end
+where:
+  show(instructions) is draw-fullscreen-textbox(INSTRUCTIONS, 0)
+  show(GAMEPLAY-START) is place-image-align(
+    draw-messagebox([list:
+        "It's Player X's turn.",
+        "Choose a position and place a mark!"], 0),
+    0, GAMEPLAY-AREA-HEIGHT, "left", "top",
+    draw-selector(GAMEPLAY-START,
+      draw-marks(GAMEPLAY-START,
+        draw-grid(GAMEPLAY-START, BASE-SCENE))))
+  win-case = victory(row-points, empty, X, bc(0, 0), bc(0, 4),
+    bc(0, 0), INITIAL-ZOOM)
+  show(win-case) is place-image-align(draw-messagebox([list:
+        "Player X won!",
+        "Would you like to play another round? Press y (Yes) or n (No)."], 0),
+    0, GAMEPLAY-AREA-HEIGHT, "left", "top", draw-win-line(win-case,
+      draw-marks(win-case, draw-grid(win-case, BASE-SCENE))))
+end
+
+# Input Handling
+
+fun keyboard-handler(w :: World, key :: String) -> World:
+  doc: "Consumes the world and a key pressed, and returns the updated world."
+  cases (World) w:
+    | instructions => GAMEPLAY-START
+    | gameplay(x-marks, o-marks, current-player, selector-posn, camera-posn,
+        zoom-level, mouse-last-posn, mouse-dragging) =>
+      ask:
+        | key == PLACE-MARK-KEY then:
+          place-mark(w)
+        | key == MOVE-SELECTOR-UP-KEY then:
+          move-selector(w, UP)
+        | key == MOVE-SELECTOR-DOWN-KEY then:
+          move-selector(w, DOWN)
+        | key == MOVE-SELECTOR-LEFT-KEY then:
+          move-selector(w, LEFT)
+        | key == MOVE-SELECTOR-RIGHT-KEY then:
+          move-selector(w, RIGHT)
+        | key == PAN-UP-KEY then:
+          move-camera(w, sc(0, -1 * CAMERA-SPEED))
+        | key == PAN-DOWN-KEY then:
+          move-camera(w, sc(0, CAMERA-SPEED))
+        | key == PAN-LEFT-KEY then:
+          move-camera(w, sc(-1 * CAMERA-SPEED, 0))
+        | key == PAN-RIGHT-KEY then:
+          move-camera(w, sc(CAMERA-SPEED, 0))
+        | key == RESET-VIEW-KEY then:
+          gameplay(x-marks, o-marks, current-player,
+            bc(0, 0), bc(0, 0), INITIAL-ZOOM, mouse-last-posn, mouse-dragging)
+        | key == ZOOM-IN-KEY then:
+          adjust-zoom(w, ZOOM-SPEED)
+        | (key == ZOOM-OUT-KEY)
+          or
+          (key == ZOOM-OUT-KEY-BUG-WORKAROUND) then:
+          adjust-zoom(w, -1 * ZOOM-SPEED)
+        | otherwise: handle-invalid-keypress(w, key)
+      end
+    | victory(_, _, _, _, _, _, _) =>
+      ask:
+        | key == "n" then: exit
+        | key == "y" then: GAMEPLAY-START
+        | otherwise: handle-invalid-keypress(w, key)
+      end
+    | exit => raise("Game has exited")
+  end
+where:
+  keyboard-handler(instructions, "a") is GAMEPLAY-START
+  keyboard-handler(GAMEPLAY-START, PLACE-MARK-KEY) is place-mark(GAMEPLAY-START)
+  keyboard-handler(o-won, "n") is exit
+  keyboard-handler(o-won, "y") is GAMEPLAY-START
+end
+
+fun handle-invalid-keypress(w :: World, key :: String) -> World:
+  doc: "Returns the world state after an invalid keypress."
+  _ = print("Invalid keypress: " + key + if string-length(key) == 1:
+      " (" + num-to-string(string-to-code-point(key)) + ")"
+    else:
+      ""
+    end)
+  w
+where:
+  handle-invalid-keypress(GAMEPLAY-START, "") is GAMEPLAY-START
+  handle-invalid-keypress(instructions, "") is instructions
+  a-victory = victory(row-points, five-marks-diag-pos, O,
+    bc(5, 7), bc(9, 11), bc(0, 0), INITIAL-ZOOM)
+  handle-invalid-keypress(a-victory, "") is a-victory
+end
+
+fun mouse-handler(w :: World, mouse-x, mouse-y, mouse-event) -> World:
+  mouse-posn = sc(mouse-x, mouse-y)
+  cases (World) w:
+    | instructions =>
+      if mouse-event == "button-up":
+        GAMEPLAY-START
+      else:
+        w
+      end
+    | gameplay(x-marks, o-marks, current-player, selector-posn, camera-posn,
+        zoom-level, mouse-last-posn, mouse-dragging) =>
+      ask:
+        | (mouse-event == "button-up") and not(mouse-dragging) then:
+          place-mark(w)
+        | mouse-event == "drag" then:
+          mouse-updated = gameplay(x-marks, o-marks, current-player,
+            selector-posn, camera-posn, zoom-level, mouse-posn, true)
+          d-camera-posn = process-scs(mouse-last-posn, mouse-posn, SUBTRACT)
+          move-camera(mouse-updated, d-camera-posn)
+        | mouse-event == "move" then:
+          sc-to-bc = screen-to-board-maker(w)
+          mouse-bc = sc-to-bc(mouse-posn)
+          mouse-bc-int = bc(num-round-even(mouse-bc.x),
+            num-round-even(mouse-bc.y))
+          {top-left; bottom-right} = frame-bounds(w)
+
+          from-top-left = process-bcs(mouse-bc-int, top-left, SUBTRACT)
+          from-bottom-right = process-bcs(mouse-bc-int, bottom-right, SUBTRACT)
+
+          below-top = -1 * from-top-left.y
+          above-bottom = from-bottom-right.y
+          right-of-left = from-top-left.x
+          left-of-right = -1 * from-bottom-right.x
+
+          new-selector-x = ask:
+            | right-of-left <= 0 then:
+              mouse-bc-int.x + 1
+            | left-of-right <= 0 then:
+              mouse-bc-int.x - 1
+            | otherwise: mouse-bc-int.x
+          end
+
+          new-selector-y = ask:
+            | below-top <= 0 then:
+              mouse-bc-int.y - 1
+            | above-bottom <= 0 then:
+              mouse-bc-int.y + 1
+            | otherwise: mouse-bc-int.y
+          end
+
+          new-selector-posn = bc(new-selector-x, new-selector-y)
+
+          gameplay(x-marks, o-marks, current-player, new-selector-posn,
+            camera-posn, zoom-level, mouse-posn, false)
+        | otherwise:
+          gameplay(x-marks, o-marks, current-player, selector-posn,
+            camera-posn, zoom-level, mouse-posn, false)
+      end
+    | victory(_, _, _, _, _, _, _) => w
+    | exit => w
+  end
+where:
+  mouse-center = board-to-screen-maker(GAMEPLAY-START)(bc(0, 0))
+  mouse-handler(instructions, 30, 40, "button-up") is GAMEPLAY-START
+  mouse-handler(GAMEPLAY-START, mouse-center.x, mouse-center.y, "move")
+    is gameplay(empty, empty, X, bc(0, 0), bc(0, 0), INITIAL-ZOOM,
+    mouse-center, false)
+  mouse-handler(GAMEPLAY-START, mouse-center.x, mouse-center.y, "button-up")
+    is place-mark(GAMEPLAY-START)
+  mouse-handler(o-won, 2, 8, "move") is o-won
+end
+
+# Reactor
+
+instructions-reactor = reactor:
+  title: TITLE,
+  init: instructions,
+  to-draw: show,
+  on-key: keyboard-handler,
+  on-mouse: mouse-handler,
+  stop-when: is-exit,
+  close-when-stop: true
+end
+
+interact(instructions-reactor)
+
+gameplay-start-reactor = react(instructions-reactor, keypress(PLACE-MARK-KEY))
+
+# Test Reactor
+
+fun execute-keypresses(rctr :: Reactor, keypresses :: List<String>) -> Reactor:
+  cases (List) keypresses:
+    | empty => rctr
+    | link(f, r) => execute-keypresses(react(rctr, keypress(f)), r)
+  end
+where:
+  get-value(execute-keypresses(instructions-reactor, empty))
+    is get-value(instructions-reactor)
+  get-value(execute-keypresses(instructions-reactor, [list: "enter"]))
+    is GAMEPLAY-START
+  get-value(execute-keypresses(gameplay-start-reactor,
+      [list: PLACE-MARK-KEY, MOVE-SELECTOR-UP-KEY, PLACE-MARK-KEY]))
+    is gameplay([list: bc(0, 0)], [list: bc(0, 1)], X, bc(0, 1), bc(0, 0),
+    INITIAL-ZOOM, sc(0, 0), false)
+end
+
+check "reactor shows instructions":
+  get-value(instructions-reactor) is instructions
+  draw(instructions-reactor) is show(instructions)
+end
+
+check "reactor responds to keypresses":
+  get-value(gameplay-start-reactor) is GAMEPLAY-START
+  draw(gameplay-start-reactor) is show(GAMEPLAY-START)
+  get-value(react(gameplay-start-reactor, keypress(PLACE-MARK-KEY)))
+    is gameplay([list: bc(0, 0)], empty, O, bc(0, 0), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(MOVE-SELECTOR-UP-KEY)))
+    is gameplay(empty, empty, X, bc(0, 1), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(MOVE-SELECTOR-DOWN-KEY)))
+    is gameplay(empty, empty, X, bc(0, -1), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(MOVE-SELECTOR-RIGHT-KEY)))
+    is gameplay(empty, empty, X, bc(1, 0), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(MOVE-SELECTOR-LEFT-KEY)))
+    is gameplay(empty, empty, X, bc(-1, 0), bc(0, 0), INITIAL-ZOOM,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(PAN-UP-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0), bc(0, CAMERA-SPEED / INITIAL-ZOOM),
+    INITIAL-ZOOM, sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(PAN-DOWN-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0),
+    bc(0, -1 * (CAMERA-SPEED / INITIAL-ZOOM)), INITIAL-ZOOM, sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(PAN-RIGHT-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0), bc(CAMERA-SPEED / INITIAL-ZOOM, 0),
+    INITIAL-ZOOM, sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(PAN-LEFT-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0),
+    bc(-1 * (CAMERA-SPEED / INITIAL-ZOOM), 0), INITIAL-ZOOM, sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(RESET-VIEW-KEY)))
+    is GAMEPLAY-START
+  get-value(react(gameplay-start-reactor, keypress(ZOOM-IN-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0), bc(0, 0), INITIAL-ZOOM + 1,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor, keypress(ZOOM-OUT-KEY)))
+    is gameplay(empty, empty, X, bc(0, 0), bc(0, 0), INITIAL-ZOOM - 1,
+    sc(0, 0), false)
+  get-value(react(gameplay-start-reactor,
+      keypress(ZOOM-OUT-KEY-BUG-WORKAROUND)))
+    is gameplay(empty, empty, X, bc(0, 0), bc(0, 0), INITIAL-ZOOM - 1,
+    sc(0, 0), false)
+  get-value(execute-keypresses(gameplay-start-reactor,
+      [list: MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY,
+        MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY,
+        MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY,
+        MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY,
+        MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY, MOVE-SELECTOR-UP-KEY]))
+    is gameplay(empty, empty, X, bc(0, 15), bc(0, (15 - initial-frame-top) + 1),
+    INITIAL-ZOOM, sc(0, 0), false)
+end
+
+check "reactor shows victory screen":
+  get-value(execute-keypresses(gameplay-start-reactor,
+      [list: PLACE-MARK-KEY, MOVE-SELECTOR-UP-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-DOWN-KEY, MOVE-SELECTOR-RIGHT-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-UP-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-DOWN-KEY, MOVE-SELECTOR-RIGHT-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-DOWN-KEY, MOVE-SELECTOR-RIGHT-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-UP-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-DOWN-KEY, MOVE-SELECTOR-RIGHT-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-UP-KEY, PLACE-MARK-KEY,
+        MOVE-SELECTOR-DOWN-KEY, MOVE-SELECTOR-RIGHT-KEY, PLACE-MARK-KEY]))
+    is victory(
+    [list: bc(4, 0), bc(3, 0), bc(2, 0), bc(1, 0), bc(0, 0)],
+    [list: bc(4, -1), bc(3, -1), bc(1, 1), bc(0, 1)],
+    X, bc(0, 0), bc(4, 0), bc(0, 0), INITIAL-ZOOM)
+end
+```

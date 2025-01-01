@@ -11,15 +11,16 @@ export default function Page() {
       <h1 className="font-semibold text-2xl mb-8 tracking-tighter">About</h1>
       <p>
         Hi, I'm Chloe. I am a sophomore at Brown University studying computer
-        science. I write whatever is on my mind. The useful stuff is in{" "}
+        science.
+      </p>
+      <br />
+      <p>
+        I write. The long-form stuff is in{" "}
         <Link href="/writings" className="text-neutral-600 underline">
           writings
-        </Link>{" "}
-        and the personal stuff is in{" "}
-        <Link href="/etc" className="text-neutral-600 underline">
-          etc
         </Link>
-        .
+        . I take responsibility for only the things written after{" "}
+        {new Date(new Date().getTime() + 24 * 60 * 60).toUTCString()}.
       </p>
     </section>
   );

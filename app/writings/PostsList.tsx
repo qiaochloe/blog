@@ -16,18 +16,20 @@ type PostsListProps = {
 };
 
 // Tags
-type Tag = "general" | "academic" | "archive";
+type Tag = "general" | "academic" | "archive" | "extra";
 
 const defaultSelectedTags: Record<Tag, boolean> = {
   general: true,
   academic: true,
   archive: false,
+  extra: false,
 };
 
 const tagClass: Record<Tag, string> = {
   general: "bg-amber-100 text-amber-800",
   academic: "bg-sky-100 text-sky-800",
   archive: "bg-lime-100 text-lime-800",
+  extra: "bg-indigo-100 text-indigo-800",
 };
 
 export function PostsList({ allPosts }: PostsListProps) {
@@ -67,15 +69,22 @@ export function PostsList({ allPosts }: PostsListProps) {
           .sort((a, b) => {
             const isArchiveA = a.data.tags.includes("archive");
             const isArchiveB = b.data.tags.includes("archive");
+            const isExtraA = a.data.tags.includes("extra");
+            const isExtraB = b.data.tags.includes("extra");
 
             // Archive posts go to the end
             if (isArchiveA !== isArchiveB) {
               return isArchiveA ? 1 : -1;
             }
 
-            // If both are archive, sort by published date (newest first)
-            if (isArchiveA && isArchiveB) {
-              return b.data.publishedAt.localeCompare(a.data.publishedAt);
+            // Extra posts go to the end too
+            if (isExtraA !== isExtraB) {
+              return isExtraA ? 1 : -1;
+            }
+
+            // If both are archive or extra, sort by published date (oldest first)
+            if ((isArchiveA && isArchiveB) || (isExtraA && isExtraB)) {
+              return a.data.publishedAt.localeCompare(b.data.publishedAt);
             }
 
             // Otherwise, sort alphabetically by title

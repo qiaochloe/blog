@@ -1,7 +1,7 @@
 import { getPosts } from "app/utils";
 
 // TODO: Update the base URL
-export const baseUrl = "localhost:3000";
+export const baseUrl = "https://qiaochloe.com";
 
 export default async function sitemap() {
   let blogs = getPosts().map((post) => ({
