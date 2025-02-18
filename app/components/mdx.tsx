@@ -5,6 +5,12 @@ import { highlight } from "sugar-high";
 import React from "react";
 import remarkGfm from "remark-gfm";
 import Media from "./Media";
+import {
+  PuzzlethonHinting,
+  PuzzlethonMap,
+  PuzzlethonCarberry,
+} from "./Puzzlethon";
+import { EnlargedImage } from "./Image";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -46,9 +52,9 @@ function CustomLink(props) {
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
 }
 
-function RoundedImage(props) {
-  return <Image alt={props.alt} className="rounded-lg" {...props} />;
-}
+// function RoundedImage(props) {
+//   return <Image alt={props.alt} className="rounded-lg" {...props} />;
+// }
 
 function Code({ children, ...props }) {
   let codeHTML = highlight(children);
@@ -95,11 +101,15 @@ let components = {
   h4: createHeading(4),
   h5: createHeading(5),
   h6: createHeading(6),
-  Image: RoundedImage,
+  Image: EnlargedImage,
   a: CustomLink,
   code: Code,
   Table,
   Media,
+  // Puzzlethon
+  PuzzlethonHinting,
+  PuzzlethonMap,
+  PuzzlethonCarberry,
 };
 
 export function CustomMDX(props) {

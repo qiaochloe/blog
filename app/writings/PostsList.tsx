@@ -16,11 +16,12 @@ type PostsListProps = {
 };
 
 // Tags
-type Tag = "general" | "academic" | "archive" | "extra";
+type Tag = "general" | "academic" | "technical" | "archive" | "extra";
 
 const defaultSelectedTags: Record<Tag, boolean> = {
   general: true,
   academic: true,
+  technical: true,
   archive: false,
   extra: false,
 };
@@ -28,7 +29,8 @@ const defaultSelectedTags: Record<Tag, boolean> = {
 const tagClass: Record<Tag, string> = {
   general: "bg-amber-100 text-amber-800",
   academic: "bg-sky-100 text-sky-800",
-  archive: "bg-lime-100 text-lime-800",
+  technical: "bg-rose-100 text-rose-800",
+  archive: "bg-emerald-100 text-emerald-800",
   extra: "bg-indigo-100 text-indigo-800",
 };
 

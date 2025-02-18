@@ -1,0 +1,57 @@
+---
+title: Puzzlethon
+summary: A tech-focused review of the 2024 Puzzlethon.
+publishedAt: "2025-01-03"
+tags:
+  - "technical"
+---
+
+_Warning: This contains heavy spoilers for the 2024 Puzzlethon._
+
+Puzzlethon is a <span className="text-2xl text-rose-600 font-bold">24-hour</span> puzzle-writing event hosted by [Brown Puzzle Club](https://brownpuzzle.club/).
+The 24-hour restriction is mostly on the puzzle-writers and the artists;
+tech actually started around a month early, in mid-October. 
+
+Despite the time limit, we got a **lot** done in those 24 hours. This is a reflection on the tech side of things.
+For a more comprehensive review, please check out the [official wrapup](https://puzzlethon.brownpuzzle.club/wrapup) when it is out
+
+## Landing page, styling, and other front-end thoughts
+
+Because we were so focused on rewriting the backend in the first half of the year, frontend development is definitely one of our weaknesses. During Puzzlethon, we relied heavily on Tailwind's sensible defaults and automated code generation.
+
+For the landing page, the art team made the logo and the background graphics, and the tech team implemented the [sparkles](https://ui.aceternity.com/components/sparkles) and the background gradient. None of us were experienced with CSS, so it took a lot of work to make the landing page responsive.
+
+![Puzzlethon Home Page](/2024-puzzlethon/puzzlethon-home-page.png)
+
+We also weren't prepared to handle theming. Since we developed the site on a light theme, our switch to a dark theme led to several styling issues, and many colors had to be tailored individually. We're planning on defining a global color palette so that this is easier in the future.
+
+Finally, we think that we could have made the site more moble-friendly. This was not a major issue on the hunt side, since we think most of the participants were on their computers. But our hinters mentioned that sometimes it is more convenient for them respond to hints on their phones.
+
+<PuzzlethonHinting />
+
+## Maize Maize Maze
+
+Tech also worked with art to create the [maze](https://puzzlethon.brownpuzzle.club/wrapup) for the Maize Maize puzzle. We had art up the canvas into different segments, and tech put it together using Pixi.js. Pixi.js made this quite easy for us, but it was still pretty troublesome to get the pieces to line up correctly and render at the right stage. Here is some particularly rough [code](/2024-puzzlethon-map-code).
+
+<PuzzlethonMap />
+
+## Josiah Carberry, Ph.D.
+
+We also used Pixi.js for the [Josiah Carberry, Ph.D.](https://puzzlethon.brownpuzzle.club/puzzle/carberry) puzzle. The trickiest part was making the pieces draggable. We initially set up pointer event tracking on individual pieces, but this approach had issues since the pieces were inherently assigned to different layers. Dragging one piece through a second, higher piece would temporarily prevent drag events from registering on the first, causing it to enter a "detached" state. The "detached" piece would remain highlighted but stop following the mouse. Our solution was to track pointer events globally. This approach improved responsiveness but caused pieces to toggle back to their starting positions when released. To combat this, we used a React hook to store and update the positions of all pieces.
+
+We also spent an hour or two trying to incorporate bulk selection, both rectangular dragging and command multi-selection, to no avail. We made progress on both—the selections would highlight properly—but we were ultimately unable to make the pieces move together.
+
+<PuzzlethonCarberry />
+
+## Miscellaneous bugs
+
+Of course, we also had our fair share of bugs. Most of it revolved around caching. For the [Prada](https://puzzlethon.brownpuzzle.club/puzzle/prada) puzzle, we had to edit the JSON Web Token (JWT) so that it contained information about the team's interaction mode (either `in-person` or `remote`). However, since many people had already registered for the hunt, their JWT tokens were outdated. Unfortunately, we couldn't manually revoke the token and had to tell them to relog into the site.
+
+One of our other issues was not fully understanding the complicated caching policy in Next.js. Namely, the caching was overly-aggressive, especially on the admin side. Some puzzles wouldn't appear, and the hinting table sometimes wouldn't load without a manual refresh. We ulitmately fixed that by adding `export const fetchCache = "force-no-store"` on sensitive pages. I think we should also avoid mixing static dynamic route segments with hardcoded routes.
+
+## Some parting thoughts
+
+Puzzlethon was a blast (and an awesome way to spend a birthday). It was like doing a Hackathon, except that your team is 20 people and you're not competing against anyone but the clock. The tech stack held up well against the initial load, giving us more confidence in handling bigger hunts in the future.
+
+Stay tuned for [Brown Puzzlehunt 2025](https://www.brownpuzzlehunt.com/)!
+
