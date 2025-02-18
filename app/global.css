@@ -96,7 +96,7 @@ html {
 }
 
 .prose h3 {
-  @apply text-xl font-medium tracking-tight mt-6 mb-2;
+  @apply text-lg font-normal tracking-tight mt-6 mb-2;
 }
 
 .prose h4 {
@@ -113,6 +113,10 @@ html {
 
 .prose ol {
   @apply list-decimal pl-6;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-neutral-200 dark:border-neutral-700 pl-4 my-4;
 }
 
 .prose > :first-child {
@@ -141,8 +145,9 @@ input[type="email"] {
 table {
   display: block;
   max-width: fit-content;
-  overflow-x: auto;
+  /*overflow-x: auto;*/
   white-space: nowrap;
+  word-break: break-word;
 }
 
 th,
