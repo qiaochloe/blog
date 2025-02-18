@@ -19,8 +19,7 @@ export default function Page() {
         <Link href="/writings" className="text-neutral-600 underline">
           writings
         </Link>
-        . I take responsibility for only the things written after{" "}
-        {new Date(new Date().getTime() + 24 * 60 * 60).toUTCString()}.
+        .
       </p>
       <br />
       <p>
