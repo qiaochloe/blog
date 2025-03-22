@@ -19,7 +19,8 @@ export default function Page() {
         <Link href="/writings" className="text-neutral-600 underline">
           writings
         </Link>
-        .
+        . I try to keep my notes "evergreen," which means that each post ends up
+        getting updated many times after it is published.
       </p>
       <br />
       <p>
