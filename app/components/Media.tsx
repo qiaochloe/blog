@@ -2,19 +2,24 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { formatDate } from "./utils";
 
 const tags = [
-  "Book",
+  "Novel",
   "Webnovel",
   "Webcomic",
+  "Textbook",
+
   "Chinese",
   "Japanese",
   "English",
   "French",
   "Korean",
+
   "BL",
   "GL",
   "BG",
+
   "Wuxia",
   "Xianxia",
   "Imperial China",
@@ -22,6 +27,7 @@ const tags = [
   "Modern",
   "Interstellar",
   "ABO",
+  "Role Reversal",
   "Infinite Flow",
   "Transmigration",
 ] as const;
@@ -37,7 +43,7 @@ const tagCategories = [
 type TagCategory = (typeof tagCategories)[number];
 
 const categoryToTags: Record<TagCategory, Tag[]> = {
-  medium: ["Webnovel", "Webcomic", "Book"],
+  medium: ["Webnovel", "Webcomic", "Novel"],
   originalLanguage: ["Chinese", "Japanese", "Korean", "English", "French"],
   relationship: ["BL", "GL", "BG"],
   setting: [
@@ -52,17 +58,21 @@ const categoryToTags: Record<TagCategory, Tag[]> = {
 };
 
 const tagStyles: Record<Tag, string> = {
+  Textbook: "bg-gray-300 text-gray-900",
   Webnovel: "bg-gray-300 text-gray-900",
-  Book: "bg-gray-300 text-gray-900",
+  Novel: "bg-gray-300 text-gray-900",
   Webcomic: "bg-gray-300 text-gray-900",
+
   Chinese: "bg-yellow-100 text-yellow-900",
   Japanese: "bg-yellow-100 text-yellow-900",
   English: "bg-yellow-100 text-yellow-900",
   French: "bg-yellow-100 text-yellow-900",
   Korean: "bg-yellow-100 text-yellow-900",
+
   BL: "bg-red-100 text-red-900",
   GL: "bg-red-100 text-red-900",
   BG: "bg-red-100 text-red-900",
+
   Wuxia: "bg-sky-100 text-sky-900",
   Xianxia: "bg-sky-100 text-sky-900",
   "Imperial China": "bg-sky-100 text-sky-900",
@@ -72,6 +82,7 @@ const tagStyles: Record<Tag, string> = {
   ABO: "bg-pink-100 text-pink-900",
   "Infinite Flow": "bg-green-100 text-green-900",
   Transmigration: "bg-orange-100 text-orange-900",
+  "Role Reversal": "bg-orange-100 text-orange-900",
 };
 
 const finishedDates = [
@@ -82,11 +93,13 @@ const finishedDates = [
   "Summer 2024",
   "Fall 2024",
 ] as const;
-type FinishedDate = (typeof finishedDates)[number];
+
+type FinishedDate = (typeof finishedDates)[number] | null;
 
 type Media = {
   title: string;
-  finishedDate: FinishedDate;
+  author?: string;
+  finishedDate: FinishedDate | Date;
   href: string;
   tags: Tag[];
   comments?: string;
@@ -95,6 +108,7 @@ type Media = {
 const media: Media[] = [
   {
     title: "After I Turned From O to A I Became the National Male God",
+    author: "一人路过",
     finishedDate: "Fall 2024",
     href: "https://www.novelupdates.com/series/after-i-turned-from-o-to-a-i-became-the-national-male-god/",
     tags: ["Webnovel", "Chinese", "BL", "Interstellar", "ABO"],
@@ -192,7 +206,7 @@ const media: Media[] = [
     title: "The Stranger",
     finishedDate: "Fall 2023",
     href: "https://www.goodreads.com/book/show/49552.The_Stranger",
-    tags: ["Book", "French"],
+    tags: ["Novel", "French"],
     comments:
       "French existentialist novel by Albert Camus. I also hate the heat.",
   },
@@ -200,7 +214,7 @@ const media: Media[] = [
     title: "No Longer Human",
     finishedDate: "Fall 2023",
     href: "https://www.goodreads.com/book/show/194746.No_Longer_Human",
-    tags: ["Book", "Japanese"],
+    tags: ["Novel", "Japanese"],
     comments:
       "Japanese existentialist novel by Dazai Osamu. Found it funny at the time I was reading it, might be depressing in another context.",
   },
@@ -216,7 +230,7 @@ const media: Media[] = [
     title: "The Name of the Wind",
     finishedDate: "Summer 2024",
     href: "https://www.goodreads.com/book/show/186074.The_Name_of_the_Wind",
-    tags: ["Book", "English"],
+    tags: ["Novel", "English"],
     comments:
       "American fantasy novel. Probably the best I've read so fair. Rotherfuss is a master of language, and he makes stories seem magical. Reminds me a little bit of Ken Liu's book The Grace of Kings; while Ken Liu draws upon stories from Chinese history, Rotherfuss pulls a lot from Western tradition.",
   },
@@ -240,9 +254,24 @@ const media: Media[] = [
     finishedDate: "Summer 2024",
     title: "A Study in Scarlet",
     href: "https://www.goodreads.com/book/show/102868.A_Study_in_Scarlet",
-    tags: ["Book", "English"],
+    tags: ["Novel", "English"],
     comments:
       "I probably donn't need to tell you that Sherlock Holmes is pretty good. He is different in the book that in the show; more delicate, more emotional, and more human. #TheBookIsBetter",
+  },
+  {
+    finishedDate: new Date("2025-03-22"),
+    title: "Until the Tragic Male Lead Walks Again",
+    href: "https://xbato.com/title/148791-until-the-tragic-male-lead-walks-again-official",
+    tags: [
+      "Webcomic",
+      "Korean",
+      "BG",
+      "Western Royalty",
+      "Role Reversal",
+      "Transmigration",
+    ],
+    comments:
+      "It's a pretty good role-reversal story. The FL is hilarious; the ML is a sweetheart. I'm satisfied with the art, humor, and the character archetypes. The ending was a bit abrupt",
   },
 ];
 
@@ -271,7 +300,7 @@ export default function Media() {
         <div className="flex pb-2 space-x-1"></div>
         {Object.entries(categoryToTags).map(([category, tags]) => {
           return (
-            <div className="flex pb-2 space-x-1">
+            <div className="flex pb-2 space-x-1 text-s">
               {tags.map((tag) => (
                 <button
                   key={`${tag}-main`}
@@ -288,9 +317,27 @@ export default function Media() {
       <div>
         {media
           .sort((a, b) => {
+            // If there are dates, sort by date
+            if (
+              a.finishedDate instanceof Date &&
+              b.finishedDate instanceof Date
+            ) {
+              return -a.finishedDate.getTime() + b.finishedDate.getTime();
+            } else if (a.finishedDate instanceof Date) {
+              return 1;
+            } else if (b.finishedDate instanceof Date) {
+              return -1;
+            }
+
             // Sort by date first, and then alphabetically by title
-            const dateNumberA = finishedDates.indexOf(a.finishedDate);
-            const dateNumberB = finishedDates.indexOf(b.finishedDate);
+            // If there is no date, put it at the end
+            const dateNumberA = a.finishedDate
+              ? finishedDates.indexOf(a.finishedDate)
+              : -1;
+            const dateNumberB = b.finishedDate
+              ? finishedDates.indexOf(b.finishedDate)
+              : -1;
+
             if (dateNumberA != dateNumberB) {
               return dateNumberA - dateNumberB;
             }
@@ -304,7 +351,7 @@ export default function Media() {
               <div key={item.title} className="flex justify-between py-1">
                 <Link href={item.href}>{item.title}</Link>
                 <div className="text-gray-600 text-sm text-right">
-                  {item.finishedDate}
+                  {formatDate(item.finishedDate)}
                 </div>
               </div>
               <div className="flex space-x-1 py-1">
