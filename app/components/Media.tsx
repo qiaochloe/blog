@@ -99,7 +99,7 @@ type FinishedDate = (typeof finishedDates)[number] | null;
 type Media = {
   title: string;
   author?: string;
-  finishedDate: FinishedDate | Date;
+  finishedDate: FinishedDate | Date | null;
   href: string;
   tags: Tag[];
   comments?: string;
@@ -111,7 +111,7 @@ const media: Media[] = [
     author: "一人路过",
     finishedDate: "Fall 2024",
     href: "https://www.novelupdates.com/series/after-i-turned-from-o-to-a-i-became-the-national-male-god/",
-    tags: ["Webnovel", "Chinese", "BL", "Interstellar", "ABO"],
+    tags: ["Webnovel", "Chinese", "BL", "Interstellar", "ABO", "Role Reversal"],
     comments:
       "The MC gong is very good. He's gentle, considerate, and attracts a lot of people to his side but always puts the ML first. He handles most problems very reasonably, but he can be unexpectedly willful about what he wants (like eventually openly being in a relationship with the ML!). \nThe ML shou is where this novel really shines for me. He's very unruly and fierce (really like a delinquent) when we first meet him, but he is a little bit shy when it comes to his relationship with the MC. He is a very fleshed-out characters, with his own cast of friends, values, good traits and bad traits. I love that the author doesn't shy away from giving him insecurities, jealousies, and fears, but the MC always reaffirms that he loves him regardless of his \"advantages and disadvantages.\" Even though it is implied that the ML is the shou, I would say that it's more about their circumstances pheromone incompatibility & the ML never acts like an O torward the MC. \nI actually think that the writing, plot, and characterization is not very polished, but this is why the characters could continue to surprise me. The MC can be at times gentle or willful, and the ML can be at times grumpy or flustered or jealous.",
   },
@@ -191,7 +191,7 @@ const media: Media[] = [
       "Transmigration",
     ],
     comments:
-      "This an ABO interstellar setting. The MC has a sharp mouth, appears a bit frivolous, but is actually quite gentle and soft-hearted on the inside. The ML is every bit the kind of person that you would expect to rise to the level of major general in such a setting despite being an O. Before meeting our MC, he's restrained, disciplined, and only has mechas and fighting in his heart. They are equals in every way, helping and accommodating each other. \nThe plot, I think, is actually quite mild. One of the major themes of the novel is that... you are just one person. When you see a problem, you can only try your best to change things a little bit, and hope that with enough people pushing, something will change. The novel acknowledges how longstanding problems like omega rights, domestic abuse, journalistic privacy violations, and corruption can't just be resolved by one person. Although the translation is ongoing, the MTL is actually quite passable",
+      "This an ABO interstellar setting. The MC has a sharp mouth, appears a bit frivolous, but is actually quite gentle and soft-hearted on the inside. The ML is every bit the kind of person that you would expect to rise to the level of major general in such a setting despite being an O. Before meeting our MC, he's restrained, disciplined, and only has mechas and fighting in his heart. They are equals in every way, helping and accommodating each other. \nThe plot, I think, is actually quite mild. One of the major themes of the novel is that... you are just one person. When you see a problem, you can only try your best to change things a little bit, and hope that with enough people pushing, something will change. The novel acknowledges how longstanding problems like omega rights, domestic abuse, journalistic privacy violations, and corruption can't just be resolved by one person. Although the translation is ongoing, the MTL is actually quite passable.",
   },
   {
     title:
@@ -238,7 +238,7 @@ const media: Media[] = [
     finishedDate: "Summer 2024",
     title: "Knight Flight",
     href: "https://mangakakalot.com/manga/ar924746",
-    tags: ["Webcomic", "Korean", "BG", "Western Royalty"],
+    tags: ["Webcomic", "Korean", "BG", "Western Royalty", "Role Reversal"],
     comments:
       "She's a knight, he's a prince. I don't think I need to say more.",
   },
@@ -272,6 +272,14 @@ const media: Media[] = [
     ],
     comments:
       "It's a pretty good role-reversal story. The FL is hilarious; the ML is a sweetheart. I'm satisfied with the art, humor, and the character archetypes. The ending was a bit abrupt",
+  },
+  {
+    finishedDate: null,
+    title: "My White Moonlight Took Off His Women’s Clothes",
+    href: "https://www.novelupdates.com/series/my-white-moonlight-took-off-his-womens-clothes/",
+    tags: ["Webnovel", "Chinese", "BL", "Imperial China", "Role Reversal"],
+    comments:
+      "From my experience, webnovels commonly expose the most depraved love fantasies. Many authors seem to feel that love can only be expressed with possessive, controlling, and excessive behavior. It's rare that an author can create a character that is upright and moral without being a cold bore. This is one of those rare novels that succeed. The MC, a brave general, shines brightly in a world of political filth. I really admire him.\n Although the ML is desparately in love with the MC, he restrains himself from excessiveness every time. I could feel how considerate he is of the MC's feelings. He is really afraid of scaring the MC away, and that—to me—is more romantic than uncontrollable behavior.",
   },
 ];
 
@@ -317,27 +325,30 @@ export default function Media() {
       <div>
         {media
           .sort((a, b) => {
-            // If there are dates, sort by date
+            // If there are both dates, sort by date
             if (
               a.finishedDate instanceof Date &&
               b.finishedDate instanceof Date
             ) {
               return -a.finishedDate.getTime() + b.finishedDate.getTime();
-            } else if (a.finishedDate instanceof Date) {
-              return 1;
-            } else if (b.finishedDate instanceof Date) {
-              return -1;
             }
 
-            // Sort by date first, and then alphabetically by title
-            // If there is no date, put it at the end
+            // Strings should be sorted according to finishedDates array
+            // Dates should be second-to last
+            // Null values should be last
             const dateNumberA = a.finishedDate
-              ? finishedDates.indexOf(a.finishedDate)
-              : -1;
-            const dateNumberB = b.finishedDate
-              ? finishedDates.indexOf(b.finishedDate)
-              : -1;
+              ? a.finishedDate instanceof Date
+                ? finishedDates.length
+                : finishedDates.indexOf(a.finishedDate)
+              : finishedDates.length + 1;
 
+            const dateNumberB = b.finishedDate
+              ? b.finishedDate instanceof Date
+                ? finishedDates.length
+                : finishedDates.indexOf(b.finishedDate)
+              : finishedDates.length + 1;
+
+            // Sort by date first, and then alphabetically by title
             if (dateNumberA != dateNumberB) {
               return dateNumberA - dateNumberB;
             }
