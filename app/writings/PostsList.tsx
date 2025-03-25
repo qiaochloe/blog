@@ -95,7 +95,7 @@ export function PostsList({ allPosts }: PostsListProps) {
           .map((post) => (
             <Link key={post.slug} href={`/${post.slug}`}>
               <div className="w-full py-4">
-                <h2 className="text-neutral-900 dark:text-neutral-100 tracking-tight">
+                <h2 className="text-neutral-900 tracking-tight">
                   {post.data.title}
                 </h2>
                 <p className="text-neutral-600 italic">{post.data.summary}</p>
