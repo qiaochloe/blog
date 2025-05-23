@@ -1,13 +1,13 @@
 ---
-title: "Course-planning @ Brown"
+title: "Courses @ Brown"
 summary: "An ongoing evaluation of how to pick courses, from someone who is trying to make the best use of Brown's open curriculum."
 publishedAt: "2023-05-23"
-tags: 
+tags:
   - "academic"
   - "college"
 ---
 
-_Updated 2/18/25 for Fall 2024_
+_Updated 5/22/25 for Spring 2025_
 
 I am a student at Brown University studying computer science, so my course selection is heavily biased towards that field. This is a reflection on the courses I have taken.
 
@@ -39,7 +39,11 @@ _Context: I was an incoming freshman with a vague interest in logic, math, and l
 
 ### CSCI 0190
 
-Every year, upperclassmen give a lot of advice about whether to take CSCI 0111, 0150, 0170, or 0190. This is not a simple choice: every intro course differs from the others in size, difficulty, and even content.[^4] Difficulty is roughly 11 < 15 \<= 17 < 19, and size is roughly 19 < 11 < 17 < 15. As far as I know, 15 is the only one that teaches object-oriented programming, and the rest teach functional programming.
+Every year, upperclassmen give a lot of advice about whether to take CSCI 0111, 0150, 0170, or 0190. This is not a simple choice: every intro course differs from the others in size, difficulty, and even content.
+
+As far as I know, 15 is the only one that teaches object-oriented programming, and the rest teach functional programming. Difficulty is roughly 11 < 15 \<= 17 < 19, and size is roughly 19 < 11 < 17 < 15.
+
+Let me put in a note about demographics as well. In Fall 2023, 15 had 450 students, 17 had 150 students, and 19 had 60 students. Because of that, 15 and 17 were very lecture-based, and 19 felt more like a seminar. However, the gender-ratio was also worse. (I have the impression that the 19 professor tries very hard to address this, but it is what it is.)
 
 ![Diagram of the intro-CS sequence at Brown](/courses/intro_cs_courses.png)
 
@@ -55,7 +59,7 @@ At that time, I was also impatient to get one of my math prerequisites out of th
 
 Coming to Brown, I also had a vague idea that I wanted to learn more about logic. I think I was trying to make an (automated) theorem-prover at the time. This led me to take CSCI 1951x, which did not have any formal prerequisites. It touched on everything from program semantics and metaprogramming to the logical foundations of mathematics. I also have very good memories of camping office hours for this course.
 
-### CSCI 0120
+### COST 0120
 
 My last course was COST 0120. I thought it might help me solve a few existential problems I had at that time. It did not help that much, but I did learn a lot about Mengzi, Xunzi, and Zhuangzi.
 
@@ -192,7 +196,7 @@ My takeaways from this semester were:
 
 In high school, I was very curious about [a lot of things](/ap-exams). I still believe that there is a high marginal benefit to dipping your toes into a wide range of fields and taking away the most important ideas and models.
 
-But the fact of the matter, at least at Brown, is that there are no longer any survey courses. I checked. We don't have a World History course; it has got to be something like "The Age of Revolutions, 1760-1824" or "Japan's Pacific War: 1937-1945." These are good courses if you really care about the topic, but they are not very suitable for the casual passerby.
+But the fact of the matter, at least at Brown, is that there are no longer any survey courses. I checked. We don't have a World History course; it's always something like "The Age of Revolutions, 1760-1824" or "Japan's Pacific War: 1937-1945." These are good courses if you really care about the topic, but they are not very suitable for the casual passerby.
 
 To be clear, I think Brown's Open Curriculum is very good at combatting this phenomenon. I have never taken a course that I wasn't the slightest interested in. But I do find my scope of interests narrowing quite a bit, despite my best efforts. Maybe because my first impression of these topics come from drinking from the water hose, I am not that curious about math, philosophy, or linguistics anymore.
 
@@ -200,13 +204,21 @@ Maybe that's just what happens when you get older. You are less confused, and yo
 
 ### Spring 2025
 
-I am still in my Spring 2025 semester, so expected changes to this section later.
+_Context: I was pretty burnt out after the fall semester. My advisor was trying to talk me into taking 1 or even (gasp) no CS classes. I told her that I would try my best and would up taking 2.5 classes._
 
-Unlike previous semesters, I wasn't sure about my schedule _at all_. Reflecting back on my decisions in the past, there were usually very shallow reasons for taking or not taking a course. I would take course A because my friend was taking it or I would reject course B because it was held in a dusty classroom. Well, this is even more true this semester. All I learned to do was ruthlessly prune classes that I wasn't enjoying at the start of shopping period.
+Unlike previous semesters, I wasn't sure about my schedule _at all_. Reflecting back on my decisions in the past, there were usually very shallow reasons for taking or not taking a course. I would take course A because my friend was taking it or I would reject course B because it was held in a dusty classroom. Well, this was even more true this semester. All I learned to do was ruthlessly prune classes that I wasn't enjoying at the start of shopping period.
 
 ### CSCI 1670/1690
 
 I took CSCI 1670/1690 because all of my friends were taking it. Plus, CSCI 1670 is taught in C, and I was TAing CSCI 0300, which is in C, which made me feel like there's a good kind of synergy there. (I told you, the reasoning was not very sophisticated.) This whole thing was not a easy choice for me though, because I knew that if I waited two more years, it would be taught by a really great professor.
+
+I think, at the end of the day, I didn't like it. I'll tell you what you need to know if you're thinking about taking the course:
+
+1. You won't become a better programmer, like you would in [1680](#csci-1680). There's no design element to it; it's all about following the instructions as best as you can. Maybe you learn a bit about reading complex codebases.
+2. Debugging what you wrote is basically all of the effort. You'll become well-acquainted with GDB. You'll figure out what your limits are before you throw in the hat and call a friend for help.
+3. Did I emphasize the fact that you're mostly _reading other people's code_ and trying to _figure out what they want you to write_ enough? The abstractions get pretty ridiculous. Like, check out this call stack for `proc_kill_all`.
+
+![CSCI 1670 proc_kill_all call stack](/courses/csci-1670-call-stack.jpeg)
 
 ### CSCI 1515
 
@@ -214,28 +226,45 @@ I decided to take CSCI 1515 two days before the end of shopping period, without 
 
 After scrambling to find an available CS course—I also tried to get into CSCI 1650 ("Computer Security") and 1951A ("Data Science")—I finally remembered that CSCI 1515 had very good reviews. Cryptography was never quite on my radar, and C++ is not one of my favorite languages, but I'm quite happy about my choice. The professor puts a lot of care into making sure we understand lecture, and her passion is infectious.
 
+Some courses leave you with the impression that the field is awfully boring and unmotivated. Not 1515. Hashing is actually, like, magical. Do you know how many things you can do with it? Signatures, pseudorandom generators, non-interactive proofs, commitments...
+
+It's all super exciting, even though it's never going to be my main thing. Highly recommend.
+
 ### ENGN 0520
 
-I really did not expect to take ENGN 0520. I only decided to shop it because my friend was taking it, and I had a free slot in my schedule. But the first lecture was very good, and it reignited that curiosity I also had toward electronics and hardware. I have had some experience with it in my high school physics class, but I never felt like I really knew how circuits worked. I also thought ENGN 0520 could also solve some existential problems I have about "what is real" and whatnot. It has been going well!
+I really did not expect to take ENGN 0520. I only decided to shop it because my friend was taking it, and I had a free slot in my schedule. But the first lecture was very good, and it reignited that curiosity I also had toward electronics and hardware. I have had some experience with it in my high school physics class, but I never felt like I really knew how circuits worked. I also thought ENGN 0520 could also solve some existential problems I have about "what is real" and whatnot.
 
-I have had to learn how to do applied math again. There are actually a lot of practical considerations, like:
+I discovered something tragic: I don't remember how to do math anymore.
+
+Like, real math. In my previous math classes, we just had to write words. ENGN 0520 required a kind of numeracy that you _better_ have when you're armed with only a pencil and a piece of paper.
+
+There are actually a lot of practical considerations, like:
 
 1. When should you round?
 2. Where should you round to?
 3. When should you include units?
 4. How do you show your work?
+5. How much of your work should you show?
 
-In my previous math classes, we just had to write words.
+I think I totally got clobbered by the two midterms. Definitely below median (and the median was 50%). It took me until the final exam to lock in and relearn everything I had forgotten.
+
+I am going to give a special thank you to the ENGN friend for helping me study even when I was a below-average student for most of the course, and they were setting the high score on every exam.
 
 ![Oscilloscope](/courses/engn-0520-lab-x.png)
 
-(The lab part is going great too, but I am totally relying on my partner to handle the oscilloscope.)
+(The lab part was great too, but I was totally relying on my friend to handle the oscilloscope.)
 
 ### EGYT 1320
 
-Finally, I continued with Middle Egyptian in **EGYT 1320**. There is a lot more grammar and vocabulary to learn than I expected, so I'm glad I'm not taking it alongside CHIN 1010.
+Finally, I continued learning Middle Egyptian in **EGYT 1320**. There was a lot more grammar and vocabulary to learn than I expected, so I'm glad I'm not taking it alongside CHIN 1010.
 
-## Thoughts from other people
+### Reflection
+
+It has been a pretty good semester. I didn't work too hard or worry too much. I found the time for my courses, my jobs, and puzzle club. I only dealt with like... 2 days of burnout after the semester ended, and that was for some other reasons.
+
+But I do wish—at least for next semester—that I spend more time with my friends, more time developing as a person, and more time outdoors. My doctor says I'm deficient in Vitamin D.
+
+## College advice from other people
 
 1. [College advice for people who are exactly like me](https://www.benkuhn.net/college/) is not about choosing courses, but about all of the other things you can do in college when you're not choosing courses.
 2. [Bluebooking for happiness](https://zhengdongwang.com/bluebook) argues that only the professor matters.
@@ -245,7 +274,5 @@ Finally, I continued with Middle Egyptian in **EGYT 1320**. There is a lot more 
 [^2]: Opinions expressed are solely my own and do not express the views or opinions of my employer.
 
 [^3]: S/NC stands for satisfactory or no credit and is an alternative grading option at Brown.
-
-[^4]: Let me put in a note about demographics. In Fall 2023, 15 had 450 students, 17 had 150 students, and 19 had 60 students. Because of that, 15 and 17 were very lecture-based, and 19 felt more like a seminar. However, the gender-ratio was also worse. (I have the impression that the 19 professor tries very hard to address this, but it is what it is.)
 
 [^RAN]: I'm very sincere with this offer. I have convinced at least one of my good friends to take 19 in their sophomore year, and now they are concentrating in anthropology _and_ CS. This offer extends to CSCI 0300 and CSCI 1680.
