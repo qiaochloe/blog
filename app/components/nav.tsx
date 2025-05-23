@@ -24,7 +24,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <aside className="-ml-[8px] mb-16 tracking-tight">
+    <aside className="-ml-[8px] mb-8 tracking-tight">
       <div className="lg:sticky lg:top-20">
         <nav
           className="flex flex-row items-start relative px-0 pb-0 fade md:overflow-auto scroll-pr-6 md:relative"
@@ -36,7 +36,7 @@ export function Navbar() {
                 <Link
                   key={path}
                   href={path}
-                  className={`flex align-middle relative py-1 px-2 m-1 transition-colors ${
+                  className={`flex align-middle relative py-1 px-2 transition-colors ${
                     path === pathname
                       ? "text-orange-500"
                       : "hover:text-orange-500 text-neutral-700"
