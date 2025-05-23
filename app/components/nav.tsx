@@ -1,4 +1,6 @@
+"use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navItems = {
   "/": {
@@ -19,6 +21,8 @@ const navItems = {
 };
 
 export function Navbar() {
+  const pathname = usePathname();
+
   return (
     <aside className="-ml-[8px] mb-16 tracking-tight">
       <div className="lg:sticky lg:top-20">
@@ -32,7 +36,11 @@ export function Navbar() {
                 <Link
                   key={path}
                   href={path}
-                  className="transition-all hover:text-neutral-800 flex align-middle relative py-1 px-2 m-1"
+                  className={`flex align-middle relative py-1 px-2 m-1 transition-colors ${
+                    path === pathname
+                      ? "text-orange-500"
+                      : "hover:text-orange-500 text-neutral-700"
+                  }`}
                 >
                   {name}
                 </Link>
