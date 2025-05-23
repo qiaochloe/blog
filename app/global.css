@@ -48,18 +48,25 @@ html {
   @apply visible;
 }
 
+/* Inline code (inside text) */
+.prose :not(pre) > code {
+  @apply px-1.5 py-0.5 rounded-md bg-zinc-100 text-pink-600 font-mono text-xs;
+}
+
+/* Code block <pre><code> */
 .prose pre {
-  @apply bg-neutral-50 rounded-lg overflow-x-auto border border-neutral-200 py-2 px-3 text-sm;
+  @apply rounded-xl bg-zinc-100 p-4 overflow-x-auto my-6;
 }
 
-.prose code {
-  @apply px-1 py-0.5 rounded-lg;
-}
-
+/* Code block <code> inside <pre> */
 .prose pre code {
-  @apply p-0;
+  @apply text-sm text-zinc-100 font-mono leading-relaxed;
   border: initial;
-  line-height: 1.5;
+}
+
+/* Optional: span styling inside code if used by highlighters */
+.prose pre code span {
+  @apply font-medium;
 }
 
 .prose code span {
