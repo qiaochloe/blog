@@ -350,7 +350,7 @@ export default function Media() {
               a.finishedDate instanceof Date &&
               b.finishedDate instanceof Date
             ) {
-              return -a.finishedDate.getTime() + b.finishedDate.getTime();
+              return a.finishedDate.getTime() - b.finishedDate.getTime();
             }
 
             // Strings should be sorted according to finishedDates array
@@ -370,7 +370,7 @@ export default function Media() {
 
             // Sort by date first, and then alphabetically by title
             if (dateNumberA != dateNumberB) {
-              return dateNumberA - dateNumberB;
+              return -dateNumberA + dateNumberB;
             }
             return a.title.localeCompare(b.title);
           })
