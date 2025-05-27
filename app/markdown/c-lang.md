@@ -85,7 +85,7 @@ int add(int a, int b) { return a + b; }
 void print_hello_world() { printf("Hello, World!\n"); }
 ```
 
-**Structs** are typed and support distructuring.
+**Structs** are typed and support destructuring.
 
 ```c
 #include <math.h>
@@ -200,7 +200,7 @@ int main() {
 // x can go from 0 to 4,294,967,295
 unsigned int x;
 
-// y and z can go from -2,147,483,648 to 2,147,483,648
+// y and z can go from -2,147,483,648 to 2,147,483,647
 int y;
 signed int z;
 ```
@@ -220,7 +220,7 @@ They are not variables, and they are not allocated memory in the program.
 
 C files have a `.c` extension. A valid file name, for example, would be `program.c`.
 
-Every C program must have a `main` function. The `main` function is the first function that is executed. There are two accepted signatures for `main`:
+Most C program need to have a `main` function. The `main` function is the first function that is executed. There are two accepted signatures for `main`:
 
 ```c
 // No command-line arguments
