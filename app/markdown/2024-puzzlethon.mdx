@@ -12,7 +12,7 @@ _Warning: This contains heavy spoilers for the 2024 Puzzlethon._
 
 Puzzlethon is a <span className="text-2xl text-rose-600 font-bold">24-hour</span> puzzle-writing event hosted by [Brown Puzzle Club](https://brownpuzzle.club/).
 The 24-hour restriction is mostly on the puzzle-writers and the artists;
-tech actually started around a month early, in mid-October. 
+tech actually started around a month early, in mid-October.
 
 Despite the time limit, we got a **lot** done in those 24 hours. This is a reflection on the tech side of things.
 For a more comprehensive review, please check out the [official wrapup](https://puzzlethon.brownpuzzle.club/wrapup) when it is out
@@ -33,11 +33,11 @@ Finally, we think that we could have made the site more moble-friendly. This was
 
 ## Maize Maize Maze
 
-Tech also worked with art to create the [maze](https://puzzlethon.brownpuzzle.club/wrapup) for the Maize Maize puzzle. We had art up the canvas into different segments, and tech put it together using Pixi.js. Pixi.js made this quite easy for us, but it was still pretty troublesome to get the pieces to line up correctly and render at the right stage. Here is some particularly rough [code](/2024-puzzlethon-map-code).
+Tech also worked with art to create the [maze](https://puzzlethon.brownpuzzle.club/wrapup) for the Maize Maize puzzle. We had art up the canvas into different segments, and tech put it together using Pixi.js. Pixi.js made this quite easy for us, but it was still pretty troublesome to get the pieces to line up correctly and render at the right stage.
 
 <PuzzlethonMap />
 
-## Josiah Carberry, Ph.D.
+## Josiah Carberry, Ph.D
 
 We also used Pixi.js for the [Josiah Carberry, Ph.D.](https://puzzlethon.brownpuzzle.club/puzzle/carberry) puzzle. The trickiest part was making the pieces draggable. We initially set up pointer event tracking on individual pieces, but this approach had issues since the pieces were inherently assigned to different layers. Dragging one piece through a second, higher piece would temporarily prevent drag events from registering on the first, causing it to enter a "detached" state. The "detached" piece would remain highlighted but stop following the mouse. Our solution was to track pointer events globally. This approach improved responsiveness but caused pieces to toggle back to their starting positions when released. To combat this, we used a React hook to store and update the positions of all pieces.
 
@@ -56,4 +56,3 @@ One of our other issues was not fully understanding the complicated caching poli
 Puzzlethon was a blast (and an awesome way to spend a birthday). It was like doing a Hackathon, except that your team is 20 people and you're not competing against anyone but the clock. The tech stack held up well against the initial load, giving us more confidence in handling bigger hunts in the future.
 
 Stay tuned for [Brown Puzzlehunt 2025](https://www.brownpuzzlehunt.com/)!
-

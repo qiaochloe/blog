@@ -14,20 +14,13 @@ export async function generateStaticParams() {
 }
 
 export function generateMetadata({ params }) {
-  let post = getPosts().find((post) => post.slug === params.slug);
+  const post = getPosts().find((post) => post.slug === params.slug);
   if (!post) {
     return {};
   }
 
-  let {
-    title,
-    publishedAt: publishedTime,
-    summary: description,
-    image,
-  } = post.data;
-  let ogImage = image
-    ? image
-    : `${baseUrl}/og?title=${encodeURIComponent(title)}`;
+  const { title, publishedAt, summary: description } = post.data;
+  const ogImage = `${baseUrl}/og?title=${encodeURIComponent(title)}`;
 
   return {
     title,
@@ -36,7 +29,7 @@ export function generateMetadata({ params }) {
       title,
       description,
       type: "article",
-      publishedTime,
+      publishedTime: String(publishedAt),
       url: `${baseUrl}/${post.slug}`,
       images: [
         {
@@ -71,11 +64,9 @@ export default function Page({ params }) {
             "@type": "Blogposting",
             headline: post.data.title,
             datePublished: post.data.publishedAt,
-            dateModified: post.data.publishedAt,
+            dateModified: post.data.updatedAt,
             description: post.data.summary,
-            image: post.data.image
-              ? `${baseUrl}${post.data.image}`
-              : `/og?title=${encodeURIComponent(post.data.title)}`,
+            image: `/og?title=${encodeURIComponent(post.data.title)}`,
             url: `${baseUrl}/${post.slug}`,
             author: {
               "@type": "Person",
@@ -87,10 +78,11 @@ export default function Page({ params }) {
       <h1 className="title font-semibold text-2xl tracking-tighter">
         {post.data.title}
       </h1>
-      <div className="flex justify-between items-center mt-2 mb-8 text-sm">
-        <p className="text-sm text-neutral-600">
-          {formatDate(post.data.publishedAt)}
-        </p>
+      <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
+        <p className="">{formatDate(post.data.publishedAt)}</p>
+        {post.data.updatedAt && (
+          <p>Updated {formatDate(post.data.updatedAt)}</p>
+        )}
       </div>
       <article className="prose">
         <CustomMDX source={post.content} />

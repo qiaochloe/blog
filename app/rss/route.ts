@@ -5,19 +5,14 @@ export async function GET() {
   let allWritings = getPosts();
 
   const itemsXml = allWritings
-    .sort((a, b) => {
-      if (new Date(a.data.publishedAt) > new Date(b.data.publishedAt)) {
-        return -1;
-      }
-      return 1;
-    })
+    .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
     .map(
       (post) =>
         `<item>
           <title>${post.data.title}</title>
           <link>${baseUrl}/${post.slug}</link>
-          <description>${post.data.summary || ""}</description>
-          <pubDate>${new Date(post.data.publishedAt).toUTCString()}</pubDate>
+          <description>${post.data.summary}</description>
+          <pubDate>${post.data.publishedAt.toUTCString()}</pubDate>
         </item>`,
     )
     .join("\n");

@@ -2,51 +2,65 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-function getMDXFiles(dir: fs.PathLike) {
-  return fs
+type Frontmatter = {
+  title: string;
+  summary: string;
+  publishedAt: Date;
+  updatedAt?: Date;
+  tags: string[];
+};
+
+type Post = {
+  data: Frontmatter;
+  slug: string;
+  content: string;
+};
+
+function getMDXData(dir: string): Post[] {
+  const fileNames = fs
     .readdirSync(dir)
     .filter(
       (file) => path.extname(file) === ".mdx" || path.extname(file) === ".md",
     );
-}
 
-function readMDXFile(filePath: fs.PathLike) {
-  let rawContent = fs.readFileSync(filePath, "utf-8");
-  return matter(rawContent);
-}
-
-function getMDXData(dir: string) {
-  let mdxFiles = getMDXFiles(dir);
-  return mdxFiles.map((file) => {
-    let { data, content } = readMDXFile(path.join(dir, file));
-    let slug = path.basename(file, path.extname(file));
+  const fileData = fileNames.map((fileName) => {
+    const filePath = path.join(dir, fileName);
+    const { data, content } = matter(fs.readFileSync(filePath, "utf-8"));
+    const frontmatter = data as Frontmatter;
+    const slug = path.basename(fileName, path.extname(fileName));
 
     return {
-      data,
+      data: {
+        ...frontmatter,
+        publishedAt: new Date(frontmatter.publishedAt),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined,
+      },
       slug,
       content,
     };
   });
+
+  return fileData;
 }
 
-export function getPosts() {
+export function getPosts(): Post[] {
   return getMDXData(path.join(process.cwd(), "app", "markdown"));
 }
 
-export function formatDate(date: string, includeRelative = false) {
-  if (!date || typeof date !== "string") {
-    return "";
+export function formatDate(date: string | Date, includeRelative = false) {
+  // Coerce string to Date
+  if (typeof date === "string") {
+    if (!date.includes("T")) {
+      date = `${date}T00:00:00`;
+    }
+    date = new Date(date);
   }
 
-  let currentDate = new Date();
-  if (!date.includes("T")) {
-    date = `${date}T00:00:00`;
-  }
-  let targetDate = new Date(date);
-
-  let yearsAgo = currentDate.getFullYear() - targetDate.getFullYear();
-  let monthsAgo = currentDate.getMonth() - targetDate.getMonth();
-  let daysAgo = currentDate.getDate() - targetDate.getDate();
+  const targetDate = date;
+  const currentDate = new Date();
+  const yearsAgo = currentDate.getFullYear() - targetDate.getFullYear();
+  const monthsAgo = currentDate.getMonth() - targetDate.getMonth();
+  const daysAgo = currentDate.getDate() - targetDate.getDate();
 
   let formattedDate = "";
 
