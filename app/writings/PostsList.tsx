@@ -86,7 +86,9 @@ export function PostsList({ allPosts }: PostsListProps) {
 
             // If both are archive or extra, sort by published date (oldest first)
             if ((isArchiveA && isArchiveB) || (isExtraA && isExtraB)) {
-              return a.data.publishedAt.localeCompare(b.data.publishedAt);
+              return (
+                b.data.publishedAt.getTime() - a.data.publishedAt.getTime()
+              );
             }
 
             // Otherwise, sort alphabetically by title
