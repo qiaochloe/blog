@@ -1,0 +1,107 @@
+---
+title: "Designing data-intensive applications"
+summary: "By Martin Kleppmann"
+publishedAt: "2025-05-29"
+tags:
+  - "notes"
+---
+
+## Table of Contents
+
+Part I. Foundations of data systems
+
+1. Reliable, scalable, and maintainable applications
+2. Data models and query languages
+3. Storage and retrieval
+4. Encoding and evolution
+
+Part II. Distributed data
+
+5. Replication
+6. Partitioning
+7. Transactions
+8. The trouble with distributed systems
+9. Consistency and consensus
+
+Part III. Derived data
+
+10. Batch processing
+11. Stream processing
+12. The future of data systems
+
+## Reliable, scalable, and maintainable applications
+
+    Reliability means that the system works even when faults occur.
+
+    Scalability means that performance stays good even when load reasonably increases.
+
+    Maintainability means that life is good for people who need to work with the system.
+
+## Data models and query languages
+
+    **Relational** models have a strict schema.
+    Relationships can be many-to-many, _but not deeply nested_.
+
+    **Document** models have a loose schema. Data is self-contained, such as a resume. Relationships are 1-to-many.
+
+    **Graph** models have a loose schema. Anything is potentially related to anything. Relationships are many-to-many and queries can traverse over a chain of edges.
+
+## Storage and retrieval
+
+    Online transaction processing (OLTP) and online analytic processing (OLAP) have different requirements
+
+    - OLTP systems are user-facing and have to handle a huge volume of requests. Each query usually only touch a small number of records. Reads requests are usually via individual keys. Write requests are usually random-access.
+    - OLAP like data warehouses are used by business analysts and have to handle a smaller volume of requests. Each query tends to touch millions of records. Read requests are usually over a range of keys. Write requests can be done in batches.
+
+    Storage engines for OLTP rely on indices and sequential writes. They can be log-structured (hash indexes, LSM trees) or update-in-place (b-trees).
+
+    Storage engines for OLAP rely less on indexing and more on column-oriented compression. The _star schema_ helps organize data from multiple OLTP databases. It is a fact table with every event with foreign keys to dimension tables.
+
+### Hash indexes
+
+      1. Write requests are appended to a **log**
+      2. The most recent write to a key is tracked by the in-memory **hash index**
+      3. After some threshold, **segments** are compacted and merged
+
+    Advantages
+
+      - Disk writes are sequential, so write throughput is high
+      - Concurrency and crash recovery is simple
+
+    Disadvantages
+
+      - Keys need to fit in-memory
+      - Keys are not ordered, so range queries are not efficient
+
+### LSM tree (log-structured merge tree)
+
+      Similar to hash indexes, but keys are sorted.
+
+      1. Write requests are added to the sorted, in-memory **memtable** (red-black or AVL tree)
+      2. After some threshold, the memtable is copied to an on-disk **SSTable** (sorted string table)
+      3. After some threshold, SSTables are compacted and merged
+      4. Read requests first check the memtable and then the on-disk segments
+
+      Advantages
+
+      - Disk writes are sequential, so write throughput is high
+      - The hash index does not need to store all keys anymore
+      - Merging segments is efficient through mergesort
+      - Range queries are efficient
+
+      Disadvantages
+
+      - When the database crashes, the memtable will be lost. Thus, write requests are also added to the unsorted, on-disk log.
+      - Read requests need to check the memtable and all of the segments before determining that a key doesn't exist. Bloom filters can be used to speed this up.
+
+### B-Trees
+
+      The most common type of on-disk index. Similar to LSM trees in that keys are sorted. Thought to be faster for reads but slower for writes.
+
+      1. The root page references child pages, which each represent a range of keys.
+      2. Writes requests overwrite the page containing the key.
+      3. Read requests traverse from the root page to the appropriate child page.
+
+      Disadvantages
+
+      - Write requests are not resilient to crashes unless there is a write-ahead log (WAL or redo log) or a copy-on-write scheme
