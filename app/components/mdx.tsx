@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
+
 import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { highlight } from "sugar-high";
@@ -121,7 +123,7 @@ export function CustomMDX(props) {
       options={{
         mdxOptions: {
           rehypePlugins: [rehypeKatex],
-          remarkPlugins: [remarkMath],
+          remarkPlugins: [remarkMath, remarkGfm],
         },
       }}
     />
