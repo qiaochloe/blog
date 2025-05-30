@@ -84,7 +84,9 @@ export default function Page({ params }) {
           <p>Updated {formatDate(post.data.updatedAt)}</p>
         )}
       </div>
-      <article className="prose">
+      <article
+        className={`${post.data.tags?.includes("notes") ? "prose-notes columns-1 sm:columns-2 3xl:columns-3 gap-8 w-screen absolute left-1/2 -translate-x-1/2 max-w-4xl px-2 pb-4" : "prose max-w-3xl"}`}
+      >
         <CustomMDX source={post.content} />
       </article>
     </section>

@@ -1,8 +1,10 @@
+import React from "react";
 import Link from "next/link";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { highlight } from "sugar-high";
-import React from "react";
-import remarkGfm from "remark-gfm";
 import Media from "./Media";
 import {
   PuzzlethonHinting,
@@ -118,7 +120,8 @@ export function CustomMDX(props) {
       components={{ ...components, ...(props.components || {}) }}
       options={{
         mdxOptions: {
-          remarkPlugins: [remarkGfm],
+          rehypePlugins: [rehypeKatex],
+          remarkPlugins: [remarkMath],
         },
       }}
     />

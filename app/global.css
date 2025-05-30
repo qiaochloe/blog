@@ -21,6 +21,8 @@ html {
   min-width: 360px;
 }
 
+/* PROSE */
+
 .prose .anchor {
   @apply absolute invisible no-underline;
 
@@ -78,7 +80,7 @@ html {
 }
 
 .prose p {
-  @apply my-4 text-neutral-800;
+  @apply my-4;
 }
 
 .prose h1 {
@@ -113,9 +115,51 @@ html {
   @apply border-l-4 border-neutral-200 pl-4 my-4;
 }
 
-.prose > :first-child {
-  margin-top: 1.25em !important;
-  margin-bottom: 1.25em !important;
+/*.prose > :first-child {*/
+/*  margin-top: 1.25em !important;*/
+/*  margin-bottom: 1.25em !important;*/
+/*}*/
+
+/* Prose notes */
+
+.prose-notes p {
+  @apply text-sm mx-1 my-2;
+}
+
+.prose-notes p:has(+ ul) {
+  @apply mb-0;
+}
+
+.prose-notes p:has(+ ol) {
+  @apply mb-0;
+}
+
+.prose-notes ol {
+  @apply list-decimal text-sm pl-6;
+}
+
+.prose-notes ul {
+  @apply list-disc text-sm pl-6;
+}
+
+.prose-notes li {
+  @apply text-sm;
+}
+
+.prose-notes h2 {
+  @apply text-sm font-semibold bg-red-50 px-1 rounded py-0 my-4 mx-0;
+}
+
+.prose-notes h3 {
+  @apply text-sm font-semibold bg-orange-100 px-1 rounded py-0 my-4 mx-0;
+}
+
+.prose-notes strong {
+  @apply font-bold;
+}
+
+.prose-notes em {
+  @apply bg-yellow-100 inline-block px-0.5 py-0 rounded-sm not-italic;
 }
 
 pre::-webkit-scrollbar {
