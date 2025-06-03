@@ -13,8 +13,7 @@ export default function Page() {
     }))
     .filter(
       (post) =>
-        post.recentDate.getMonth() === now.getMonth() &&
-        post.recentDate.getUTCFullYear() === now.getUTCFullYear(),
+        now.getTime() - post.recentDate.getTime() < 29 * 24 * 60 * 60 * 1000,
     )
     .sort((a, b) => {
       return b.recentDate.getTime() - a.recentDate.getTime();
