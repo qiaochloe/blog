@@ -85,7 +85,7 @@ export default function Page({ params }) {
         )}
       </div>
       <article
-        className={`${post.data.tags?.includes("notes") ? "prose-notes columns-1 sm:columns-2 3xl:columns-3 gap-8 w-screen absolute left-1/2 -translate-x-1/2 max-w-4xl px-2 pb-4" : "prose max-w-3xl"}`}
+        className={`${post.data.tags?.includes("notes") ? "prose-notes columns-1 sm:columns-2 2xl:columns-3 gap-8 w-screen absolute left-1/2 -translate-x-1/2 max-w-4xl px-2 pb-4" : "prose max-w-3xl"}`}
       >
         <CustomMDX source={post.content} />
       </article>

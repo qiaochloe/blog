@@ -159,7 +159,11 @@ html {
 }
 
 .prose-notes em {
-  @apply bg-yellow-100 inline-block px-0.5 py-0 rounded-sm not-italic;
+  @apply bg-yellow-100 inline px-0.5 py-0 rounded-sm not-italic;
+}
+
+.prose-notes table {
+  @apply text-sm;
 }
 
 pre::-webkit-scrollbar {
