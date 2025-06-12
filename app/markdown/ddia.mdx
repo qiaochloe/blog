@@ -105,3 +105,57 @@ Part III. Derived data
       Disadvantages
 
       - Write requests are not resilient to crashes unless there is a write-ahead log (WAL or redo log) or a copy-on-write scheme
+
+## Encoding and evolution
+
+Data can often have two different reprsentations:
+
+1. In memory, data is kept in objects that are optimized for the CPU (typically using pointers)
+2. In disk or in packets, data is kept in a self-contained sequence of bytes (without any pointers)
+
+Translating from the in-memory representation to the byte sequence is called encoding, serialization, or marshalling, and the reverse is called decoding, deserialization, or demarshalling.
+
+Types of encodings:
+
+1. Language-specific formats lock you in to a specific language.
+2. Text-based formats like JSON, XML, and CSV are widely supported but have ambiguous support for numbers and binary strings.
+3. Binary formats like Thrift, Protocol Buffers, and Avro are more compact. They also tend to have better support for schemas, especially when it comes to maintaining compatibility.
+
+When a data format changes, there may be both new and old data formats, and new and old code, all existing in an application. We need to support both (1) backward compatibility, or new code working on old data, and (2) forward compatibility, or old code working on new data.
+
+- In Thrift and Protocol Buffers, only optional columns can be added or removed
+- In Avro, differences between writers and readers schemas are resolved, and only columns with a default value can be added or removed
+
+Modes of dataflow:
+
+- With databases, a process writing to it encodes the data and a process reading from it decodes the data. Migrating data into a new schema is expensive. Adding a new column with a default value is fine.
+- With services (REST and RPC), both the client and the server encode and decode requests and responses.
+- With asynchronous message passing (using message brokers), nodes send each other messages encoded by the sender and decoded by the recipient.
+
+## Replication
+
+Advantages of replication:
+
+1. Increased availability
+2. Increased read throughput
+3. Less latency if servers are around the globe
+
+In _leader-based replication_, the leader is the source of truth. Clients must send write requests to the leader, which then updates the followers. Clients can send read requests to either the leader or the followers.
+
+Leaders update their followers with replication logs:
+
+- Statement-based replication could break down with non-deterministic functions like `NOW()` or `RAND()`
+- Write-ahead logs (WAL) are very low-level, making it highly coupled with the storage engine. This makes performing software updates without downtime difficult.
+- Logical log replication describes writes at the granularity of a row. It is decoupled from the storage engine's (physical) log.
+
+Followers can either be synchronous or asynchronous. In synchronous replication, then the leader waits for the follower to confirm that it received the write before reporting success to the user. The advantage is that the follower is guaranteed to have an up-to-date copy of the data.
+
+In asynchronous replication, the leader can continue taking write requests even when followers lag behind. But this can cause replication lag:
+
+- Requesting a write, and then not reading the write (read-after-write)
+- Reading from a fresh replica and then a stale replica (non-monotonic reads)
+- Reading writes in a different order than they were written (inconsistent prefix reads)
+
+Try to avoid _multi-leader replication_, since conflict resolution can get hairy. Sometimes it is necessary if there are multiple data centers, offline requests, or collaborative editing.
+
+There is also _leaderless replication_ (Dynamo-style), where clients send write and read requests to multiple servers to get a quorum. Given $n$ replicas where $w$ replicas must confirm a write request and $r$ replicas are queried for a read request, having $r + w > n$ means that generally every read request will get the up-to-date value.
