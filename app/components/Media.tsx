@@ -107,6 +107,16 @@ type Media = {
 
 const media: Media[] = [
   {
+    title: "Oshi no Ko",
+    author: "Aka Akasaka",
+    finishedDate: new Date("2024-06-18"),
+    href: "https://www.goodreads.com/book/show/55222222-1-oshi-no-ko-1",
+    img: "onk.jpeg",
+    tags: ["Webcomic", "Japanese", "Modern", "BG"],
+    comments:
+      "Oshi no Ko raises the standard of media for me. First, the manga is seriously good. The premise is refreshingly original: two fans of a pop idol die and are reincarnated as her twin children. It sets the stage perfectly for a comedy-mystery-drama.\nI'm someone who cares about character design first and foremost. The main characters, Aqua and Ruby, have a sort of compelling attraction that real celebrities have. Frankly speaking, I can see why literally every major female character (Kana, Akane, Ruby) fall in love with Aqua. \nAka was very creative with the entertainment setting. For context, most of the media I've seen about showbiz comes from China and tends to revolve around 'face-slapping' revenge arcs. In contrast, Oshi no Ko dives deep into unique Japanese entertainment culture characteristics (idols, 2.5D musicals, manga) and doesn't shy away from serious topics like cyberbulling, stalking, and industry abuse. (I'm not even mad about the ending.)\nLastly, all the adaptations have been strong across the board. The animation is beautiful, and the music from Yoasobi slaps: https://youtu.be/RkjSfZ30GM4?si=w45tDhaauRsNPqI7. Idol is probably my most played song on DDR.",
+  },
+  {
     title: "After I Turned From O to A I Became the National Male God",
     author: "一人路过",
     finishedDate: "Fall 2024",
@@ -316,15 +326,8 @@ export default function Media() {
 
   return (
     <div>
-      <p>
-        This is a list of media that I've consumed and enjoyed a lot. The
-        webnovels I read are all romance, so I really only review how I thought
-        about the relationship. The books and manga vary a little more than
-        that. At some point I was really interested in existentialism, but not
-        anymore.
-      </p>
       <p>The tag system below takes the intersection, not the union.</p>
-      <div className="py-4">
+      <div className="pb-4">
         <div className="flex pb-2 space-x-1"></div>
         {Object.entries(categoryToTags).map(([category, tags]) => {
           return (
