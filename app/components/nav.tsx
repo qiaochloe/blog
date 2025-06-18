@@ -37,9 +37,7 @@ export function Navbar() {
                   key={path}
                   href={path}
                   className={`flex align-middle relative py-1 px-2 transition-colors ${
-                    path === pathname
-                      ? "text-orange-500"
-                      : "hover:text-orange-500 text-neutral-700"
+                    path === pathname ? "underline" : "hover:underline"
                   }`}
                 >
                   {name}
