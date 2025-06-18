@@ -62,7 +62,7 @@ export default function Page() {
         <Link key={post.slug} href={`/${post.slug}`}>
           <div className="w-full py-2">
             <div className="flex justify-between ">
-              <h2 className="text-neutral-900 tracking-tight">
+              <h2 className="text-neutral-900 tracking-tight hover:underline">
                 {post.data.title}
               </h2>
               <p className="text-neutral-600 tracking-tight text-sm">
