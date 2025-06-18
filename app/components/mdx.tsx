@@ -8,6 +8,7 @@ import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { highlight } from "sugar-high";
 import Media from "./Media";
+import References from "./References";
 import {
   PuzzlethonHinting,
   PuzzlethonMap,
@@ -64,7 +65,7 @@ function Code({ children, ...props }) {
   return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />;
 }
 
-function slugify(str) {
+function slugify(str: string) {
   return str
     .toString()
     .toLowerCase()
@@ -109,6 +110,7 @@ let components = {
   code: Code,
   Table,
   Media,
+  References,
   // Puzzlethon
   PuzzlethonHinting,
   PuzzlethonMap,
