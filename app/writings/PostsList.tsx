@@ -95,14 +95,14 @@ export function PostsList({ allPosts }: PostsListProps) {
             return a.data.title.localeCompare(b.data.title);
           })
           .map((post) => (
-            <Link key={post.slug} href={`/${post.slug}`}>
-              <div className="w-full py-4">
+            <div className="w-full py-4" key={post.slug}>
+              <Link href={`/${post.slug}`}>
                 <h2 className="text-neutral-900 tracking-tight hover:underline">
                   {post.data.title}
                 </h2>
-                <p className="text-neutral-600 italic">{post.data.summary}</p>
-              </div>
-            </Link>
+              </Link>
+              <p className="text-neutral-600 italic">{post.data.summary}</p>
+            </div>
           ))}
       </div>
     </div>

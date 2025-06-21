@@ -31,26 +31,24 @@ export default function Page() {
         com.
       </p>
       {posts.length > 0 && (
-        <>
-          <h1 className="mb-2 text-xl font-semibold tracking-tighter">
-            Thoughts
-          </h1>
-        </>
+        <h1 className="mb-2 text-xl font-semibold tracking-tighter">
+          Thoughts
+        </h1>
       )}
       {posts.map((post) => (
-        <Link key={post.slug} href={`/${post.slug}`}>
-          <div className="w-full py-2">
-            <div className="flex justify-between ">
-              <h2 className="text-neutral-900 tracking-tight">
+        <div key={post.slug} className="w-full py-2">
+          <div className="flex justify-between">
+            <Link href={`/${post.slug}`}>
+              <h2 className="text-neutral-900 tracking-tight hover:underline">
                 {post.data.title}
               </h2>
-              <p className="text-neutral-600 tracking-tight text-sm">
-                {formatDate(String(post.recentDate))}
-              </p>
-            </div>
-            <p className="text-neutral-600 italic">{post.data.summary}</p>
+            </Link>
+            <p className="text-neutral-600 tracking-tight text-sm">
+              {formatDate(String(post.recentDate))}
+            </p>
           </div>
-        </Link>
+          <p className="text-neutral-600 italic">{post.data.summary}</p>
+        </div>
       ))}
 
       {notes.length > 0 && (
@@ -59,19 +57,19 @@ export default function Page() {
         </h1>
       )}
       {notes.map((post) => (
-        <Link key={post.slug} href={`/${post.slug}`}>
-          <div className="w-full py-2">
-            <div className="flex justify-between ">
+        <div key={post.slug} className="w-full py-2">
+          <div className="flex justify-between">
+            <Link href={`/${post.slug}`}>
               <h2 className="text-neutral-900 tracking-tight hover:underline">
                 {post.data.title}
               </h2>
-              <p className="text-neutral-600 tracking-tight text-sm">
-                {formatDate(String(post.recentDate))}
-              </p>
-            </div>
-            <p className="text-neutral-600 italic">{post.data.summary}</p>
+            </Link>
+            <p className="text-neutral-600 tracking-tight text-sm">
+              {formatDate(String(post.recentDate))}
+            </p>
           </div>
-        </Link>
+          <p className="text-neutral-600 italic">{post.data.summary}</p>
+        </div>
       ))}
     </section>
   );
