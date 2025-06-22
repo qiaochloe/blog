@@ -36,7 +36,7 @@ type Book = {
   comments?: string;
 };
 
-const references: Book[] = [
+const textbooks: Book[] = [
   {
     title: "Learn Rust in a Month of Lunches",
     author: "Dave Macleod",
@@ -99,7 +99,7 @@ const references: Book[] = [
   },
 ];
 
-export default function References() {
+export default function Textbooks() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   function toggleTag(tag: Tag) {
@@ -132,7 +132,7 @@ export default function References() {
         })}
       </div>
       <div>
-        {references
+        {textbooks
           .sort((a, b) => {
             return a.title.localeCompare(b.title);
           })
@@ -147,7 +147,7 @@ export default function References() {
               {/* Image */}
               <div className="flex-shrink-0 py-4">
                 <Image
-                  src={`/references/${item.img}`}
+                  src={`/textbooks/${item.img}`}
                   alt={item.title}
                   width={100}
                   height={100}

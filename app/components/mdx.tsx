@@ -7,8 +7,8 @@ import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { highlight } from "sugar-high";
-import Media from "./Media";
-import References from "./References";
+import Fiction from "./Fiction";
+import Textbooks from "./Textbooks";
 import {
   PuzzlethonHinting,
   PuzzlethonMap,
@@ -109,8 +109,8 @@ let components = {
   a: CustomLink,
   code: Code,
   Table,
-  Media,
-  References,
+  Fiction,
+  Textbooks,
   // Puzzlethon
   PuzzlethonHinting,
   PuzzlethonMap,

@@ -95,7 +95,7 @@ const finishedDates = [
 
 type FinishedDate = (typeof finishedDates)[number] | null;
 
-type Media = {
+type Fiction = {
   title: string;
   author?: string;
   finishedDate: FinishedDate | Date | null;
@@ -105,11 +105,21 @@ type Media = {
   comments?: string;
 };
 
-const media: Media[] = [
+const fiction: Fiction[] = [
+  {
+    title: "Kaguya-sama Wants To Be Confessed To",
+    author: "Aka Akasaka",
+    finishedDate: new Date("2025-06-21"),
+    href: "https://guya.cubari.moe/",
+    img: "kaguya-sama.jpeg",
+    tags: ["Webcomic", "Japanese", "Modern", "BG"],
+    comments:
+      "Read it after enjoying Akasaka's other work, Oshi no Ko. I don't typically read slice-of-life, but I thought that this had a really solid start and end. Something that's really great about slice-of-life romance is that the main characters have meaningful platonic friendships with other people too. The couple doesn't live in a two-man world. I appreciate that.",
+  },
   {
     title: "Oshi no Ko",
     author: "Aka Akasaka",
-    finishedDate: new Date("2024-06-18"),
+    finishedDate: new Date("2025-06-18"),
     href: "https://www.goodreads.com/book/show/55222222-1-oshi-no-ko-1",
     img: "onk.jpeg",
     tags: ["Webcomic", "Japanese", "Modern", "BG"],
@@ -313,7 +323,7 @@ const media: Media[] = [
   },
 ];
 
-export default function Media() {
+export default function Fiction() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   function toggleTag(tag: Tag) {
@@ -346,14 +356,14 @@ export default function Media() {
         })}
       </div>
       <div>
-        {media
+        {fiction
           .sort((a, b) => {
             // If there are both dates, sort by date
             if (
               a.finishedDate instanceof Date &&
               b.finishedDate instanceof Date
             ) {
-              return a.finishedDate.getTime() - b.finishedDate.getTime();
+              return -a.finishedDate.getTime() + b.finishedDate.getTime();
             }
 
             // Strings should be sorted according to finishedDates array
@@ -388,7 +398,7 @@ export default function Media() {
               {/* Image */}
               <div className="flex-shrink-0 py-4">
                 <Image
-                  src={`/media/${item.img}`}
+                  src={`/fiction/${item.img}`}
                   alt={item.title}
                   width={100}
                   height={100}
