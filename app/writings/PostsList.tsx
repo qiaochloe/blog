@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Dot } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 // Props passed to PostLists
-type Post = {
+export type Post = {
   data: {
     [key: string]: any;
   };
@@ -112,10 +112,16 @@ export function PostsList({ allPosts }: PostsListProps) {
                   />
                 ))}
               </div>
-              <Link href={`/${post.slug}`}>
-                <h2 className="text-neutral-900 tracking-tight hover:underline">
-                  {post.data.title}
+              <Link
+                href={post.data.isExternalLink ? post.slug : `/${post.slug}`}
+                className="flex items-start space-x-1 hover:underline"
+              >
+                <h2 className="text-neutral-900 tracking-tight ">
+                  {post.data.title}{" "}
                 </h2>
+                {post.data.isExternalLink && (
+                  <ExternalLink className="size-3 text-neutral-500" />
+                )}
               </Link>
               <div></div>
               <p className="text-neutral-600 text-sm my-1">
