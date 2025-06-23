@@ -36,7 +36,7 @@ export default function Page() {
         </h1>
       )}
       {posts.map((post) => (
-        <div key={post.slug} className="w-full py-2">
+        <div key={post.slug} className="w-full pb-1">
           <div className="flex justify-between">
             <Link href={`/${post.slug}`}>
               <h2 className="text-neutral-900 tracking-tight hover:underline">
@@ -47,17 +47,15 @@ export default function Page() {
               {formatDate(String(post.recentDate))}
             </p>
           </div>
-          <p className="text-neutral-600 italic">{post.data.summary}</p>
         </div>
       ))}
-
       {notes.length > 0 && (
-        <h1 className="mt-4 mb-2 text-xl font-semibold tracking-tighter">
+        <h1 className="my-8 mb-4 text-xl font-semibold tracking-tighter">
           Notes
         </h1>
       )}
       {notes.map((post) => (
-        <div key={post.slug} className="w-full py-2">
+        <div key={post.slug} className="w-full pb-1">
           <div className="flex justify-between">
             <Link href={`/${post.slug}`}>
               <h2 className="text-neutral-900 tracking-tight hover:underline">
@@ -68,7 +66,6 @@ export default function Page() {
               {formatDate(String(post.recentDate))}
             </p>
           </div>
-          <p className="text-neutral-600 italic">{post.data.summary}</p>
         </div>
       ))}
     </section>

@@ -1,6 +1,6 @@
 ---
 title: C Lang
-summary: A review of C syntax, file structure, and debugging.
+summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
 tags:
   - "technical"

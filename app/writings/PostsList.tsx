@@ -47,7 +47,7 @@ export function PostsList({ allPosts }: PostsListProps) {
 
   return (
     <div>
-      <div className="pb-2">
+      <div className="pt-2 pb-4">
         {Object.keys(selectedTags).map((tag: Tag) => (
           <button
             key={tag}
@@ -95,13 +95,15 @@ export function PostsList({ allPosts }: PostsListProps) {
             return a.data.title.localeCompare(b.data.title);
           })
           .map((post) => (
-            <div className="w-full py-4" key={post.slug}>
+            <div className="w-full py-2" key={post.slug}>
               <Link href={`/${post.slug}`}>
                 <h2 className="text-neutral-900 tracking-tight hover:underline">
                   {post.data.title}
                 </h2>
               </Link>
-              <p className="text-neutral-600 italic">{post.data.summary}</p>
+              <p className="text-neutral-600 text-sm my-1">
+                {post.data.summary}
+              </p>
             </div>
           ))}
       </div>
