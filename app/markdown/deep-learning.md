@@ -3,7 +3,7 @@ title: "Something like a deep disinterest in intelligence"
 summary: "This semester I took a course in Deep Learning. My friend—a former TA, and now a PhD candidate at Yale—had told me that deep learning was state-of-the-art, and that if I was only going to pick one AI course, it should be deep learning."
 publishedAt: "2024-03-25"
 tags:
-  - "extra"
+  - "reflection"
 ---
 
 This semester I took a course in Deep Learning. My friend—a former TA, and now a PhD candidate at Yale—had told me that deep learning was state-of-the-art, and that if I was only going to pick one AI course, it should be deep learning.
@@ -33,7 +33,5 @@ From a sort of sociological perspective, AI (the technology) is interesting. But
 [^2]: Godel's Incompleteness Theorem
 
 [^3]: Dark energy and dark matter
-
-[^4]: Set theory, model theory, proof theory, etc
 
 [^5]: Pure type system
