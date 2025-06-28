@@ -7,7 +7,7 @@ import { useState } from "react";
 const tags = [
   "Computer science",
   "Mathematics",
-  "Health",
+  "Lifestyle",
   "Theory",
   "Practical",
 ] as const;
@@ -16,13 +16,13 @@ type Tag = (typeof tags)[number];
 const tagCategories = ["subject", "practicality"] as const;
 type TagCategory = (typeof tagCategories)[number];
 const categoryToTags: Record<TagCategory, Tag[]> = {
-  subject: ["Computer science", "Mathematics", "Health"],
+  subject: ["Computer science", "Mathematics", "Lifestyle"],
   practicality: ["Practical", "Theory"],
 };
 const tagStyles: Record<Tag, string> = {
   "Computer science": "bg-blue-100 text-blue-800",
   Mathematics: "bg-blue-100 text-blue-800",
-  Health: "bg-blue-100 text-blue-800",
+  Lifestyle: "bg-blue-100 text-blue-800",
   Theory: "bg-blue-100 text-blue-800",
   Practical: "bg-blue-100 text-blue-800",
 };
@@ -51,7 +51,7 @@ const textbooks: Book[] = [
     author: "Peter Attia",
     href: "https://peterattiamd.com/outlive/",
     img: "outlive.jpeg",
-    tags: ["Health", "Practical"],
+    tags: ["Lifestyle", "Practical"],
     comments:
       "Currently reading. Live notes here: https://qiaochloe.com/outlive.",
   },
@@ -96,6 +96,14 @@ const textbooks: Book[] = [
     tags: ["Computer science", "Theory"],
     comments:
       "An amazing book about operating systems. Extremely digestable with short chapters (51 over the course of 700 pages). Would help to have some background in computer systems and C programming.\nAesthetic review: nicely typeset. There is a set of student-teacher dialogues between major concepts and an annotated reference page after every chapter.",
+  },
+  {
+    title: "Salt, Fat, Acid, Heat",
+    href: "https://www.saltfatacidheat.com/",
+    img: "sfah.jpeg",
+    tags: ["Lifestyle", "Practical"],
+    comments:
+      "Current reading. Live notes here: https://qiaochloe.com/salt-fat-acid-heat. \nA lot of books about cooking is overly practical; they are just lists of recipes and ingredients. This makes it difficult to develop a mental framwork for the subject. What is the purpose of vinegar and baking soda? Why do you add oil to salads and cakes? What's wrong with the food? \nThis books explains these critical components systematically. It's helped me a lot with identifying what makes food taste good. Highly recommend.",
   },
 ];
 
