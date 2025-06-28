@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import MarkdownIt from "markdown-it";
 import { useState } from "react";
 
 const tags = [
@@ -44,7 +45,7 @@ const textbooks: Book[] = [
     img: "learn-rust-in-a-month-of-lunches.jpeg",
     tags: ["Computer science", "Practical"],
     comments:
-      "Background: I've failed to learn Rust from the Book many times. The biggest problem was that I didn't have a computer systems background yet, and I didn't know how memory allocation and alignment worked yet. I also think my experiences with functional programming languages and C made me better appreciate the design choices Rust makes.\nThis book is the first book I've actually stuck with since taking a systems course. Everything in this book is also immediately practical. In addition to common language features, the book gives you a tour of Rust tooling and the most popular crates as well. This book was sufficient for writing a complex, multithreaded program.\n I was reading this over the summer, so I appreciate that every chapter is lightweight. You can definitely read a chapter every day in the beginning (maybe a chapter every three days later on).\n",
+      "Background: I've failed to learn Rust from the Book many times. The biggest problem was that I didn't have a computer systems background yet, and I didn't know how memory allocation and alignment worked yet. I also think my experiences with functional programming languages and C made me better appreciate the design choices Rust makes.\n\nThis book is the first book I've actually stuck with since taking a systems course. Everything in this book is also immediately practical. In addition to common language features, the book gives you a tour of Rust tooling and the most popular crates as well. This book was sufficient for writing a complex, multithreaded program.\n\n I was reading this over the summer, so I appreciate that every chapter is lightweight. You can definitely read a chapter every day in the beginning (maybe a chapter every three days later on).\n\n",
   },
   {
     title: "Outlive: The Scieince & Art of Longetivity",
@@ -53,7 +54,7 @@ const textbooks: Book[] = [
     img: "outlive.jpeg",
     tags: ["Lifestyle", "Practical"],
     comments:
-      "Currently reading. Live notes here: https://qiaochloe.com/outlive.",
+      "Currently reading. Live notes [here](https://qiaochloe.com/outlive).",
   },
   {
     title: "Concrete Mathematics",
@@ -62,7 +63,7 @@ const textbooks: Book[] = [
     img: "concrete-mathematics.jpeg",
     tags: ["Computer science", "Theory", "Mathematics"],
     comments:
-      'Not an "abstract mathematics" book, but one that covers practical, CONtinuous and disCRETE topics. "The material [...] may seem at first to be a disparate bag of tricks, but practice makes it into a disciplined set of tools. Topics include: recurrent problems, sums, integer functions, number theory, binomial coefficients, special numbers, generating functions, discrete probability, and asymptopics.\nAesthetic review: it is beautifully typeset with AMS Euler math formulas and Tufte-style sidenotes.',
+      'Not an "abstract mathematics" book, but one that covers practical, CONtinuous and disCRETE topics. "The material [...] may seem at first to be a disparate bag of tricks, but practice makes it into a disciplined set of tools.  \n\nTopics include: recurrent problems, sums, integer functions, number theory, binomial coefficients, special numbers, generating functions, discrete probability, and asymptopics.\n\nAesthetic review: it is beautifully typeset with AMS Euler math formulas and Tufte-style sidenotes.',
   },
   {
     title: "Algorithms",
@@ -71,7 +72,7 @@ const textbooks: Book[] = [
     href: "https://jeffe.cs.illinois.edu/teaching/algorithms",
     img: "algorithms-erickson.jpeg",
     comments:
-      "A lucid introduction to algorithms. It feels like an experienced professor guiding you through the subject. Topics include: recursion, backtracking, dynamic programming, greedy algorithms, graph algorithms, minimum spanning trees, shortest paths, maximum flows & minimum cuts, and NP-hardness.\nAesthetic review: the diagrams are clear and there is minimal but clean use of color. The footnotes are humorous.",
+      "A lucid introduction to algorithms. It feels like an experienced professor guiding you through the subject.  \n\nTopics include: recursion, backtracking, dynamic programming, greedy algorithms, graph algorithms, minimum spanning trees, shortest paths, maximum flows & minimum cuts, and NP-hardness.\n\nAesthetic review: the diagrams are clear and there is minimal but clean use of color. The footnotes are humorous.",
   },
   {
     title: "Algorithm Design Manual",
@@ -87,7 +88,7 @@ const textbooks: Book[] = [
     img: "crafting-interpreters.jpeg",
     tags: ["Computer science", "Practical"],
     comments:
-      "A practical introduction to creating interpreters and compilers in Java and C. I only wish that it had used pattern-matching and not the visitor design pattern, but this is a language issue.\nAesthetic review: has beautifully hand-drawn diagrams, useful sidenotes, and a fantastic color palette. Clearly made with love.",
+      "A practical introduction to creating interpreters and compilers in Java and C. I only wish that it had used pattern-matching and not the visitor design pattern, but this is a language issue.\n\nAesthetic review: has beautifully hand-drawn diagrams, useful sidenotes, and a fantastic color palette. Clearly made with love.",
   },
   {
     title: "Operating Systems: Three Easy Pieces",
@@ -95,7 +96,7 @@ const textbooks: Book[] = [
     img: "ostep.jpeg",
     tags: ["Computer science", "Theory"],
     comments:
-      "An amazing book about operating systems. Extremely digestable with short chapters (51 over the course of 700 pages). Would help to have some background in computer systems and C programming.\nAesthetic review: nicely typeset. There is a set of student-teacher dialogues between major concepts and an annotated reference page after every chapter.",
+      "An amazing book about operating systems. Extremely digestable with short chapters (51 over the course of 700 pages). Would help to have some background in computer systems and C programming.\n\nAesthetic review: nicely typeset. There is a set of student-teacher dialogues between major concepts and an annotated reference page after every chapter.",
   },
   {
     title: "Salt, Fat, Acid, Heat",
@@ -103,13 +104,13 @@ const textbooks: Book[] = [
     img: "sfah.jpeg",
     tags: ["Lifestyle", "Practical"],
     comments:
-      "Current reading. Live notes here: https://qiaochloe.com/salt-fat-acid-heat. \nA lot of books about cooking is overly practical; they are just lists of recipes and ingredients. This makes it difficult to develop a mental framwork for the subject. What is the purpose of vinegar and baking soda? Why do you add oil to salads and cakes? What's wrong with the food? \nThis books explains these critical components systematically. It's helped me a lot with identifying what makes food taste good. Highly recommend.",
+      "Current reading. Live notes [here](https://qiaochloe.com/salt-fat-acid-heat). \n\nA lot of books about cooking is overly practical; they are just lists of recipes and ingredients. This makes it difficult to develop a mental framwork for the subject. What is the purpose of vinegar and baking soda? Why do you add oil to salads and cakes? What's wrong with the food? \n\nThis books explains these critical components systematically. It's helped me a lot with identifying what makes food taste good. Highly recommend.",
   },
 ];
 
 export default function Textbooks() {
+  // Tag filter system
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-
   function toggleTag(tag: Tag) {
     if (selectedTags.includes(tag)) {
       setSelectedTags(() => selectedTags.filter((t) => t !== tag));
@@ -117,6 +118,8 @@ export default function Textbooks() {
       setSelectedTags([...selectedTags, tag]);
     }
   }
+
+  const md = new MarkdownIt();
 
   return (
     <div>
@@ -171,9 +174,6 @@ export default function Textbooks() {
                   <Link href={item.href} className="font-medium underline">
                     {item.title}
                   </Link>
-                  {/* <div className="text-gray-600 text-sm text-right whitespace-nowrap"> */}
-                  {/*   {formatDate(item.finishedDate)} */}
-                  {/* </div> */}
                 </div>
                 {/* Tag section */}
                 <div className="flex flex-wrap gap-1 py-1">
@@ -205,15 +205,13 @@ export default function Textbooks() {
                 </div>
                 {/* Comments */}
                 {item.comments && (
-                  <div>
-                    {item.comments?.split("\n").map((line, i) =>
-                      line.trim() ? (
-                        <p key={i} className="text-gray-600 text-sm mb-0.5">
-                          {line}
-                        </p>
-                      ) : null,
-                    )}
-                  </div>
+                  <div
+                    key={i}
+                    className="text-gray-600 text-sm mb-0.5"
+                    dangerouslySetInnerHTML={{
+                      __html: md.render(item.comments),
+                    }}
+                  />
                 )}
               </div>
             </div>

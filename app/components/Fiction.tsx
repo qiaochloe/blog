@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { formatDate } from "./utils";
+import MarkdownIt from "markdown-it";
 
 const tags = [
   "Novel",
@@ -124,7 +125,7 @@ const fiction: Fiction[] = [
     img: "onk.jpeg",
     tags: ["Webcomic", "Japanese", "Modern", "BG"],
     comments:
-      "Oshi no Ko raises the standard of media for me. First, the manga is seriously good. The premise is refreshingly original: two fans of a pop idol die and are reincarnated as her twin children. It sets the stage perfectly for a comedy-mystery-drama.\nI'm someone who cares about character design first and foremost. The main characters, Aqua and Ruby, have a sort of compelling attraction that real celebrities have. Frankly speaking, I can see why literally every major female character (Kana, Akane, Ruby) fall in love with Aqua. \nAka was very creative with the entertainment setting. For context, most of the media I've seen about showbiz comes from China and tends to revolve around 'face-slapping' revenge arcs. In contrast, Oshi no Ko dives deep into unique Japanese entertainment culture characteristics (idols, 2.5D musicals, manga) and doesn't shy away from serious topics like cyberbulling, stalking, and industry abuse. (I'm not even mad about the ending.)\nLastly, all the adaptations have been strong across the board. The animation is beautiful, and the music from Yoasobi slaps: https://youtu.be/RkjSfZ30GM4?si=w45tDhaauRsNPqI7. Idol is probably my most played song on DDR.",
+      "Oshi no Ko raises the standard of media for me. First, the manga is seriously good. The premise is refreshingly original: two fans of a pop idol die and are reincarnated as her twin children. It sets the stage perfectly for a comedy-mystery-drama.\n\nI'm someone who cares about character design first and foremost. The main characters, Aqua and Ruby, have a sort of compelling attraction that real celebrities have. Frankly speaking, I can see why literally every major female character (Kana, Akane, Ruby) fall in love with Aqua. \n\nAka was very creative with the entertainment setting. For context, most of the media I've seen about showbiz comes from China and tends to revolve around 'face-slapping' revenge arcs. In contrast, Oshi no Ko dives deep into unique Japanese entertainment culture characteristics (idols, 2.5D musicals, manga) and doesn't shy away from serious topics like cyberbulling, stalking, and industry abuse. (I'm not even mad about the ending.)\n\nLastly, all the adaptations have been strong across the board. The animation is beautiful, and the music from Yoasobi slaps. [Idol](https://youtu.be/RkjSfZ30GM4?si=w45tDhaauRsNPqI7) is probably my most played song on DDR.",
   },
   {
     title: "After I Turned From O to A I Became the National Male God",
@@ -134,7 +135,7 @@ const fiction: Fiction[] = [
     img: "aitfotaibtnmg.jpeg",
     tags: ["Webnovel", "Chinese", "BL", "Interstellar", "ABO", "Role Reversal"],
     comments:
-      "The MC gong is very good. He's gentle, considerate, and attracts a lot of people to his side but always puts the ML first. He handles most problems very reasonably, but he can be unexpectedly willful about what he wants (like eventually openly being in a relationship with the ML!). \nThe ML shou is where this novel really shines for me. He's very unruly and fierce (really like a delinquent) when we first meet him, but he is a little bit shy when it comes to his relationship with the MC. He is a very fleshed-out characters, with his own cast of friends, values, good traits and bad traits. I love that the author doesn't shy away from giving him insecurities, jealousies, and fears, but the MC always reaffirms that he loves him regardless of his \"advantages and disadvantages.\" Even though it is implied that the ML is the shou, I would say that it's more about their circumstances pheromone incompatibility & the ML never acts like an O torward the MC. \nI actually think that the writing, plot, and characterization is not very polished, but this is why the characters could continue to surprise me. The MC can be at times gentle or willful, and the ML can be at times grumpy or flustered or jealous.",
+      "The MC gong is very good. He's gentle, considerate, and attracts a lot of people to his side but always puts the ML first. He handles most problems very reasonably, but he can be unexpectedly willful about what he wants (like eventually openly being in a relationship with the ML!). \n\nThe ML shou is where this novel really shines for me. He's very unruly and fierce (really like a delinquent) when we first meet him, but he is a little bit shy when it comes to his relationship with the MC. He is a very fleshed-out characters, with his own cast of friends, values, good traits and bad traits. I love that the author doesn't shy away from giving him insecurities, jealousies, and fears, but the MC always reaffirms that he loves him regardless of his \"advantages and disadvantages.\" Even though it is implied that the ML is the shou, I would say that it's more about their circumstances pheromone incompatibility & the ML never acts like an O torward the MC. \n\nI actually think that the writing, plot, and characterization is not very polished, but this is why the characters could continue to surprise me. The MC can be at times gentle or willful, and the ML can be at times grumpy or flustered or jealous.",
   },
   {
     title: "Global Examination",
@@ -143,7 +144,7 @@ const fiction: Fiction[] = [
     img: "ge.jpeg",
     tags: ["Webnovel", "Chinese", "Webcomic", "BL", "Infinite Flow"],
     comments:
-      'This is another novel in the 无限流 ("infinity flow") genre. I started with the manhua and liked it so much that I finished the webnovel.\n From the onset, the MC is quiet, reticent, and a little bit cold. The ML is flamboyant, the type that pushes the boundaries of the system rules. They work together extremely well, but it\'s a bit difficult for me to characterize the relationship between the MC and ML. Their relationship is full of subtle moments, most likely because the setting forced them to be clandestine. Their dynamic is "silent, implicit understanding." The backstory and the plot is excellent. It\'s hard for me to describe more without spoilers, but I really loved this.',
+      'This is another novel in the 无限流 ("infinity flow") genre. I started with the manhua and liked it so much that I finished the webnovel.\n\n From the onset, the MC is quiet, reticent, and a little bit cold. The ML is flamboyant, the type that pushes the boundaries of the system rules. They work together extremely well, but it\'s a bit difficult for me to characterize the relationship between the MC and ML. Their relationship is full of subtle moments, most likely because the setting forced them to be clandestine. Their dynamic is "silent, implicit understanding." The backstory and the plot is excellent. It\'s hard for me to describe more without spoilers, but I really loved this.',
   },
   {
     title: "Gold Class Fighter",
@@ -170,7 +171,7 @@ const fiction: Fiction[] = [
     img: "lytrofs.jpeg",
     tags: ["Webnovel", "Chinese", "BL", "Xianxia"],
     comments:
-      "I think the reviews might dissect the themes of this novel much better than I can, so I will just focus on the main relationship here. The MC is silent, resilient, and the type to push himself to his limits. I read this novel for the MC; he's simply that inspiring. \nThe ML is pure peacock material but takes on more and more responsibilities after the time-skip. I like him quite a lot too. In another setting, with another MC, I would probably find him too possessive, but our MC is simply too top-notch and keeps him in line. \nReview: It's a very good novel, and was my most favorite for a long time. The writing is one of the most mature of the listings here.",
+      "I think the reviews might dissect the themes of this novel much better than I can, so I will just focus on the main relationship here. The MC is silent, resilient, and the type to push himself to his limits. I read this novel for the MC; he's simply that inspiring. \n\nThe ML is pure peacock material but takes on more and more responsibilities after the time-skip. I like him quite a lot too. In another setting, with another MC, I would probably find him too possessive, but our MC is simply too top-notch and keeps him in line. \n\nReview: It's a very good novel, and was my most favorite for a long time. The writing is one of the most mature of the listings here.",
   },
   {
     title: "No One Can Refuse Doggie A",
@@ -221,7 +222,7 @@ const fiction: Fiction[] = [
       "Transmigration",
     ],
     comments:
-      "This an ABO interstellar setting. The MC has a sharp mouth, appears a bit frivolous, but is actually quite gentle and soft-hearted on the inside. The ML is every bit the kind of person that you would expect to rise to the level of major general in such a setting despite being an O. Before meeting our MC, he's restrained, disciplined, and only has mechas and fighting in his heart. They are equals in every way, helping and accommodating each other. \nThe plot, I think, is actually quite mild. One of the major themes of the novel is that... you are just one person. When you see a problem, you can only try your best to change things a little bit, and hope that with enough people pushing, something will change. The novel acknowledges how longstanding problems like omega rights, domestic abuse, journalistic privacy violations, and corruption can't just be resolved by one person. Although the translation is ongoing, the MTL is actually quite passable.",
+      "This an ABO interstellar setting. The MC has a sharp mouth, appears a bit frivolous, but is actually quite gentle and soft-hearted on the inside. The ML is every bit the kind of person that you would expect to rise to the level of major general in such a setting despite being an O. Before meeting our MC, he's restrained, disciplined, and only has mechas and fighting in his heart. They are equals in every way, helping and accommodating each other. \n\nThe plot, I think, is actually quite mild. One of the major themes of the novel is that... you are just one person. When you see a problem, you can only try your best to change things a little bit, and hope that with enough people pushing, something will change. The novel acknowledges how longstanding problems like omega rights, domestic abuse, journalistic privacy violations, and corruption can't just be resolved by one person. Although the translation is ongoing, the MTL is actually quite passable.",
   },
   {
     title:
@@ -319,13 +320,13 @@ const fiction: Fiction[] = [
     img: "mwmtohwc.jpeg",
     tags: ["Webnovel", "Chinese", "BL", "Imperial China", "Role Reversal"],
     comments:
-      "From my experience, webnovels commonly expose the most depraved love fantasies. Many authors seem to feel that love can only be expressed with possessive, controlling, and excessive behavior. It's rare that an author can create a character that is upright and moral without being a cold bore. This is one of those rare novels that succeed. The MC, a brave general, shines brightly in a world of political filth. I really admire him.\n Although the ML is desparately in love with the MC, he restrains himself from excessiveness every time. I could feel how considerate he is of the MC's feelings. He is really afraid of scaring the MC away, and that—to me—is more romantic than uncontrollable behavior.",
+      "From my experience, webnovels commonly expose the most depraved love fantasies. Many authors seem to feel that love can only be expressed with possessive, controlling, and excessive behavior. It's rare that an author can create a character that is upright and moral without being a cold bore. This is one of those rare novels that succeed. The MC, a brave general, shines brightly in a world of political filth. I really admire him.\n\n Although the ML is desparately in love with the MC, he restrains himself from excessiveness every time. I could feel how considerate he is of the MC's feelings. He is really afraid of scaring the MC away, and that—to me—is more romantic than uncontrollable behavior.",
   },
 ];
 
 export default function Fiction() {
+  // Tag filter system
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-
   function toggleTag(tag: Tag) {
     if (selectedTags.includes(tag)) {
       setSelectedTags(() => selectedTags.filter((t) => t !== tag));
@@ -333,6 +334,8 @@ export default function Fiction() {
       setSelectedTags([...selectedTags, tag]);
     }
   }
+
+  const md = new MarkdownIt();
 
   return (
     <div>
@@ -448,15 +451,13 @@ export default function Fiction() {
                 </div>
                 {/* Comments */}
                 {item.comments && (
-                  <div>
-                    {item.comments?.split("\n").map((line, i) =>
-                      line.trim() ? (
-                        <p key={i} className="text-gray-600 text-sm mb-0.5">
-                          {line}
-                        </p>
-                      ) : null,
-                    )}
-                  </div>
+                  <div
+                    key={i}
+                    className="text-gray-600 text-sm mb-0.5"
+                    dangerouslySetInnerHTML={{
+                      __html: md.render(item.comments),
+                    }}
+                  />
                 )}
               </div>
             </div>

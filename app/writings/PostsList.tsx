@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import MarkdownIt from "markdown-it";
 
 // Props passed to PostLists
 export type Post = {
@@ -62,6 +63,9 @@ export function PostsList({ allPosts }: PostsListProps) {
     }));
   };
 
+  // For titles
+  const md = new MarkdownIt();
+
   return (
     <div>
       <div className="pt-2 pb-4">
@@ -88,20 +92,19 @@ export function PostsList({ allPosts }: PostsListProps) {
             );
           })
           .sort((a, b) => {
+            // reflection posts go to the end
             const isreflectionA = a.data.tags.every(
               (tag: string) => tag === "reflection",
             );
             const isreflectionB = b.data.tags.every(
               (tag: string) => tag === "reflection",
             );
-
-            // reflection posts go to the end
-            if (isreflectionA !== isreflectionB) {
-              return isreflectionA ? 1 : -1;
-            }
+            if (isreflectionA !== isreflectionB) return isreflectionA ? 1 : -1;
 
             // Otherwise, sort alphabetically by title
-            return a.data.title.localeCompare(b.data.title);
+            const aNormalized = a.data.title.replace(/^[_*~`]+/, "").trim();
+            const bNormalized = b.data.title.replace(/^[_*~`]+/, "").trim();
+            return aNormalized.localeCompare(bNormalized);
           })
           .map((post) => (
             <div
@@ -121,7 +124,11 @@ export function PostsList({ allPosts }: PostsListProps) {
                   href={post.data.isExternalLink ? post.slug : `/${post.slug}`}
                   className="text-neutral-900 tracking-tight inline-flex hover:underline space-x-1"
                 >
-                  <div>{post.data.title}</div>{" "}
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: md.renderInline(post.data.title),
+                    }}
+                  />{" "}
                   {post.data.isExternalLink && (
                     <ExternalLink className="size-3 text-neutral-500" />
                   )}

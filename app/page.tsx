@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getPosts, formatDate } from "./utils";
+import MarkdownIt from "markdown-it";
 
 export default function Page() {
+  // For titles
+  const md = new MarkdownIt();
   const now = new Date();
-
   const all = getPosts()
     .map((post) => ({
       ...post,
@@ -59,7 +61,11 @@ export default function Page() {
           <div className="flex justify-between">
             <Link href={`/${post.slug}`}>
               <h2 className="text-neutral-900 tracking-tight hover:underline">
-                {post.data.title}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: md.renderInline(post.data.title),
+                  }}
+                />
               </h2>
             </Link>
             <p className="text-neutral-600 tracking-tight text-sm">
