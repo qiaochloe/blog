@@ -17,13 +17,14 @@ type PostsListProps = {
 };
 
 // Tags
-type Tag = "general" | "school" | "project" | "reflection";
+type Tag = "general" | "school" | "project" | "reflection" | "notes";
 
 const defaultSelectedTags: Record<Tag, boolean> = {
   general: true,
   school: true,
   project: true,
   reflection: true,
+  notes: true,
 };
 
 const tagTextColor: Record<Tag, string> = {
@@ -31,6 +32,7 @@ const tagTextColor: Record<Tag, string> = {
   school: "text-sky-800",
   project: "text-rose-800",
   reflection: "text-emerald-800",
+  notes: "text-violet-800",
 };
 
 const tagBGColor: Record<Tag, string> = {
@@ -38,6 +40,7 @@ const tagBGColor: Record<Tag, string> = {
   school: "bg-sky-100",
   project: "bg-rose-100",
   reflection: "bg-emerald-100",
+  notes: "bg-violet-100",
 };
 
 const dotColor: Record<Tag, string> = {
@@ -45,6 +48,7 @@ const dotColor: Record<Tag, string> = {
   school: "bg-sky-300",
   project: "bg-rose-300",
   reflection: "bg-emerald-300",
+  notes: "bg-violet-300",
 };
 
 export function PostsList({ allPosts }: PostsListProps) {
