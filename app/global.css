@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-::selection {
-  background-color: #47a3f3;
-  color: #fefefe;
-}
-
 :root {
   --sh-class: #2d5e9d;
   --sh-identifier: #354150;
