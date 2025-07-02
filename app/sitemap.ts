@@ -1,4 +1,4 @@
-import { getPosts } from "app/utils";
+import { getPosts } from "app/posts";
 
 // TODO: Update the base URL
 export const baseUrl = "https://qiaochloe.com";

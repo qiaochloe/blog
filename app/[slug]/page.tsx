@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
-import { formatDate, getPosts } from "app/utils";
+import { getPosts } from "app/posts";
+import { formatDate } from "app/utils";
 import { baseUrl } from "app/sitemap";
 
 // This page is just for generating the markdown files in the `app/markdown` directory.

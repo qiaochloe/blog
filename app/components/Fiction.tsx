@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { formatDate } from "./utils";
 import MarkdownIt from "markdown-it";
+import { formatDate } from "app/utils";
 
 const tags = [
   "Novel",

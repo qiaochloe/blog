@@ -1,4 +1,4 @@
-import { getPosts } from "app/utils";
+import { getPosts } from "app/posts";
 import { Post, PostsList } from "app/writings/PostsList";
 
 export const metadata = {

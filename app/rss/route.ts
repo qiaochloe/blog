@@ -1,5 +1,5 @@
 import { baseUrl } from "app/sitemap";
-import { getPosts } from "app/utils";
+import { getPosts } from "app/posts";
 
 export async function GET() {
   let allWritings = getPosts();

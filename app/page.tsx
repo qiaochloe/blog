@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { getPosts, formatDate } from "./utils";
 import MarkdownIt from "markdown-it";
+import { getPosts } from "app/posts";
+import { formatDate } from "app/utils";
 
 export default function Page() {
   // For titles
@@ -46,7 +47,7 @@ export default function Page() {
               </h2>
             </Link>
             <p className="text-neutral-600 tracking-tight text-sm">
-              {formatDate(String(post.recentDate))}
+              {formatDate(post.recentDate)}
             </p>
           </div>
         </div>
@@ -69,7 +70,7 @@ export default function Page() {
               </h2>
             </Link>
             <p className="text-neutral-600 tracking-tight text-sm">
-              {formatDate(String(post.recentDate))}
+              {formatDate(post.recentDate)}
             </p>
           </div>
         </div>
