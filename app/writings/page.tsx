@@ -1,5 +1,6 @@
 import { getPosts } from "app/posts";
 import { Post, PostsList } from "app/writings/PostsList";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Writings",
@@ -26,7 +27,9 @@ export default function Page() {
   return (
     <section>
       <h1 className="font-semibold text-2xl mb-4 tracking-tighter">Writings</h1>
-      <PostsList allPosts={allPosts} />
+      <Suspense>
+        <PostsList allPosts={allPosts} />
+      </Suspense>
     </section>
   );
 }
