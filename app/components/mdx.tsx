@@ -14,7 +14,7 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
-import { EnlargedImage } from "./Image";
+import { ModalImage } from "./ModalImage";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -55,10 +55,6 @@ function CustomLink(props) {
 
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
 }
-
-// function RoundedImage(props) {
-//   return <Image alt={props.alt} className="rounded-lg" {...props} />;
-// }
 
 function Code({ children, ...props }) {
   let codeHTML = highlight(children);
@@ -105,7 +101,8 @@ let components = {
   h4: createHeading(4),
   h5: createHeading(5),
   h6: createHeading(6),
-  Image: EnlargedImage,
+  Image: ModalImage,
+  img: ModalImage,
   a: CustomLink,
   code: Code,
   Table,

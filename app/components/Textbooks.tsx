@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import MarkdownIt from "markdown-it";
+import { ModalImage } from "./ModalImage";
 import { useState } from "react";
 
 const tags = [
@@ -157,7 +157,7 @@ export default function Textbooks() {
             >
               {/* Image */}
               <div className="flex-shrink-0 py-4">
-                <Image
+                <ModalImage
                   src={`/textbooks/${item.img}`}
                   alt={item.title}
                   width={100}

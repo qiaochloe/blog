@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { ModalImage } from "./ModalImage";
 import MarkdownIt from "markdown-it";
 import { formatDate } from "app/utils";
 
@@ -400,7 +400,7 @@ export default function Fiction() {
             >
               {/* Image */}
               <div className="flex-shrink-0 py-4">
-                <Image
+                <ModalImage
                   src={`/fiction/${item.img}`}
                   alt={item.title}
                   width={100}
