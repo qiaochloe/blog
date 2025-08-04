@@ -2,6 +2,7 @@
 title: Algorithms
 publishedAt: 07-16-25
 updatedAt: 08-04-25
+summary: "Arrays • Linked Lists • Trees • DAGs • Backtracking • Dynamic Programming • Union Find • Built-In "
 tags:
   - "notes"
 todo: Add stack, heap, trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree
@@ -253,6 +254,51 @@ def f():
 
 Popular problems include [Permutations](https://leetcode.com/problems/permutations/description) and [Combinations](https://leetcode.com/problems/combinations/description).
 
+## Dynamic Programming
+
+Might be right for problems that involve looking for the optimum value or the number of ways to do something. Most importantly, future decisions depend on earlier decisions.
+
+**Top-down**
+
+Recursion made efficient by _memoization_.
+
+```python
+memo = {}
+def fib(n):
+    if n == 0 or i == 1:
+        return n
+    if n not in memo:
+        memo[n] = f(n - 1) + f(n - 2)
+    return memo[n]
+```
+
+**Bottom-up**
+
+Starts with base cases and iteratively build up to the solution in order.
+
+```python
+def fib(n):
+    if n == 0:
+        return 0
+    prev, curr = 0, 1
+    for i in range(2, n):
+        prev, curr = curr, prev + curr
+    return curr
+```
+
+**Kadane's Algorithm**
+
+Used to find the maximum sum of a subarray within an array.
+
+```python
+def f(arr):
+    curr_sum = 0
+    best_sum = float('-inf')
+    for n in arr:
+        curr_sum = max(n, curr_sum + n)
+        best_sum = max(best_sum, curr_sum)
+    return best_sum
+```
 
 ## Union Find
 
@@ -305,53 +351,6 @@ def union(x, y):
         else:
             parent[py] = px
             rank[px] += 1 
-```
-
-
-## Dynamic Programming
-
-Might be right for problems that involve looking for the optimum value or the number of ways to do something. Most importantly, future decisions depend on earlier decisions.
-
-**Top-down**
-
-Recursion made efficient by _memoization_.
-
-```python
-memo = {}
-def fib(n):
-    if n == 0 or i == 1:
-        return n
-    if n not in memo:
-        memo[n] = f(n - 1) + f(n - 2)
-    return memo[n]
-```
-
-**Bottom-up**
-
-Starts with base cases and iteratively build up to the solution in order.
-
-```python
-def fib(n):
-    if n == 0:
-        return 0
-    prev, curr = 0, 1
-    for i in range(2, n):
-        prev, curr = curr, prev + curr
-    return curr
-```
-
-**Kadane's Algorithm**
-
-Used to find the maximum sum of a subarray within an array.
-
-```python
-def f(arr):
-    curr_sum = 0
-    best_sum = float('-inf')
-    for n in arr:
-        curr_sum = max(n, curr_sum + n)
-        best_sum = max(best_sum, curr_sum)
-    return best_sum
 ```
 
 ## Built-In Data Structures
