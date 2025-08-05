@@ -4,12 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { formatDate } from "app/utils";
 import Link from "next/link";
 import MarkdownIt from "markdown-it";
-import {
-  ExternalLink,
-  Calendar,
-  ArrowDownAZ,
-  WandSparkles,
-} from "lucide-react";
+import { ExternalLink, Calendar, ArrowDownAZ } from "lucide-react";
 
 // Props passed to PostLists
 export type Post = {
@@ -60,11 +55,11 @@ export function PostsList({ allPosts }: PostsListProps) {
   // SORT
   // Initialize sort
   const [sort, setSort] = useState<string>(
-    searchParams.get("sort") || "default",
+    searchParams.get("sort") || "chrono",
   );
 
   const toggleSort = () => {
-    const sortOrder = ["default", "chrono", "alpha"];
+    const sortOrder = ["chrono", "alpha"];
     const index = sortOrder.indexOf(sort);
     const nextIndex = (index + 1) % sortOrder.length;
     const newSort = sortOrder[nextIndex];
@@ -76,6 +71,7 @@ export function PostsList({ allPosts }: PostsListProps) {
   };
 
   // TAGS
+  // TODO: there is a noticeable delay when toggling tags
   const tagsParam = searchParams.get("tags")?.split(",") ?? defaultTags;
   const tagMap = Object.fromEntries(
     defaultTags.map((tag) => [tag, tagsParam.includes(tag)]),
@@ -101,7 +97,7 @@ export function PostsList({ allPosts }: PostsListProps) {
       defaultTags.map((tag) => [tag, tagsParam.includes(tag)]),
     ) as Record<Tag, boolean>;
     setSelectedTags(tagMap);
-    setSort(searchParams.get("sort") ?? "default");
+    setSort(searchParams.get("sort") ?? "chrono");
   }, [searchParams]);
 
   // Filtered and sorted posts
@@ -112,34 +108,16 @@ export function PostsList({ allPosts }: PostsListProps) {
       return aNormalized.localeCompare(bNormalized);
     };
     const chronoSort = (a: Post, b: Post) => {
-      const aDate = a.data.updatedAt || a.data.publishedAt;
-      const bDate = b.data.updatedAt || b.data.publishedAt;
+      const aDate = a.data.publishedAt;
+      const bDate = b.data.publishedAt;
       return new Date(bDate).getTime() - new Date(aDate).getTime();
-    };
-    const defaultSort = (a: Post, b: Post) => {
-      // Reflection posts go to the end
-      // Otherwise, sort alphabetically by title
-      const isreflectionA = a.data.tags.every(
-        (tag: string) => tag === "reflection",
-      );
-      const isreflectionB = b.data.tags.every(
-        (tag: string) => tag === "reflection",
-      );
-      if (isreflectionA !== isreflectionB) return isreflectionA ? 1 : -1;
-      return alphaSort(a, b);
     };
 
     return allPosts
       .filter((post) => {
         return post.data.tags?.some((tag: Tag) => selectedTags[tag]) ?? false;
       })
-      .sort(
-        sort === "alpha"
-          ? alphaSort
-          : sort === "chrono"
-            ? chronoSort
-            : defaultSort,
-      );
+      .sort(sort === "alpha" ? alphaSort : chronoSort);
   }, [sort, selectedTags]);
 
   // For titles
