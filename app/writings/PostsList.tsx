@@ -147,10 +147,8 @@ export function PostsList({ allPosts }: PostsListProps) {
         >
           {sort === "alpha" ? (
             <ArrowDownAZ className="size-4" />
-          ) : sort === "chrono" ? (
-            <Calendar className="size-4" />
           ) : (
-            <WandSparkles className="size-4" />
+            <Calendar className="size-4" />
           )}
         </div>
       </div>
