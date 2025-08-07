@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
 import { getPosts } from "app/posts";
@@ -14,11 +15,10 @@ export async function generateStaticParams() {
   }));
 }
 
-export function generateMetadata({ params }) {
-  const post = getPosts().find((post) => post.slug === params.slug);
-  if (!post) {
-    return {};
-  }
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = getPosts().find((post) => post.slug === slug);
+  if (!post) return {};
 
   const { title, publishedAt, summary: description } = post.data;
   const ogImage = `${baseUrl}/og?title=${encodeURIComponent(title)}`;
@@ -47,8 +47,9 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function Page({ params }) {
-  let post = getPosts().find((post) => post.slug === params.slug);
+export default async function Page({ params }) {
+  const { slug } = await params;
+  let post = getPosts().find((post) => post.slug === slug);
 
   if (!post) {
     notFound();
