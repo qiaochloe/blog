@@ -23,20 +23,27 @@ export default function Page() {
     });
 
   const posts = all.filter((post) => !post.data.tags?.includes("notes"));
-
   const notes = all.filter((post) => post.data.tags?.includes("notes"));
 
   return (
     <section>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tighter">Hi.</h1>
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight">Hi.</h1>
+      <p className="mb-4">
+        I'm Chloe Qiao. I'm an undergraduate student at Brown University
+        studying computer science.
+      </p>
       <p className="mb-8">
-        My name is Chloe Qiao. I can be reached at qiaochloe [at] gmail [dot]
-        com.
+        For what I'm up to, take a look at my{" "}
+        <Link
+          href="/now"
+          className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
+        >
+          Now
+        </Link>{" "}
+        page.
       </p>
       {posts.length > 0 && (
-        <h1 className="mb-2 text-xl font-semibold tracking-tighter">
-          Thoughts
-        </h1>
+        <h1 className="mb-2 text-xl font-semibold tracking-tight">Thoughts</h1>
       )}
       {posts.map((post) => (
         <div key={post.slug} className="w-full pb-1">
@@ -53,7 +60,7 @@ export default function Page() {
         </div>
       ))}
       {notes.length > 0 && (
-        <h1 className="my-8 mb-4 text-xl font-semibold tracking-tighter">
+        <h1 className="my-8 mb-4 text-xl font-semibold tracking-tight">
           Notes
         </h1>
       )}
