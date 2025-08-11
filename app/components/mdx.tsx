@@ -3,10 +3,12 @@ import Link from "next/link";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
 
 import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { highlight } from "sugar-high";
+import { ModalImage } from "./ModalImage";
 import Fiction from "./Fiction";
 import Textbooks from "./Textbooks";
 import {
@@ -14,7 +16,7 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
-import { ModalImage } from "./ModalImage";
+import { Manga } from "./About";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -40,7 +42,6 @@ function Table({ data }) {
 
 function CustomLink(props) {
   let href = props.href;
-
   if (href.startsWith("/")) {
     return (
       <Link href={href} {...props}>
@@ -48,17 +49,8 @@ function CustomLink(props) {
       </Link>
     );
   }
-
-  if (href.startsWith("#")) {
-    return <a {...props} />;
-  }
-
+  if (href.startsWith("#")) return <a {...props} />;
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
-}
-
-function Code({ children, ...props }) {
-  let codeHTML = highlight(children);
-  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />;
 }
 
 function slugify(str: string) {
@@ -104,7 +96,6 @@ let components = {
   Image: ModalImage,
   img: ModalImage,
   a: CustomLink,
-  code: Code,
   Table,
   Fiction,
   Textbooks,
@@ -112,6 +103,7 @@ let components = {
   PuzzlethonHinting,
   PuzzlethonMap,
   PuzzlethonCarberry,
+  Manga,
 };
 
 export function CustomMDX(props) {
@@ -121,7 +113,10 @@ export function CustomMDX(props) {
       components={{ ...components, ...(props.components || {}) }}
       options={{
         mdxOptions: {
-          rehypePlugins: [rehypeKatex],
+          rehypePlugins: [
+            rehypeKatex,
+            [rehypeHighlight, { ignoreMissing: true }],
+          ],
           remarkPlugins: [remarkMath, remarkGfm],
         },
       }}

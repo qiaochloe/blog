@@ -16,6 +16,13 @@ html {
   min-width: 360px;
 }
 
+/* HIGHLIGHT */
+
+/* Make sure that hljs doesn't control the background */
+.hljs {
+  background: transparent !important;
+}
+
 /* PROSE */
 
 .prose .anchor {
@@ -176,12 +183,7 @@ html {
 
 /* Code block <pre><code> */
 .prose-notes pre {
-  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm;
-}
-
-/* Code block <code> inside <pre> */
-.prose-notes pre code {
-  @apply text-xs text-zinc-100 font-mono leading-relaxed;
+  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
   border: initial;
 }
 
