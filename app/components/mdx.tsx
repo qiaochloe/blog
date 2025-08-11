@@ -16,7 +16,6 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
-import { Manga } from "./About";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -103,7 +102,6 @@ let components = {
   PuzzlethonHinting,
   PuzzlethonMap,
   PuzzlethonCarberry,
-  Manga,
 };
 
 export function CustomMDX(props) {
