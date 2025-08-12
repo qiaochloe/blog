@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Righteous&display=swap");
 
 :root {
   --sh-class: #2d5e9d;
@@ -54,27 +56,13 @@ html {
 
 /* Inline code (inside text) */
 .prose :not(pre) > code {
-  @apply px-1.5 py-0.5 rounded-md bg-zinc-100 text-pink-600 font-mono text-xs;
+  @apply px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-xs;
 }
 
 /* Code block <pre><code> */
 .prose pre {
-  @apply rounded-xl bg-zinc-100 p-4 overflow-x-auto my-6;
-}
-
-/* Code block <code> inside <pre> */
-.prose pre code {
-  @apply text-sm text-zinc-100 font-mono leading-relaxed;
+  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
   border: initial;
-}
-
-/* Optional: span styling inside code if used by highlighters */
-.prose pre code span {
-  @apply font-medium;
-}
-
-.prose code span {
-  @apply font-medium;
 }
 
 .prose img {
@@ -125,23 +113,15 @@ html {
 /* Prose notes */
 
 .prose-notes p {
-  @apply text-sm mx-1 my-2;
-}
-
-.prose-notes p:has(+ ul) {
-  @apply mb-0;
-}
-
-.prose-notes p:has(+ ol) {
-  @apply mb-0;
+  @apply text-sm py-2;
 }
 
 .prose-notes ol {
-  @apply list-decimal text-sm pl-6;
+  @apply list-decimal text-sm pl-6 pb-2;
 }
 
 .prose-notes ul {
-  @apply list-disc text-sm pl-6;
+  @apply list-disc text-sm pl-6 pb-2;
 }
 
 .prose-notes li {
@@ -157,19 +137,19 @@ html {
 }
 
 .prose-notes h2 {
-  @apply text-sm font-semibold bg-red-50 px-1 rounded py-0 my-4 mx-0;
+  @apply text-lg font-semibold mt-6 text-[#D73A4A] leading-5 font-["Figtree"] tracking-tight;
 }
 
 .prose-notes h3 {
-  @apply text-sm font-semibold bg-orange-100 px-1 rounded py-0 my-4 mx-0;
+  @apply text-base font-semibold mt-4 mb-2 text-[#E97000] font-["Figtree"] tracking-tight;
+}
+
+.prose-notes h2 + h3 {
+  @apply mt-2;
 }
 
 .prose-notes strong {
   @apply font-bold;
-}
-
-.prose-notes em {
-  @apply bg-yellow-100 inline px-0.5 py-0 rounded-sm not-italic;
 }
 
 .prose-notes table {

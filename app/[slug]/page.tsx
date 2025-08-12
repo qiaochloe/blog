@@ -77,20 +77,31 @@ export default async function Page({ params }) {
           }),
         }}
       />
-      <h1 className="title font-semibold text-2xl tracking-tighter">
-        {post.data.title}
-      </h1>
-      <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
-        <p className="">{formatDate(post.data.publishedAt)}</p>
-        {post.data.updatedAt && (
-          <p>Updated {formatDate(post.data.updatedAt)}</p>
-        )}
-      </div>
-      <article
-        className={`${post.data.tags?.includes("notes") ? "prose-notes columns-1 sm:columns-2 2xl:columns-3 2xl:px-16 gap-8 w-screen absolute left-1/2 -translate-x-1/2 px-2 pb-4" : "prose max-w-3xl"}`}
-      >
-        <CustomMDX source={post.content} />
-      </article>
+      {!post.data.tags?.includes("notes") ? (
+        <div>
+          <h1 className="title font-semibold text-2xl tracking-tighter">
+            {post.data.title}
+          </h1>
+          <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
+            <p className="">{formatDate(post.data.publishedAt)}</p>
+            {post.data.updatedAt && (
+              <p>Updated {formatDate(post.data.updatedAt)}</p>
+            )}
+          </div>
+          <article className="prose-notes max-w-3xl">
+            <CustomMDX source={post.content} />
+          </article>
+        </div>
+      ) : (
+        <div>
+          <h1 className="title font-semibold text-2xl tracking-tighter">
+            {post.data.title}
+          </h1>
+          <article className="prose-notes max-w-3xl">
+            <CustomMDX source={post.content} />
+          </article>
+        </div>
+      )}
     </section>
   );
 }

@@ -134,7 +134,7 @@ export function PostsList({ allPosts }: PostsListProps) {
                 selectedTags[tag]
                   ? `${tagTextColor[tag]} ${tagBGColor[tag]}`
                   : "bg-gray-300 text-gray-600"
-              } text-sm font-medium m-1 px-2.5 py-0.5 rounded-full cursor-pointer`}
+              } text-sm font-medium m-1 first:ml-0 px-2.5 py-0.5 rounded-full cursor-pointer`}
               onClick={() => toggleTag(tag)}
             >
               {tag.charAt(0).toUpperCase() + tag.slice(1)}
