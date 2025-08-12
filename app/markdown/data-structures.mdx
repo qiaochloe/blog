@@ -1,5 +1,5 @@
 ---
-title: Algorithms
+title: Data structures
 publishedAt: 07-16-25
 updatedAt: 08-11-25
 summary: "List • Priority Queue • Tree • Binary Tree • Heap • Binary Heap • Segment Tree • Union Find • Built-In"
@@ -209,18 +209,17 @@ def find(i):
     parent[i] = find(parent[i])
     return parent[i]
 
-def union(x, y):
-    px = find(x)
-    py = find(y)
-
-    if px != py:
-        if rank[px] > rank[py]:
-            parent[py] = px
-        elif rank[px] < rank[py]:
-            parent[px] = py
-        else:
-            parent[py] = px
-            rank[px] += 1 
+def union(a, b):
+    pa, pb = find(a), find(b)
+    if pa == pb:
+        return
+    if rank[pa] > rank[pb]:
+        parent[pb] = pa
+    elif rank[pa] < rank[pb]:
+        parent[pa] = pb
+    else:
+        parent[pa] = pb
+        rank[pb] += 1 
 ```
 
 ## Built-In Data Structures
