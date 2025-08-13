@@ -4,6 +4,7 @@ import { CustomMDX } from "app/components/mdx";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { baseUrl } from "app/sitemap";
+import MarkdownIt from "markdown-it";
 
 // This page is just for generating the markdown files in the `app/markdown` directory.
 
@@ -48,6 +49,8 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 }
 
 export default async function Page({ params }) {
+  const md = new MarkdownIt();
+
   const { slug } = await params;
   let post = getPosts().find((post) => post.slug === slug);
 
@@ -80,7 +83,11 @@ export default async function Page({ params }) {
       {!post.data.tags?.includes("notes") ? (
         <div>
           <h1 className="title font-semibold text-2xl tracking-tighter">
-            {post.data.title}
+            <div
+              dangerouslySetInnerHTML={{
+                __html: md.renderInline(post.data.title),
+              }}
+            />
           </h1>
           <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
             <p className="">{formatDate(post.data.publishedAt)}</p>
@@ -88,14 +95,18 @@ export default async function Page({ params }) {
               <p>Updated {formatDate(post.data.updatedAt)}</p>
             )}
           </div>
-          <article className="prose-notes max-w-3xl">
+          <article className="prose max-w-3xl">
             <CustomMDX source={post.content} />
           </article>
         </div>
       ) : (
         <div>
           <h1 className="title font-semibold text-2xl tracking-tighter">
-            {post.data.title}
+            <div
+              dangerouslySetInnerHTML={{
+                __html: md.renderInline(post.data.title),
+              }}
+            />
           </h1>
           <article className="prose-notes max-w-3xl">
             <CustomMDX source={post.content} />

@@ -1,6 +1,5 @@
 "use client";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { formatDate } from "app/utils";
 import Link from "next/link";
 import MarkdownIt from "markdown-it";
@@ -48,33 +47,20 @@ const tagDotColor: Record<Tag, string> = {
 };
 
 export function PostsList({ allPosts }: PostsListProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
   // SORT
-  // Initialize sort
-  const [sort, setSort] = useState<string>(
-    searchParams.get("sort") || "chrono",
-  );
+  const [sort, setSort] = useState<string>("chrono");
 
   const toggleSort = () => {
     const sortOrder = ["chrono", "alpha"];
     const index = sortOrder.indexOf(sort);
     const nextIndex = (index + 1) % sortOrder.length;
     const newSort = sortOrder[nextIndex];
-
     setSort(newSort);
-    const params = new URLSearchParams(searchParams);
-    params.set("sort", newSort);
-    router.push(`${pathname}?${params.toString()}`);
   };
 
   // TAGS
-  // TODO: there is a noticeable delay when toggling tags
-  const tagsParam = searchParams.get("tags")?.split(",") ?? defaultTags;
   const tagMap = Object.fromEntries(
-    defaultTags.map((tag) => [tag, tagsParam.includes(tag)]),
+    defaultTags.map((tag) => [tag, true]),
   ) as Record<Tag, boolean>;
   const [selectedTags, setSelectedTags] =
     useState<Record<Tag, boolean>>(tagMap);
@@ -84,21 +70,8 @@ export function PostsList({ allPosts }: PostsListProps) {
       ...selectedTags,
       [tag]: !selectedTags[tag],
     };
-    const activeTags = Object.keys(updated).filter((t) => updated[t]);
-    const params = new URLSearchParams(searchParams);
-    params.set("tags", activeTags.join(","));
-    router.push(`${pathname}?${params.toString()}`);
+    setSelectedTags(updated);
   };
-
-  // Covers edge case where router pushes to params
-  useEffect(() => {
-    const tagsParam = searchParams.get("tags")?.split(",") ?? defaultTags;
-    const tagMap = Object.fromEntries(
-      defaultTags.map((tag) => [tag, tagsParam.includes(tag)]),
-    ) as Record<Tag, boolean>;
-    setSelectedTags(tagMap);
-    setSort(searchParams.get("sort") ?? "chrono");
-  }, [searchParams]);
 
   // Filtered and sorted posts
   const currPosts = useMemo(() => {
