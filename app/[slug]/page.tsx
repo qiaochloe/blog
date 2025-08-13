@@ -95,7 +95,7 @@ export default async function Page({ params }) {
               <p>Updated {formatDate(post.data.updatedAt)}</p>
             )}
           </div>
-          <article className="prose max-w-3xl">
+          <article className="prose">
             <CustomMDX source={post.content} />
           </article>
         </div>
@@ -108,7 +108,7 @@ export default async function Page({ params }) {
               }}
             />
           </h1>
-          <article className="prose-notes max-w-3xl">
+          <article className="prose-notes">
             <CustomMDX source={post.content} />
           </article>
         </div>

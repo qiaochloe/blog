@@ -184,15 +184,34 @@ input[type="email"] {
 }
 
 table {
-  display: block;
-  max-width: fit-content;
-  white-space: nowrap;
-  word-break: break-word;
+  display: block; /* Allows horizontal scroll if too wide */
+  max-width: fit-content; /* Shrinks table to fit contents */
+  white-space: nowrap; /* Prevents wrapping inside cells */
+  word-break: normal; /* Don’t break words unless necessary */
+  overflow-x: auto; /* Adds scroll for smaller screens */
+  margin-top: 1rem;
+  margin-botom: 1rem;
 }
 
 th,
 td {
-  padding-left: 15px;
+  padding: 0.25rem 1rem 0.25rem 1rem; /* Optional: spacing */
+  white-space: nowrap; /* Keeps headings/cells on one line */
+  vertical-align: top; /* Align multi-line cells neatly */
+  text-wrap: pretty;
+  @apply text-sm;
+}
+
+th {
+  text-align: left; /* Aligns table headers to the left */
+}
+
+tr:nth-child(even) {
+  background-color: #f4f4f5; /* light gray */
+}
+
+tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
 }
 
 .title {
