@@ -1,9 +1,9 @@
 ---
-title: C Lang
+title: A review of C
 summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
 tags:
-  - "general"
+  - "technical"
 ---
 
 This is a review of C syntax, file structure, and debugging—mainly for folks who are already familiar with computer systems and just need a refresher on C syntax and the C ecosystem.

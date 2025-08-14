@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { formatDate } from "app/utils";
 import Link from "next/link";
 import MarkdownIt from "markdown-it";
-import { ExternalLink, Calendar, ArrowDownAZ } from "lucide-react";
+import { ExternalLink, Calendar, ArrowDownAZ, LayoutList } from "lucide-react";
 
 // Props passed to PostLists
 export type Post = {
@@ -19,29 +19,29 @@ type PostsListProps = {
 };
 
 // Tags
-type Tag = "general" | "school" | "project" | "reflection" | "notes";
-const defaultTags = ["general", "school", "project", "reflection", "notes"];
+type Tag = "general" | "advice" | "technical" | "reflection" | "notes";
+const defaultTags = ["general", "advice", "technical", "reflection", "notes"];
 
 const tagTextColor: Record<Tag, string> = {
   general: "text-amber-800",
-  school: "text-sky-800",
-  project: "text-rose-800",
+  advice: "text-sky-800",
+  technical: "text-rose-800",
   reflection: "text-emerald-800",
   notes: "text-violet-800",
 };
 
 const tagBGColor: Record<Tag, string> = {
   general: "bg-amber-100",
-  school: "bg-sky-100",
-  project: "bg-rose-100",
+  advice: "bg-sky-100",
+  technical: "bg-rose-100",
   reflection: "bg-emerald-100",
   notes: "bg-violet-100",
 };
 
 const tagDotColor: Record<Tag, string> = {
   general: "bg-amber-300",
-  school: "bg-sky-300",
-  project: "bg-rose-300",
+  advice: "bg-sky-300",
+  technical: "bg-rose-300",
   reflection: "bg-emerald-300",
   notes: "bg-violet-300",
 };

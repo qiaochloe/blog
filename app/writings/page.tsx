@@ -10,10 +10,10 @@ export const metadata = {
 const externalLinks: Post[] = [
   {
     data: {
-      title: "2025 Brown Puzzle Hunt",
+      title: "2025 Brown Puzzle Hunt wrapup",
       summary: "Tech wrapup of 2025 BPH",
       publishedAt: new Date("2025-04-30"),
-      tags: ["school", "project"],
+      tags: ["technical"],
       isExternalLink: true,
     },
     slug: "https://2025.brownpuzzlehunt.com/wrapup",
