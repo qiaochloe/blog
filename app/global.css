@@ -136,6 +136,10 @@ html {
   @apply text-inherit;
 }
 
+.prose-notes h1 {
+  @apply mb-4;
+}
+
 .prose-notes h2 {
   @apply text-lg font-semibold mt-6 text-[#D73A4A] leading-5 font-["Figtree"] tracking-tight;
 }

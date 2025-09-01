@@ -100,7 +100,7 @@ export default async function Page({ params }) {
           </article>
         </div>
       ) : (
-        <div>
+        <div className="prose-notes">
           <h1 className="title font-semibold text-2xl tracking-tighter">
             <div
               dangerouslySetInnerHTML={{
@@ -108,7 +108,7 @@ export default async function Page({ params }) {
               }}
             />
           </h1>
-          <article className="prose-notes">
+          <article>
             <CustomMDX source={post.content} />
           </article>
         </div>
