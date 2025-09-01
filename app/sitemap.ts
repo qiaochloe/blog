@@ -1,6 +1,4 @@
 import { getPosts } from "app/posts";
-
-// TODO: Update the base URL
 export const baseUrl = "https://qiaochloe.com";
 
 export default async function sitemap() {
