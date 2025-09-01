@@ -1,0 +1,29 @@
+---
+title: Logic and theory notes
+summary: Halting Problem • Incompletness Theorems
+publishedAt: 2025-09-01
+tags:
+- notes
+---
+
+**The halting problem** is the problem of determining whether a given program `f` will eventually halt or continue to run indefinitely. It is **undecidable**, which means that there is no general algorithm `halts` that can take in any program `f` and solve the halting problem.
+
+Proof. Suppose that the algorithm `halts` exists. Then define the following program `f`:
+
+```python
+def f():
+    if halts(f): 
+        loop_forever
+    else: 
+        halt
+```
+
+Program `f` both halts and does not halt, which is a contradiction. Therefore, the algorithm `halts` cannot exist.
+
+**Gödel's first incompleteness theorem** states that there does not exist an algorithm that can determine whether any statement about the arithmetic of natural numbers $(\mathbb{N}, +, \times)$ is true or not. In other words, there exists **undecidable** statements.
+
+Proof. Suppose that such an algorithm `is_true` exists. There is an arithmetic statement that says "There exists a $k$ such that the program `f` terminates in $k$ steps." But if `is_true` can determine whether this statement is true or not, then `is_true` can solve the halting problem, which is a contradiction. Therefore, such an algorithm `is_true` cannot exist.
+
+**Gödel's second incompleteness theorem** states that a system cannot demonstrate its own **consistency**. Since soundness implies consistency, a system cannot demonstrate its own soundness either.
+
+Proof. Let's use ZFC. We can create a lemma $l_k$, which states that it is not possible to prove $l_k$. If ZFC is consistent, then it cannot prove $l_k$. That is because if it can prove $l_k$, then it can prove that it is not possible to prove $l_k$, which would be a contradiction. But if ZFC is consistent, then we can prove that $l_k$ is true, since ZFC indeed cannot prove $l_k$. Now we have another contradiction. Thus, ZFC cannot prove its own consistency.
