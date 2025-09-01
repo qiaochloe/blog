@@ -29,16 +29,45 @@ export default function Page() {
     <section>
       <h1 className="mb-8 text-2xl font-semibold tracking-tight">Hi.</h1>
       <p className="mb-4">
-        I'm Chloe Qiao. I'm an undergraduate student at Brown University
-        studying computer science.
+        I'm Chloe Qiao. I am an undergraduate student at Brown University
+        studying computer science. I am broadly interested in building systems.
       </p>
+
       <p className="mb-8">
-        For what I'm up to, take a look at my{" "}
+        Outside of work, I like{" "}
+        <Link
+          href="/fiction"
+          className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
+        >
+          reading
+        </Link>
+        ,{" "}
+        <Link
+          href="/writing"
+          className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
+        >
+          writing
+        </Link>
+        ,{" "}
+        <Link
+          href="/climbing"
+          className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
+        >
+          climbing
+        </Link>
+        , and{" "}
+        <Link
+          href="/cooking"
+          className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
+        >
+          cooking
+        </Link>
+        . For what I'm up to these days, take a look at my{" "}
         <Link
           href="/now"
           className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
         >
-          Now
+          now
         </Link>{" "}
         page.
       </p>
