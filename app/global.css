@@ -141,7 +141,7 @@ html {
 }
 
 .prose-notes h2 {
-  @apply text-lg font-semibold mt-6 text-[#D73A4A] leading-5 font-["Figtree"] tracking-tight;
+  @apply text-lg font-semibold mt-6 text-[#D73A4A] leading-5 font-["Figtree"] tracking-tight mb-2;
 }
 
 .prose-notes h3 {
@@ -188,34 +188,33 @@ input[type="email"] {
 }
 
 table {
-  display: block; /* Allows horizontal scroll if too wide */
-  max-width: fit-content; /* Shrinks table to fit contents */
-  white-space: nowrap; /* Prevents wrapping inside cells */
-  word-break: normal; /* Don’t break words unless necessary */
-  overflow-x: auto; /* Adds scroll for smaller screens */
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+  display: block;
+  max-width: fit-content;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-collapse: collapse;
 }
 
 th,
 td {
-  padding: 0.25rem 1rem 0.25rem 1rem; /* Optional: spacing */
-  white-space: nowrap; /* Keeps headings/cells on one line */
-  vertical-align: top; /* Align multi-line cells neatly */
-  text-wrap: pretty;
-  @apply text-sm;
+  padding: 0.25rem 1rem;
+  white-space: nowrap;
+  vertical-align: top;
+  font-size: 0.875rem;
 }
 
 th {
-  text-align: left; /* Aligns table headers to the left */
+  text-align: left;
 }
 
 tr:nth-child(even) {
-  background-color: #f4f4f5; /* light gray */
+  background-color: #f4f4f5;
 }
 
 tr:nth-child(odd) {
-  background-color: #ffffff; /* white */
+  background-color: #ffffff;
 }
 
 .title {
