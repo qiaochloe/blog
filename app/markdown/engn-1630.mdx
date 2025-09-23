@@ -1,0 +1,188 @@
+---
+title: "Digital electronics systems design notes"
+publishedAt: 2025-09-18
+updatedAt: 2025-09-23
+tags:
+- notes
+---
+
+## Contents
+
+1. [Introduction](#introduction) (9/4)
+2. [Numbering systems](#numbering-systems) (9/9, 9/11)
+    1. [Binary and hexadecimal numbers](#binary-and-hexadecimal-numbers)
+    2. [Signed numbers](#signed-numbers)
+    3. [Signed arithmetic](#signed-arithmetic)
+3. [Digital logic gates](#digital-logic-gates) (9/11, 9/16, 9/18)
+    1. [Multiple-input logic gates](#multiple-input-logic-gates)
+    2. [Ripple carry adders](#ripple-carry-adders)
+    3. [Ring oscillators](#ring-oscillators)
+    4. [Transistors](#transistors)
+    5. [Noise margins](#noise-margins)
+4. [Combinational circuits](#combinational-circuits) (9/23, 9/25, 9/30, 10/2, 10/7, 10/9)
+    1. [Boolean algebra](#boolean-algebra)
+
+## Introduction
+
+![Layers of abstraction](/engn-1630/layers-of-abstraction.png)
+
+## Numbering systems
+
+### Binary and hexadecimal numbers 
+
+Powers of 2
+
+| n | 2^n |
+|---|-----|
+|0  | 1   |
+|1  | 2   |
+|2  | 4   |
+|3  | 8   |
+|4  | 16  |
+|5  | 32  |
+|6  | 64  |
+|7  | 128 |
+|8  | 256 |
+|9  | 512 |
+|10 | 1024|
+|11 | 2048|
+|12 | 4096|
+
+Large powers of 2
+
+| n | 2^n |
+|---|-----|
+|10 | 1K (10^3) |
+|20 | 1M (10^6) |
+|30 | 1G (10^9) |
+|40 | 1T (10^12)|
+|50 | 1P (10^15)|
+|60 | 1E (10^18)|
+
+For example, 2^32 = 2^2 * 2^30 = 4 billion.
+
+A n-bit binary number ranges from [0, 2^n - 1] and has 2^n values.
+
+To convert a decimal to a binary number, repeatedly divide by 2. The remainder goes in the next most significant bit.
+
+![Decimal to binary conversion](/engn-1630/decimal-to-binary.png)
+
+For binary to hexadecimal conversion, group bits into nibbles (4 bits), and then convert to a single hex digit.
+
+### Signed numbers 
+
+While it is possible to use a signed digit to represent positive and negative numbers, addition doesn't work, and there are multiple representations for 0. This is fixed by the **two's complement** representation.
+
+To reverse the sign of a two's complement number, invert all bits and add 1. A quick way to do this is to start from the LSB and copy all bits up to and including the first 1, and then invert all remaining bits.
+
+The range of an n-bit two's complement number is $[-2^{n-1}, 2^{n-1} - 1]$.  
+The most positive n-bit number is 011111...  
+The most negative n-bit number is 100000...  
+The MSB indicates the sign.  
+
+![Two's complement number line](/engn-1630/twos-complement-number-line.png)
+
+### Signed arithmetic
+
+In signed addition, overflow occurs when adding two positive numbers produces a negative result, or adding two negative numbers produces a positive result. However, adding a positive number with a negative number cannot result in overflow; you can just drop the carried bits.
+
+In signed multiplication, you must **sign-extend** to the product bit width. 
+Sign-extension involves copying the MSB into the new bits. The product bit width of two n-bit numbers is 2n.
+
+In signed division:
+1. Convert the binary numbers to positive
+2. Perform division
+3. Apply the appropriate sign to the quotient
+3. Remainder takes the sign of the divident
+
+## Digital logic gates
+
+### Multiple input logic gates
+
+Multi-input XNOR gate returns whether this is even parity. In the two-input case, it is the same as an equality gate.
+
+Multi-input XOR returns whether there is an odd parity.
+
+### Ripple carry adders
+
+The ripple carry adder chains 1-bit adders together and carries the carry out to the next adder.
+
+Here is a ripple carry adder that has been repurposed to subtract $B$ from $A$:
+
+![Ripple carry adder](/engn-1630/ripple-carry-adder.png)
+
+### Ring oscillators
+
+Ring oscillators are made from an odd number of inverters connected in a ring. The oscillation frequency is impacted by the number of inverters $n$ and the propagation delay of each inverter $d_p$ by the equation $f = 1/(2d_pn)$.
+
+![Ring oscillators](/engn-1630/ring-oscillators.png)
+
+### Transistors
+
+Logic gates are built from transistors, which are like voltage-controlled switches. Two ports get connected depending on the voltage of the third.
+
+**nMOS** transistors pass good 0s, so they should be connected to ground. **pMOS** transistors pass good 1s, so they should be connected to VDD. nMOS and pMOS have opposite behavior.
+
+![nMOS and pMOS](/engn-1630/nmos-pmos.png)
+
+**CMOS** uses both nMOS and pMOS transistors in a pull-down and pull-up network. Notice that the nMOS is involved in the pull-down network, since it is good at passing 0s. The pMOS is involved in the pull-up network, since it is good at passing 1s. There is always a path to either VDD or GND, but never both at the same time.
+
+![CMOS circuit](/engn-1630/cmos-circuit.png)
+
+**Transmission gates** are a bidirectional switch made from an nMOS and pMOS transistor in parallel. The nMOS is controlled by the signal, and the pMOS is controlled by the inverted signal. This switch is good at passing both 0s and 1s.
+
+### Noise margins
+
+The high noise margin is the amount of noise that can be added to a high signal before it is interpreted as a low signal. 
+
+$$\text{NM}_H = V_{OH} - V_{IH}$$  
+
+The low noise margin is the amount of noise that can be added to a low signal before it is interpreted as a high signal. 
+
+$$\text{NM}_L = V_{IL} - V_{OL}$$
+
+The unity gain point is where the slope is equal to 1. That is where $V_{OL}$ and $V_{OH}$ should be set.
+
+![Noise margin](/engn-1630/noise-margin.png)
+
+## Combinational circuits
+
+A logic circuit is composed of:
+1. Inputs
+2. Outputs
+3. Functional specification
+4. Timing specification
+
+In a combinatorial circuit:
+1. Every node is either an input or connects to exactly one output
+2. There are no cyclic paths
+
+Combinational circuits are memoryless, meaning that the output is solely determined by the input. They are different from sequential circuits, which have memory and whose output is determined by both the input and the current state.
+
+### Boolean algebra
+
+A complement is the inverse of a variable, a literal is a variable or its complement, and an **implicant** is a product of literals.  
+
+A minterm is an implicant that includes all input variables. The sum-of-products is the sum of minterms that produce a 1 output. 
+
+To do this, list the minterm that would produce $1$ for each row, and then sum each of the minterms where $Y = 1$. The sum-of-products of $Y$ below is $\overline{A}B + AB$
+
+| $A$ | $B$ | Minterm | Y |
+| - | - | ------- | - |
+| 0 | 0 | $\overline{A}\overline{B}$ | 0 |
+| 0 | 1 | $\overline{A}B$ | 1 | 
+| 1 | 0 | $A\overline{B}$ | 0 |
+| 1 | 1 | $AB$ | 1 |
+
+A maxterm is a sum that includes all input variables. The product-of-sums is the product of maxterms that produce a 0 output. 
+
+To do this, list the maxterms sthat would produce $0$ for each row, and then multiply each of the maxterms where $Y = 0$. The product-of-sums of $Y$ below is $(A + B)(\overline{A} + B)$.
+
+| $A$ | $B$ | Maxterm | Y |
+| - | - | ------- | - |
+| 0 | 0 | $A + B$ | 0 |
+| 0 | 1 | $A + \overline{B}$ | 1 | 
+| 1 | 0 | $\overline{A} + B$ | 0 |
+| 1 | 1 | $\overline{A} + \overline{B}$ | 1 |
+
+
