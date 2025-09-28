@@ -1,0 +1,260 @@
+---
+title: "Datacenter and cloud operating systems notes"
+summary: "Multicore • OS Structure and Abstractions • High-Performance I/O • RDMA"
+publishedAt: 2025-09-06
+updatedAt: 2025-09-23
+tags:
+- notes
+todo: virtualization background for os structure, prism notes 
+---
+
+## Topics
+
+1. [Multicore](#multicore)  
+    - Background: [Processors and cores](#processors-and-cores), [Cache coherence](#cache-coherence)  
+    - Papers: [Multikernels](#multikernels), [COST](#cost) 
+2. [OS structure and abstractions](#os-structure-and-abstractions)
+    - Papers: [Exokernels](#exokernels), [Dune](#dune)
+3. [High-performance I/O](#high-performance-io)
+    - Background: [Linux network stack](#linux-network-stack), [User-level network stack](#user-level-network-stack)
+    - Papers: [IX](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-belay.pdf), [Arrakis](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-peter_simon.pdf)
+4. [High-performance I/O (cont.)](#high-performance-io-cont)
+    - Background: [eBPF](#ebpf), [Polling vs. interrupts](#polling-vs-interrupts)
+    - Papers: [XDP](https://dl.acm.org/doi/pdf/10.1145/3281411.3281443), [XRP](https://www.usenix.org/system/files/osdi22-zhong_1.pdf)
+5. [Remote direct memory access](#remote-direct-memory-access)
+    - Background: [RDMA protocol](#rdma-protocol)
+    - Papers: [FaRM](#farm), [PRISM](#prism)
+4. [Kernel bypass and OS abstractions](#kernel-bypass-and-os-abstractions)
+    - Background: [IOMMU](#iommu), [Zero-copy memory allocation](#zero-copy-memory-allocation)
+    - Papers: [Demikernel](#demikernel)
+
+## Multicore
+
+### Processors and cores
+
+A **processor** contains cores, a memory controller unit (MCU), a shared L3 cache, I/O interfaces (such as the PCI express), and interconnects. **Cache lines** are the fixed-sized blocks of data that are loaded into the shared L3 cache. A **core** is a basic computational unit which maintains its own set of registers. 
+
+![Diagram of a system, a processor, and a core](/csci-2690/processor.jpeg)
+
+A system may have multiple **processors**, which may have multiple **cores** that support multiple **hardware threads** or contexts. 
+
+In a **symmetric/shared memory multiprocessor** (SMP), all processors can run any task and access any memory. The OS is responsible for scheduling threads across processors. Sometimes non-uniform memory access (NUMA) is used, which means that each processor has local RAM but can also access remote RAM attached to another processor.
+
+In massively parallel processing (MPP), there are many processors, each with their own local memory, that communicate by message-passing. One example of this are GPUs.
+
+![Diagram of a multiprocessor system](/csci-2690/multiprocessor-system.jpeg)
+
+### Cache coherence
+
+One big problem with multiprocessors and multicores is **cache incoherence**. When a memory location is modified, the cached copies of that memory location are no longer valid. It is necessary to have a cache coherence protocol to make sure that all copies are the same. The policy needs to guarantee:
+1. **Write propagation**: writes to a memory location must be seen by everyone
+2. **Transaction serialization**: reads and writes to a memory location must be seen in the same order by everyone
+
+Nevertheless, cache coherence comes with its own set of problems:
+1. **Cache ping-pong**: when two threads on different processors repeatedly modify variables that reside on the same cache line, the cache line will be transferred back and forth between the processors, causing a lot of cache coherence traffic. This can be caused by false sharing or true sharing
+2. **False sharing**: when two threads on different processors modify variables that reside on the same cache line, the cache coherence protocol will force the cache line to be transferred between the processors, even though the threads are not actually sharing any data
+
+### Multikernels
+
+[The Multikernel: A New OS Architecture for Scalable Multicore Systems](https://www.sigops.org/s/conferences/sosp/2009/papers/baumann-sosp09.pdf). SOSP 2009.  
+[Fish in a Barrel: An Insider’s Retrospective of the SOSP’09 Multikernel Paper](https://www.sigops.org/2021/fish-in-a-barrel-an-insiders-retrospective-of-the-sosp09-multikernel-paper/).
+
+1. The authors wanted to address the problem of (1) scalibility with rising core counts where cache coherence policies become a bottleneck, and (2) the diversity of hardware within a system and across systems, which makes it difficult to optimize the OS for all hardware types.
+2. The idea of a multikernel is to have a distributed system of OS instances on each core that communicate with each other via message-passing rather than shared state. The problem with this idea was that core-count didn't actually increase dramatically in the last few decades.
+3. Its important to think about the benefits of **shared state** versus **message-passing**. Shared state is the traditional way of building operating systems, where all cores share the same memory space and communicate by reading and writing to shared memory. It can be hard to reason about. Message-passing involves asynch-programming, which can complicated in its own right.
+
+### COST paper
+
+[Scalability! But at what COST?](https://www.usenix.org/system/files/conference/hotos15/hotos15-paper-mcsherry.pdf)
+
+The authors argue that parallelizable overheads in many distributed systems paper cause the scalability of the system to be exaggerated. Instead, distributed systems papers should also consider the COST (configuration that outperforms a single thread) metric in order to gauge the true performance benefits of the system.
+
+## OS structure and abstractions
+
+### Exokernels
+
+[Exokernel: An Operating System Architecture for Application-Level Resource Management](https://dl.acm.org/doi/pdf/10.1145/224057.224076). SIGOPS '95.
+
+1. The Exokernel paper addresses the problem of only providing general, fixed, high-level abstractions such as virtual memory and interprocess communication for applications to use. This makes it difficult for databases, garbage collectors, sandboxes, and web severs to optimize their performance.
+2. The Exokernel paper proposes a new operating system architecture which only handles the protection and multiplexing of resources. The authors envisioned that general applications would use specialized, user-level library operating systems built on primitives (secure bindings) provided by the operating system (Aegis) to optimize their work.
+
+### Dune
+
+[Dune: Safe User-level Access to Privileged CPU Features](https://www.usenix.org/conference/osdi12/technical-sessions/presentation/belay). OSDI '12.
+
+1. The Dune paper tackles the same problem as the exokernel paper. They propose using the virtualization hardware in CPUs to provide a process which could access privileged hardware features. This would allow applications to take advantage of hardware features without needing to make changes to existing operating system abstractions. 
+2. The prototype of this solution is Dune, which comprises of a loadable kernel module on top of the OS (2.5k lines of code) and a user-level library, libDune.
+3. Dune is an example of how advancements in hardware can motivate new papers.
+
+## High-performance I/O
+
+### Linux network stack
+
+The Linux network stack is slow because it involves many memory copies, context switches, interrupts, and queueing delays.
+
+![kernel network stack](/csci-2690/kernel-network-stack.jpeg)
+
+### User-level network stacks
+
+To achieve higher performance, user-level network stacks allow applications to directly read and write to **device driver queues**, bypassing the kernel. This reduces the number of memory copies, context switches, and interrupts. Having a **run-to-completion model** also allows the application to avoid context switches and interrupts. 
+
+The downside is that this means that applications to need to roll out their own network stack (TCP), and **polling** may waste cycles when packets aren't being received.
+
+![user network stack](/csci-2690/user-network-stack.jpeg)
+
+### IX
+
+[IX: A Protected Dataplane Operating System for
+High Throughput and Low Latency](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-belay.pdf). OSDI '14.
+
+The paper addresses the problem of providing protection and isolation for kernel-bypass networking stacks.
+
+The authors propose creating a dataplane operating system which separate the control plane, which handles course-grain resource allocation, from the dataplane, which runs the actual networking stack and the application logic. IX depends on virtualization hardware which (1) allows the dataplane to make use of hardware resources directly and (2) runs the control plane, the dataplane, and the application at different protection levels.
+
+### Arrakis
+
+[Arrakis: The Operating System is the Control Plane](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-peter_simon.pdf). OSDI '14.
+
+Similar solution to IX.
+
+## High-performance I/O (cont.)
+
+### eBPF
+
+Extended Berkeley Packet Filter (eBPF) allows users to run special programs in the Linux kernel without changing kernel source code or loading kernel modules. The verifier ensures that the program is safe to run in the kernel by checking for memory safety and run to completion (bounded loops, instruction limit, no arbitrary jumps).
+
+eBPF programs can be set on hookpoints, which could be system calls, kernel function entry points, trace points, or network events. When the eBPF program is loaded, the jump address of the hookpoint is modified to point to the eBPF program and then back. Note that the goal of eBPF is for observability and tracing, not kernel bypass.
+
+eBPF maps provide a mechanism for eBPF to store and share data within the kernel and communicate with user-space applications. The map can be a diversity of types, including hash tables, arrays, and ring buffers.
+
+eBPF must be run on bare-metal; it is not supported in virtual machines or containers.
+
+### Polling vs. interrupts
+
+When the NIC writes into pre-prepared packet buffers, the CPU should be notified when a packet arrives. There are two ways to do this: polling and interrupts. With polling, the CPU constantly monitors a particular memory address and wastes resources. With interrupts, the kernel sends a signal to the CPU when a packet arrives.
+
+### XDP
+
+[The eXpress Data Path: Fast Programmable Packet Processing in
+the Operating System Kernel](https://dl.acm.org/doi/pdf/10.1145/3281411.3281443). CoNEXT '18.
+
+Many applications (e.g. DPDK) achieve high-performance networking through kernel bypass techniques to avoid the overhead of the operating system. Drawbacks of kernel bypass is losing kernel isolation and security, not having access to kernel network stack features (routing table, TCP stack), and needing to dedicate full CPU cores to packet processing.
+
+The authors propose eBPF-based eXpress Data Path (XDP), which lets user-defined programs run in the Linux kernel at the NIC driver level. This achieves high performance while retaining kernel isolation, security, and access to the network stack.
+
+XDP showed higher performance than baseline Linux but lower than DPDK for packet drop/forwarding benchmarks. The eBPF model was flexible enough to be used to implement layer-3 routing, inline DDoS protection, and layer-4 load balancing.
+
+### XRP
+[XRP: In-Kernel Storage Functions with eBPF](https://www.usenix.org/system/files/osdi22-zhong_1.pdf). OSDI '22.
+
+Similar to XDP, but for storage.
+
+## Remote direct memory access
+
+### RDMA protcol
+
+RDMA (Remote Direct Memory Access) allows one machine to make remote memory reads or writes *without server CPU involvement*. This is different from DPDK, where the server needs the CPU to poll for incoming messages in the NIC queues (tx_burst, rx_burst).
+
+The transport protocol is offloaded to hardware itself. The transport protocol is responsible for ensuring that packets "reliably" arrive. This means:
+1. Packets shouldn't be dropped
+2. Packets shouldn't be received out-of-order
+
+The transport protcol includes ACKs, flow control (how many messages can I have in flight at once), and congestion control. Hardware could be RDMA-enabled NICs or RDMA-enabled switches.
+
+RoCE (RDMA over Converged Ethernet) relies on PFC (Priority Flow Control) and RDMA-enabled NICs. PFC which allows switches to send PAUSE and RESUME frames to other switches, which ensures that no packets will get dropped. The RDMA-enabled NICs are able to send NACKs to signal that packets are out-of-order.
+
+![PFC](/csci-2690/pfc.png)
+
+IWARP is the full TCP protocol implemented on NICs. It is less common that RoCE.
+
+RDMA primitives
+1. One-sided operations like `READ` and `WRITE`
+2. Two-sided operations like `SEND` and `RECEIVE`
+3. Limited support for compare-and-swap (=)
+
+Problems with RDMA:
+1. Most data structures require multiple round trips to traverse
+2. Hard to ensure consistency
+3. Hard to implementing transactions
+
+### FaRM
+
+[No compromises: distributed transactions with
+consistency, availability, and performance](https://www.cs.princeton.edu/courses/archive/spring25/cos418/papers/farm.pdf). SOSP '15.
+
+FaRM is a system to provide transactions using RDMA. Every object is associated with a version number and a lock. During a transaction, FaRM gathers the read set (all values needing to be read) and the write set (all values needing to be written). Then it:
+
+1. Performs one-sided reads of all values in the read set
+2. Make write updates locally
+3. Lock all objects in the write set
+4. Reread all objects in the read set and redo the protcol if any of them has changed
+5. Update write objects
+6. Unlock
+
+Note that this protcol uses optimistic concurrency control.
+It requires multiple READs and RPCs, which means that the CPU is involved.
+
+### PRISM 
+
+[PRISM: Rethinking the RDMA Interface for Distributed Systems](https://dl.acm.org/doi/10.1145/3477132.3483587). SOSP '21.
+
+PRISM primitives:
+1. Indirect reads and writes
+2. Allocate
+3. Enhanced CAS
+4. Operating chaining
+
+In PRISM-TX, the memory layout is changed so that each key keeps the following metadata:
+  - PR: timestamp of most recent transaction that has read the key and has prepared to commit
+  - PW: timestamp of most recent transaction that needs to write the key and has prepared to commit
+  - C: the timestamp of the most recent committed transaction that wrote this key
+
+To do a transaction:
+1. Perform one-sided reads of all values in the read set
+2. Make write updates locally
+3. Check for no concurrent writes by checking pw has not increased
+3. Update write objects
+4. Unlock
+
+## Kernel bypass and OS abstractions
+
+### IOMMU
+
+The IOMMU is the I/O memory management unit that translates virtual address to device (CPU/RAM/NIC) physical memory.
+
+The range of memory the NIC is reading needs to be:
+1. Physically backed and pinned, since the NIC can't handle page-faults
+3. Registered when the NIC has IOMMU support 
+
+![IOMMU](/csci-2690/iommu.png)
+
+There are two ways to use physically_backed memory and pinned memory:
+1. `mprotect()` pins the memory you pass in
+2. OS mantains huge pages (2MB or 1GB). The 2MB pages are always pinned and physically backed. The NIC can register the huge pages with the IOMMU.
+
+### Zero-copy memory allocation
+
+ZC send:
+- App copies app memory into the network stack
+- No further copies until the NIC fetches the packet from RAM
+
+ZC receive:
+- The NIC writes the packet into RAM
+- No further copies until the app copies the packet from the network stack
+
+![Zero-copy](/csci-2690/zero-copy.png)
+
+### Demikernel
+
+[The Demikernel Datapath OS Architecture for Microsecond-scale Datacenter Systems](https://irenezhang.net/papers/demikernel-sosp21.pdf). SOSP '21.
+
+Demikernel aims to do zero-copy memory allocation even between the app and the NIC.
+
+Demikernel send:
+- No copies at all, so NIC must directly access app memory
+- The NIC to have access to app memory, we must either pin memory on demand, or expect the app to use a sepcial memory allocator which allocates pinned memory
+
+Demikernel receive:
+- Hand apps direct pointer to the receive buffer
+
+To provide use-after free protection, when memory is allocated, the Demikernel returns a queue token and increments the reference count. The app can use the queue token to push the address to the NIC. When the NIC is done with the memory region, it will decrement the reference count. When the app is done with the memory region, it will also decrement the reference count. When the reference count reaches 0, the memory region can be freed.
