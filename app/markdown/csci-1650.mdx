@@ -1,0 +1,222 @@
+---
+title: "Software security and exploitation notes"
+summary: "ELF • x86 • Memory • Processes"
+publishedAt: 2025-09-13
+updatedAt: 2025-09-29
+tags:
+- notes
+---
+
+## Contents
+1. [Basic concepts](#basic-concepts) 
+    1. [ELF](#elf), [C](#c) (9/10) 
+    2. [Memory](#memory), [Processes Address Space](#process-address-space) (9/15) 
+    3. [Executing a Process](#executing-a-process), [x86](x86) (9/17)
+2. [Control-flow highjacking](#control-flow-highjacking)
+    1. [Disassembling binaries](#disassembling-binaries) (9/22)
+    3. [Reading x86 instructions](#reading-x86-instructions) (9/24)
+3. [Code injection](#code-injection)
+
+## Basic concepts 
+
+### ELF
+
+An **ELF** is an executable, linkable, binary format. It is standard for UNIX-like systems.
+
+An ELF file can represent executables, shared/static library, object files, and core dumps.
+
+- An executable (EXEC) is a library with a main function. 
+- An object file (REL) is a compiled C file that is not liked yet.
+- A static library is statically linked in, which means that it is included as a big blob in the executable. 
+- A dynamic library (DYN) is linked in at load time. e.g. `libc`
+
+ELF file contents:
+
+1. The **header** contains metadata about the file, such as the type of file (executable, shared library, etc.), the architecture it is intended for, and the entry point address.
+2. The section header table describes the **sections** in the file, such as:
+   - `.text`: executable code
+   - `.data`: initialized global data
+   - `.bss`: uninitialized global data
+   - `.rodata`: read-only global data, such as string literals
+3. The program header table describes the **segment**, which are loaded into memory when the program is run. Segments can contain multiple sections.
+
+![ELF file format](/csci-1650/elf-file.jpeg)
+
+`readelf` is a useful utility for examining the contents of ELF files. Run it when `readelf -e file`.
+
+### C
+
+C compilation process:
+
+1. The **C preprocessor** takes the source code (.c) and preprocesses it by inserting the contents of header files (`#include`), expanding macros (`#define`), and handling conditional compilation directives (`#if`, `#else`). This becomes an intermediate file (.i).
+2. The **C compiler** takes the intermediate file and converts it to architecture-specific assembly (.s). It takes it from the AST (GENERIC), to the next IR (GIMPLE), then to the SSA (single static analysis), and finally to the assembly code.
+3. The **assembler** takes the assembly file, converts the assembly to machine code, and produces an object file (.o). 
+4. The **linker** takes one or more object files and combines them into a single executable file.
+5. The **loader** loads the executable into memory and prepares it for execution. It sets up the necessary memory segments, resolves dynamic links (if any), and transfers control to the program's entry point (usually the `main` function).
+
+Note that in this process, the object files and the final executable are ELF files.
+
+C constructs:
+- `extern` means external to the compilation unit
+- `static` means internal to the compilation unit, so you cannot access it from other compilation units
+
+C data types:
+
+| Type        | Size                     | Value                       |
+| ----------- | ------------------------ | --------------------------- |
+| `void`      | N/A                      | No value                    |
+| `char`      | 1 byte                   | Character                   |
+| `short`     | 2 bytes                  | Whole number                |
+| `int`       | 4 bytes                  | Whole number                |
+| `long`      | 4 bytes*                 | Whole number                |
+| `long long` | 8 bytes*                 | Whole number                |
+| `float`     | 4 bytes                  | Decimal number              |
+| `double`    | 8 bytes                  | Decimal number              |
+| `long double`| 16 bytes                | Decimal number              |
+| `pointer`   | 4 bytes*                 | Address                     | 
+
+*This is based on a 32-bit architecture. On a 64-bit architecture, `long` and `pointer` would typically be 8 bytes.
+
+ References:
+- [CSCI 1650 Lecture Notes](https://cs.brown.edu/courses/csci1650/notes/l02.pdf)
+- [How GCC Compiles Code](https://lug.ncsu.edu/presentations/2019-09-04-c-compilation.pdf0)
+- [COMS 4995 Introduction to Elf](https://cs4157.github.io/www/2024-1/lect/15-elf-intro.html)
+
+### Memory
+
+Memory can be referenced using its address, whose granularity and size depends on the architecture. In x86, every 8 bits (1 byte) of memory has its own address. In 32-bit systems, the address is 32 bits (4 bytes) long, and in 64-bit systems, the address is 64 bits (8 bytes) long. 
+
+This means that in x86 32-bit systems, there is roughly 2^32 bits = 4 GB of **addressable memory**. Around 1 GB is dedicated to the kernel and 3 GB is dedicated to userland.
+
+![Kernel and userland mappings](/csci-1650/kernel-and-userland-mappings.jpeg)
+
+Memory is allocated by the kernel. The granularity of **allocatable memory** is also dependent on the architecture. Linux allocates memory in pages, which are typically 4 KB in size. The reason why this is important is because permission bits can only be set at the page level.
+
+Virtual addresses are used for both resource management and process isolation. To translate from virtual addresses to physical addresses, **page tables** are managed by the operating system and assigned to each process. The hardware accesses this through the TLB (translation lookahead buffer).
+
+TLDR: Addressable memory has a granularity of 1 byte, but allocatable memory has a granularity of 4 KB.
+
+### Process address space
+
+A process is a running instance of a program. Each process has its own virtual address space. There is 1 GB dedicated to kernel mappings and 3 GB dedicated to userland.
+
+The **stack** grows from high addresses to low addresses, but data structures inside of the stack are read from low addresses to high addresses. The **heap** grows from low addresses to high addresses.
+
+The **mmap region** is the only region with DYN (dynamically linked) memory. It also has its own mmap heap.
+
+![Process address space](/csci-1650/process-address-space.jpeg)
+
+### Executing a process
+
+The operating system reads the ELF file and does the following:
+
+1. Calculate the number of pages needed for the process
+2. Carve the address space into page-aligned segments with permissions
+3. Copy allocatable bytes from the ELF file into the address space
+4. If there is no INTERP statement, jump to the entry point of the main ELF file. 
+5. If there is an INTERP statement, copy the new ELF file into the MMAP region and jump to its entry point.
+
+From then on, the operating system is done.
+
+The INTERP statement is used to describe the bianry's dependencies in dynamically-loaded libraries. For the main ELF file, the INTERP will read like this: `[Requesting program interpreter: /lib/ld-linux.so.2]`. 
+
+`ld.so` is a special helper that will help load all other libraries into memory. Similar to the operating system, `ld.so` will jump to the right place in the MMAP region of memory and copy the relevant dynamically-loaded library, like `libc.so`.
+
+### x86
+
+x86 has 8 general-purpose registers (EAX, EBX, ECX, ESI, EDI, EBP, and ESP) and two special-purpose registers (EFLAGS, EIP).
+
+1. %eip points at the next instruction to be executed.   
+2. %esp points at the top of the stack.  
+3. %eax contains the return value of functions.  
+
+![Registers](/csci-1650/registers.png)
+
+The x86 instruction set (ISA) is variable length, which makes it more difficult to decode instructions.
+
+The ISA can be presented with either AT&T syntax or IA-32 ASM (Intel) syntax, but AT&T syntax is more common in UNIX-like systems.
+
+e.g. `mov %eax, %ebx` in AT&T syntax is `mov ebx, eax` in Intel syntax.
+
+| Symbol | Meaning |
+| ------ | ------- |
+| %eax   | Register |
+| $100   | Constant |
+| 0x100  | Memory address |
+| (%eax) | Memory address in the register |
+| offset(base, index, multipler) | Memory address in offset + base + index * multiplier |
+
+x86 uses little-endian format, which means that the least significant byte is stored at the lowest memory address.
+
+## Control-flow highjacking
+
+### Disassembling binaries
+
+`ldd` is a command that prints the shared libraries required by each program.  
+`objdump -d <exec>` can disassemble an executable file.
+
+GDB
+
+1. `info proc mappings` will print the memory mappings of the current process
+3. `disassemble main` will disassemble the main function
+4. `b *addr` will set a breakpoint at the given address
+2. `si` will step one instruction
+3. `printf "%x\n", $ebp+0x8` can print addresses
+4. `x/x bffffdb0` can examine memory at the given address
+
+### Reading x86 instructions
+
+The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`. For example, this reads 4 bytes from address 0x8(%esp) and pushes it to the stack.
+
+```
+push 0x8(%ebp)
+```
+
+The `call` changes the control flow of the program. The CPU:
+
+1. Computes the return address, or the address of the next instruction after the `call`
+2. Pushes the return address onto the stack in little endian
+3. Decrements `%esp` by the size of the data being pushed to the stack
+4. Loads `%eip` with the call target
+
+```
+0x8049591  call 0x8049263 <cli_hndl>
+0x8049596  add %0x10, %esp
+```
+
+The prologue starts a function. The CPU:
+
+1. Pushes the old base pointer on the stack
+2. Decrements `%esp` by the size of the data being pushed to the stack
+3. Sets the base pointer to the current top of the stack
+4. Grows the stack down to allocate 0x218 (536) bytes for local variables
+
+```
+0x08049263 <+0>:     push   %ebp
+0x08049264 <+1>:     mov    %esp,%ebp
+0x08049266 <+3>:     sub    $0x218,%esp
+```
+
+`lea` is the only instruction that does not dereference the address. It just load the address it into a register.
+
+```
+lea -0x20c(%ebp),%eax
+```
+
+Remember that the stack grows upward. For example, the stack frame of `read(int fd, void* buf, size_t nbytes)` looks like this:
+
+```
+0x400       (length)
+0xbffffb84  (pointer to the buffer)
+0x4         (fd)
+```
+
+Parameters and local variables are referenced relative to the base pointer `%ebp`. Positive offsets means that you are accessing parameters and negative offsets means that you are accessing local variables. For example, `-0xc(%ebp)` means that there is a local variable 12 bytes from `%ebp`.
+
+## Code injection
+
+Shell code is code that is injected into the attacker's area of control in order to exploit a memory corruption vulnerability.
+
+Reverse shell code connects back to the attacker's machine and gives the attacker a shell. Bind shell code listens on a port and gives the attacker a shell when they connect to that port.
+
+Stack jitter refers to how much the stack memory location changes across instances because of environment variables placed on top. This can be mitigated by NOP sleds, which are sequences of NOP instructions that slide the execution flow to the shell code.
