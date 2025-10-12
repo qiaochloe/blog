@@ -1,0 +1,179 @@
+---
+title: "Topics in programming languages notes"
+summary: "Compiler Architecture • Program Semantics • Type Inference"
+publishedAt: 2025-09-05
+updatedAt: 2025-10-12
+tags:
+- notes
+---
+
+## Contents
+
+|Date |Topic|
+|-----|-----|
+|9/4  |[Introduction](#introduction)|
+|9/9  |[Compiler architecture](#compiler-architecture)|
+|9/11, 9/16 |[Program semantics](#high-level-program-semantics)|
+|9/18 |[Type inference](#type-inference)|
+|9/23, 9/25, 9/30|[Intraprocedural dataflow](#intraprocedural-dataflow)|
+
+## Introduction 
+
+Benefits of program analysis:
+
+1. Type checking, including classes, interfaces, traits
+2. Type inference (polymorphic, flow-sensitive)
+3. Pointer analysis (ownership, nullability)
+4. Dataflow optimizations in the assembly code
+5. Coverage-guided fuzzing
+6. JIT compilation
+7. Parallelization and differentiation
+
+There are limits to program analysis. For example, the halting problem is undecidable, and Rice's theorem extends that to most other interesting properties.
+
+## Compiler architecture
+
+### Abstract syntax tree (AST)
+
+ASTs are the output of parsing a program.
+
+### Intermediate representation (IR)
+
+IRs are used for program analysis, such as type-checking, type-inference, and optimizations. It may also convert the code into a useful **bytecode** representation. There can be multiple layers of IRs.
+
+One way to optimize code is through a **control flow graph** (CFG). A CFG is a directed graph of **basic blocks**, which begin with a label, contain statements, and end with a jump.
+
+```
+L1:
+  t0 <- 2
+  t1 <- f(t0)
+  t2 <- t0 + t1
+  JMP(L2) 
+```
+
+It might also be necessary to translate the language into a bytecode format recognizable by other runtime backends. For example, WASM.
+
+Reference: [Brown CSCI 1260 IRs and Register Allocation Notes](https://browncs1260.github.io/notes/22), [CMU 15-411 IR Notes](https://www.cs.cmu.edu/~fp/courses/15411-f14/lectures/10-irtrees.pdf),
+
+## High-level program semantics
+
+There are formal ways to describe the syntax, semantics, and type system of a programming language.
+
+### Syntax
+
+The syntax of a simple language can be described using metavariables and grammars. **Metavariables** describe different categories of syntax. Grammars describe how to construct valid syntax in the language.
+
+Here are some simple syntax rules:
+
+$
+\newcommand{\msf}[1]{\mathsf{#1}}
+\newcommand{\s}{\hspace{2em}}
+\newcommand{\efalse}{\msf{false}}
+\newcommand{\etrue}{\msf{true}}
+\newcommand{\tyint}{\msf{int}}
+\newcommand{\tystring}{\msf{string}}
+\newcommand{\tybool}{\msf{bool}}
+\newcommand{\concat}{\mathop{\textrm{\textasciicircum}}}
+\newcommand{\elet}[3]{\msf{let}~{#1} = {#2} ~ \msf{in} ~ {#3}}
+\begin{aligned}
+  \msf{Number}~n &\in \mathbb{Z} \s 
+  \msf{String}~s \s
+  \msf{Bool}~b ::= \efalse \mid \etrue \s
+  \msf{Variable}~x \\
+  \msf{Const}~c &::= n \mid s \mid b \s \\
+  \msf{Expr}~e &::= c \mid e_1 \oplus e_2 \mid \elet{x}{e_1}{e_2} \mid x \\
+  \msf{Type}~\tau &::= \tyint \mid \tystring \mid \tybool \\
+  \msf{Binop}~\oplus &::= {+} \mid {\concat} \mid {=}
+\end{aligned}
+$
+
+Notice that some branches are like base cases, such as $c$ and $x$, and other branches are recursive, like $e_1 \oplus e_2$.
+
+### Semantics
+
+The semantics of a language can be described using operational semantics. 
+
+### Type safety
+
+An expression is well-typed if it can be assigned a type according to the typing rules of the language. Type safety means that a well-typed expression can't go wrong. 
+
+Type safety is guaranteed with two properties:
+1. **Progress** ensures that a program will either be a final value or can take another step of evaluation. If $e : \tau$, then either $e ~\mathsf{val}$ or $e \hookrightarrow e'$.
+2. **Preservation** ensures that a program will have the same type after taking a step of evaluation. If $e : \tau$ and $e \hookrightarrow e'$, then $e' : \tau$.
+
+## Intraprocedural dataflow analysis
+
+### Dataflow analysis
+
+A **dataflow analysis** is used to get information about the the program at different nodes of the CFG. For example, we can figure out if there is:
+1. Division by 0
+2. Assignment to unused variables 
+3. Dead code
+4. Live variables
+
+Generally, dataflow analysis is performed on an intermediate representation (IR) of the program.
+
+$
+\newcommand{\msf}[1]{\mathsf{#1}}
+\newcommand{\s}{\hspace{2em}}
+\newcommand{\eif}[3]{\msf{if}~{#1}~\msf{goto}~{#2}~\msf{else}~{#3}}
+\begin{aligned}
+  \msf{Program}~P &::= I^* \\
+  \msf{Instr}~I &::= p = rv \mid \msf{goto}~i \mid \eif{p}{i_1}{i_2} \\
+  \msf{MemLoc}~l &::= x \\
+  \msf{Rvalue}~rv &::= c \mid p \mid p_1 \oplus p_2 \\
+\end{aligned}
+$
+
+### Monotonic frameworks
+
+**Abstract values** $v$ represent the information we have about a variable at a particular point in execution. $\bot$ means that we have no information and $\top$ means that we have too much information. 
+
+Abstract values can be represented with a **lattice** structure. Lattices have a **join** function $\sqcup$ which produces the least upper bound for any two elements. 
+
+The **domain** $\sigma$ is a map between program variables $x$ and abstract values $v$. The **transfer function** $f$ describes how $\sigma$ changes after executing an instruction. 
+
+The goal of the analysis is to compute, for each node $n$, the domain $\sigma_n^{\text{in}}$ before executing the instruction and $\sigma_n^{\text{out}}$ after executing the instruction. 
+
+```math
+\sigma^{\text{in}}_i = \sqcup_{j \in \text{pred}(i)} \sigma^{\text{out}}_j
+```
+```math
+\sigma^{\text{out}}_i = f(I_i, \sigma^{\text{in}}_i)
+```
+
+The system of equations can be solved using a **fixed-point iteration** algorithm, such as the **worklist algorithm**.
+
+```rs
+let sigma_bot = {x -> bot for x in variables}
+let sigma_in = [sigma_bot, .., sigma_bot]
+let sigma_out = [sigma_bot, .., sigma_bot]
+let worklist = [1, .., n]
+
+while let Some(i) = worklist.dequeue() {
+    sigma_in[i] = union(predecessors(i).map(|p| sigma_out[p]))
+    sigma_out[i] = f(p_i, sigma_in[i])
+    if sigma_out[i] changed {
+      worklist.enqueue(successors(i))
+    }
+}
+```
+
+### Examples
+
+<!--- Comment 
+### Worklist termination
+
+The algorithm terminates when the worklist is empty, which happens if there exists $k$ iterations such that no $\sigma^{\text{out}}_i$ changes. 
+
+A function $f$ is **inflationary** if $\forall x, f(x) \geq x$. $\sqcup$ must be inflationary by definition of lattice.
+
+A function $f$ is **monotonic** if $f$ is order-preserving; if $x \leq y$, then $f(x) \leq f(y)$.
+
+An abstraction function $\alpha$ takes a configuration $C$ and returns an abstract domain $\sigma.$
+For example, in zero analysis,  $\forall x \in C\mathsf{.locals},~ \alpha(C) = \{x \mapsto \mathsf{if} ~ x = 0 ~ \mathsf{then ~ Z ~ else ~ NZ}\}$.
+
+An analysis is sound with respect to $\alpha$ if $\forall T,~\forall C_i \in T,~\alpha(C_1) \sqsubseteq \sigma_{C_i\mathsf{.pc}}^{\text{out}}$.
+
+(This doesn't apply to backwards analysis.)
+--->
