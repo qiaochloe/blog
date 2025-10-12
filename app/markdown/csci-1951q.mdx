@@ -158,22 +158,3 @@ while let Some(i) = worklist.dequeue() {
     }
 }
 ```
-
-### Examples
-
-<!--- Comment 
-### Worklist termination
-
-The algorithm terminates when the worklist is empty, which happens if there exists $k$ iterations such that no $\sigma^{\text{out}}_i$ changes. 
-
-A function $f$ is **inflationary** if $\forall x, f(x) \geq x$. $\sqcup$ must be inflationary by definition of lattice.
-
-A function $f$ is **monotonic** if $f$ is order-preserving; if $x \leq y$, then $f(x) \leq f(y)$.
-
-An abstraction function $\alpha$ takes a configuration $C$ and returns an abstract domain $\sigma.$
-For example, in zero analysis,  $\forall x \in C\mathsf{.locals},~ \alpha(C) = \{x \mapsto \mathsf{if} ~ x = 0 ~ \mathsf{then ~ Z ~ else ~ NZ}\}$.
-
-An analysis is sound with respect to $\alpha$ if $\forall T,~\forall C_i \in T,~\alpha(C_1) \sqsubseteq \sigma_{C_i\mathsf{.pc}}^{\text{out}}$.
-
-(This doesn't apply to backwards analysis.)
---->
