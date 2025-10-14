@@ -2,7 +2,7 @@
 title: "Digital electronics systems design notes"
 summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits"
 publishedAt: 2025-09-18
-updatedAt: 2025-09-23
+updatedAt: 2025-10-14
 tags:
 - notes
 ---
@@ -22,6 +22,16 @@ tags:
     5. [Noise margins](#noise-margins)
 4. [Combinational circuits](#combinational-circuits) (9/23, 9/25, 9/30, 10/2, 10/7, 10/9)
     1. [Boolean algebra](#boolean-algebra)
+    2. [Decoders](#decoders)
+5. [Sequential circuits](#sequential-circuits) (10/9, 10/14, 10/16, 10/23, 10/25)
+    1. [Bistable circuit](#bistable-circuit)
+    2. [Set-reset latch](#set-reset-latch)
+    3. [Data latch](#data-latch)
+    4. [Data flip-flop](#data-flip-flop)
+    5. [Registers](#registers)
+    6. [Enabled flip-flops](#enabled-flip-flops)
+    7. [Resettable flip-flops](#resettable-flip-flops)
+    8. [Settable flip-flops](#settable-flip-flops)
 
 ## Introduction
 
@@ -186,4 +196,68 @@ To do this, list the maxterms sthat would produce $0$ for each row, and then mul
 | 1 | 0 | $\overline{A} + B$ | 0 |
 | 1 | 1 | $\overline{A} + \overline{B}$ | 1 |
 
+### Decoders
 
+Can be 2x4, 3x8, 4x16.
+
+Takes in some input and returns a one-hot output.
+
+## Sequential circuits
+
+### Bistable circuit
+
+- 2 outputs and no inputs
+- 4 transistors
+- Stable at two values
+
+### Set-reset latch
+
+- 2 inputs: S and R
+- 8 transistors
+- Must avoid invalid state 
+- At S = R = 1, we get an invalid state Q = Q' = 0
+
+### Data latch
+
+- 2 inputs: CLK and D
+- CLK controls when the output changes 
+- Transparent at CLK = 1, opaque at CLK = 0
+- D controls what the output changes into
+- Avoids the invalid state of the SR latch
+- 22 transistors, so expensive
+
+### Data flip-flop
+
+- Two inputs: CLK and D
+- D is sampled on the **rising edge** of CLK. Otherwise, Q holds its value.
+- Start signals with unknown state
+- 46 transistors
+
+### Registers
+
+Registers are made from multiple flip-flops.
+
+### Enabled flip-flops
+
+- 3 inputs: CLK, D, and EN
+- The EN controls whether new data is stored
+
+### Resettable flip-flops
+
+- 3 inputs: CLK, D, and Reset
+- Reset Q to initial state 0 
+
+Synchronous reset: 
+  - Reset on clock edge
+  - Easier, just AND
+  - Timing is consistent
+
+Asynchronous reset: 
+  - Reset immediately when Reset = 1
+  - Need to change internal circuitry
+  - Timing is hard
+
+### Settable flip-flops
+
+- 3 inptus: CLK, D, and Set
+- Set Q to state 1
