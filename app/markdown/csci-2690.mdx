@@ -17,16 +17,31 @@ todo: virtualization background for os structure, prism notes
     - Papers: [Exokernels](#exokernels), [Dune](#dune)
 3. [High-performance I/O](#high-performance-io)
     - Background: [Linux network stack](#linux-network-stack), [User-level network stack](#user-level-network-stack)
-    - Papers: [IX](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-belay.pdf), [Arrakis](https://www.usenix.org/system/files/conference/osdi14/osdi14-paper-peter_simon.pdf)
+    - Papers: [IX](#ix), [Arrakis](#arrakis)
 4. [High-performance I/O (cont.)](#high-performance-io-cont)
     - Background: [eBPF](#ebpf), [Polling vs. interrupts](#polling-vs-interrupts)
-    - Papers: [XDP](https://dl.acm.org/doi/pdf/10.1145/3281411.3281443), [XRP](https://www.usenix.org/system/files/osdi22-zhong_1.pdf)
+    - Papers: [XDP](#xdp), [XRP](#xrp)
 5. [Remote direct memory access](#remote-direct-memory-access)
     - Background: [RDMA protocol](#rdma-protocol)
     - Papers: [FaRM](#farm), [PRISM](#prism)
 4. [Kernel bypass and OS abstractions](#kernel-bypass-and-os-abstractions)
     - Background: [IOMMU](#iommu), [Zero-copy memory allocation](#zero-copy-memory-allocation)
     - Papers: [Demikernel](#demikernel)
+6. [NIC Interfaces](#nic-interfaces)
+    - Background: [Packetized interface](#packetized-interface)
+    - Papers: [Enso](#enso)
+7. [CPU Scheduling](#cpu-scheduling)
+    - Background
+    - Papers: [Shenango](#shenango), [Attack of the Killer Microseconds](#attack-of-the-killer-microseconds)
+8. [CPU Scheduling (cont.)](#cpu-scheduling-cont)
+    - Background:
+    - Papers: [Syrup](#syrup), [Ghost](#ghost)
+10. [CPU Scheduling & Interference](#cpu-scheduling-interference)
+    - Background:
+    - Papers: [Caladan](#caladan)
+9. [Signals vs. Interrupts](#signals-vs-interrupts)
+    - Background:
+    - Papers: [Aspen](#aspen)
 
 ## Multicore
 
@@ -87,6 +102,18 @@ The authors argue that parallelizable overheads in many distributed systems pape
 3. Dune is an example of how advancements in hardware can motivate new papers.
 
 ## High-performance I/O
+
+### Metrics
+
+Characteristics of modern datacenters:
+1. Requests are distributed across thousands of servers
+2. Requests are small
+3. There is variable load, both bursty (µs) and diurnal
+
+Important metrics:
+1. Throughput (requests per second)
+1. Tail latency, since end-to-end response times are determined by the slowest individual response
+2. CPU utilization under variable load
 
 ### Linux network stack
 
@@ -258,3 +285,127 @@ Demikernel receive:
 - Hand apps direct pointer to the receive buffer
 
 To provide use-after free protection, when memory is allocated, the Demikernel returns a queue token and increments the reference count. The app can use the queue token to push the address to the NIC. When the NIC is done with the memory region, it will decrement the reference count. When the app is done with the memory region, it will also decrement the reference count. When the reference count reaches 0, the memory region can be freed.
+
+## NIC Interfaces
+
+### Packetized interface
+
+Traditionally, NICs and applications communicate through buffers that contain packet descriptors. Packet descriptors hold metadata, a flag bit, and a pointer to a **fixed-sized packet buffer** which holds the data. 
+
+In the TX buffer, the NIC reads from the head and the CPU writes to the tail.
+
+![NIC tx buffer](/csci-2690/nic-tx-buffer.jpeg)
+
+In the RX buffer, the NIC writes to the head and the CPU reads from the tail.
+
+![NIC rx buffer](/csci-2690/nic-rx-buffer.jpeg)
+
+Packet buffers make it efficient to do software multiplexing and demultiplexing, since only packet pointers need to be delivered. However, now that demultiplexing can be done with NIC offloads, this is no longer as relevent.
+
+There are two problems with the packetized interface:
+1. Large received data is unnecessarily broken into buffers, causing CPU overhead and cache misses
+2. More metadata needs to be transferred around, making the network bottlenecked by PCIe
+
+### Enso
+
+zero-copy allows better cache utilization, since this doesn't lead to dirtying the cache 
+Enso showed that you can increase
+
+DDIO, when NIC recv data, can put in L3 cache
+
+## CPU scheduling
+
+### CPU scheduling algorithms
+
+Most Theoretical
+1. First come first serve (FCFS)
+2. Prioritization
+3. Shortest remaining processing time (SRPT)
+
+Assumes they know how long tasks will take and the implementation of algorithm has no overhead. Makes sense at long timescales.
+
+Kernel-Bypass Scheduling Policies
+- ZygOS
+- Shenango
+- Arachne
+- Caladan
+
+Very low overhead to effectively deal with microsecond-scale events.
+Requires application changes. Not all policies implemented.
+Very good performance.
+
+Improve Linux Scheduling
+- Syrup
+- Ghost
+- Snap
+
+Some changes to the kernel will be necessary. 
+Worse performance than kernel-bypass.
+
+Most Practical
+1. Completely fair scheduling (CFS) [Linux]
+2. Earliest eligible virtual deadline first (EEVDF) [Linux]
+
+### Shenango
+
+Quick core allocation.    
+
+Shenango is a runtime and a kernel module (IOKernel).  
+
+IOKernel
+- Algorithm for scheduling
+- Core pinning
+- Control plane - decides where packets go
+- Data plane - moves packets
+
+### Attack of the Killer Microseconds
+
+Hardware can mask the latency of nanosecond-scale events. 
+e.g. Cache misses are around 100ns. During that time, hardware can do out-of-order execution or the CPU can switch to another hyper-thread.
+
+Software can mask the latency of millisecond-scale events.
+e.g. Disk I/Os, WAN network events, and low-end flash devices are 10s of milliseconds. During that the time, the CPU can just switch to another thread.
+
+Nothing can effectively mask the latency of microsecond-scale events. e.g. Datacenter round trip time and high-end flash devices. 
+
+## CPU scheduling (cont.)
+
+## ghOSt
+
+Problem:
+- Scheduling is good but hard
+
+Solution
+- Mechanism vs policy
+  - Mechanism is execution
+  - Policy is deciding what to run
+
+### Syrup
+
+Mark signals they want to monitor.
+Map from signal to policy.
+
+### Caladan
+
+Identified three sources of interference: hyperthread, memory bandwidth, and last-level cache (LLC).
+
+![Caladan Interference](/csci-2690/caladan-interference.png)
+
+Hyperthread interference
+- Assume interference is always present when both siblings are active
+- Monitor LC tasks, queuing delays, response-time delays
+
+Memory bandwidth interference
+- Poll DRAM to see how much bandwidth is used currently by all tasks
+- To attribute to individual task, sample LLC misses 
+
+LLC interference
+- Measure increased queueing delays caused by reductions in compute capacity
+
+## Signals vs. interrupts
+
+### Aspen
+
+In Aspen-KB, a timer core needs to be allocated to periodically preempt runtime cores. The network RX queue is frequently polled for incoming packets, or requests. Requests are added to a new queue. The thread on the new queue runs for some quanta, and then gets added to the preempted queue. We assume that the priority of new requests is greater than preempted ones.
+
+In Aspen-Go, a dedicated thread called sysmon reempts goroutines periodically. Each core has a queue of runnable goroutines, and there is also a global queue of preempted goroutines. Tasks on per-core queues are prioritized over global queues. One problem is that sysmon does not have direct access to the network RX queue.
