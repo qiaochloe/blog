@@ -210,12 +210,16 @@ Takes in some input and returns a one-hot output.
 - 4 transistors
 - Stable at two values
 
+![Bistable circuit](/engn-1630/bistable-circuit.png)
+
 ### Set-Reset Latch
 
 - 2 inputs: S and R
 - 8 transistors
 - Must avoid invalid state 
 - At S = R = 1, we get an invalid state Q = Q' = 0
+
+![SR latch](/engn-1630/sr-latch.png)
 
 ### Data Latch
 
@@ -226,6 +230,8 @@ Takes in some input and returns a one-hot output.
 - Avoids the invalid state of the SR latch
 - 22 transistors, so expensive
 
+![Data latch](/engn-1630/data-latch.png)
+
 ### Data Flip-Flop
 
 - Two inputs: CLK and D
@@ -233,14 +239,20 @@ Takes in some input and returns a one-hot output.
 - Start signals with unknown state
 - 46 transistors
 
+![Data flip-flop](/engn-1630/data-flip-flop.png)
+
 ### Registers
 
 Registers are made from multiple flip-flops.
+
+![Register](/engn-1630/register.png)
 
 ### Enabled Flip-Flops
 
 - 3 inputs: CLK, D, and EN
 - The EN controls whether new data is stored
+
+![Enabled flip-flop](/engn-1630/enabled-flip-flop.png)
 
 ### Resettable Flip-Flops
 
@@ -252,6 +264,8 @@ Synchronous reset:
   - Easier, just AND
   - Timing is consistent
 
+![Synchronous resettable flip-flop](/engn-1630/synchronous-resettable-flip-flop.png)
+
 Asynchronous reset: 
   - Reset immediately when Reset = 1
   - Need to change internal circuitry
@@ -261,3 +275,22 @@ Asynchronous reset:
 
 - 3 inptus: CLK, D, and Set
 - Set Q to state 1
+
+### Synchronous sequential circuits
+
+There are two common types osf synchronous sequential circuits: 
+- Pipelines
+- Finite state machines (FSMs)
+
+### Finite State Machines
+
+There are two types of FSMs:
+1. Moore: Output depends only on current state
+2. Mealy: Output depends on current state and input
+
+Design procedure:
+1. Identify inputs and outputs
+2. Select state encodings
+3. Sketch a state transition diagram. Nodes represent states and edges represent inputs.
+4. Write a state transition table and output table
+5. Write boolean equations for **next state** and **output logic**
