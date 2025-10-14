@@ -1,35 +1,36 @@
 ---
-title: Data structures and algorithms notes
+title: Data Structures and Algorithms Notes
 publishedAt: 07-16-25
 updatedAt: 09-20-25
 summary: "Arrays • Linked Lists • Trees • Heaps • Segment Trees • Graphs • Union Find • Multisets • Maps"
 tags:
   - "notes"
   - "technical"
-todo: Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree
+todo: Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, time complexity
 ---
 
 ## Contents
 
-### Data structures
-1. [Abstract data types](#abstract-data-types)
+### Data Structures
+
+1. [Abstract Data Types](#abstract-data-types)
 1. [Arrays](#arrays)
-    - Techniques: [Two pointer](#two-pointer), [Sliding window](#sliding-window), [Prefix sum](#prefix-sum)
-    - Algorithms: [Kadane's algorithm](#kadanes-algorithm), [Binary search](#binary-search), [Merge sort](#merge-sort), [Bucket sort](#bucket-sort)
-2. [Linked lists](#linked-lists)
-    - Techniques: [Dummy node](#dummy-node)
-    - Algorithms: [Fast and slow pointers](#fast-and-slow-pointers)
+    - Techniques: [Two Pointer](#two-pointer), [Sliding Window](#sliding-window), [Prefix Sum](#prefix-sum)
+    - Algorithms: [Kadane's Algorithm](#kadanes-algorithm), [Binary Search](#binary-search), [Merge Sort](#merge-sort), [Bucket Sort](#bucket-sort)
+2. [Linked Lists](#linked-lists)
+    - Techniques: [Dummy Node](#dummy-node)
+    - Algorithms: [Fast and Slow Pointers](#fast-and-slow-pointers)
 4. [Trees](#trees)
-    - Implementations: [Tree with pointers](#tree-with-pointers), [Complete binary tree with arrays](#complete-binary-tree-with-arrays)
-    - Techniques: [Tree traversal](#tree-traversal)
-    - Algorithms: [Segment trees](#segment-trees)
+    - Implementations: [Tree with Pointers](#tree-with-pointers), [Complete Binary Tree with Arrays](#complete-binary-tree-with-arrays)
+    - Techniques: [Tree Traversal](#tree-traversal)
+    - Algorithms: [Segment Trees](#segment-trees)
 3. [Heaps](#heaps)
-    - Implementations: [Binary heap](#binary-heap), [Built-in heap](#built-in-heap)
+    - Implementations: [Binary Heap](#binary-heap), [Built-In Heap](#built-in-heap)
 5. [Graphs](#graphs)
     - Implementations: 
-    - Algorithms: [Topological sort](#topological-sort)
-4. [Union find](#union-find)
-    - Implementations: [Basic union find](#basic-union-find), [Path compression and rank-ordering](#path-compression-and-rank-ordering)
+    - Algorithms: [Topological Sort](#topological-sort)
+4. [Union Find](#union-find)
+    - Implementations: [Basic Union Find](#basic-union-find), [Path Compression and Rank-Ordering](#path-compression-and-rank-ordering)
 5. [Multisets](#multisets)
     - Implementations: [Counter](#counter)
 10. [Maps](#maps)
@@ -38,10 +39,10 @@ todo: Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree
 ### Algorithms
 
 1. [Backtracking](#backtracking)
-12. [Dynamic programming](#dynamic-programming)
-13. [Bit math](#bit-math)
+12. [Dynamic Programming](#dynamic-programming)
+13. [Bit Math](#bit-math)
 
-## Abstract data types
+## Abstract Data Types
 
 Abstract data types include lists, priority queues, trees, sets, multisets, maps, and graphs.
 
@@ -62,7 +63,7 @@ Abstract data types include lists, priority queues, trees, sets, multisets, maps
 
 ## Arrays
 
-### Two pointer
+### Two Pointer
 
 Used to find valid subarrays.
 
@@ -81,7 +82,7 @@ def f(arr):
 
 Example problems include [3Sum](https://leetcode.com/problems/3sum/description/), [Container With Most Water](https://leetcode.com/problems/container-with-most-water/description/) and [Trapping Rainwater](https://leetcode.com/problems/trapping-rain-water/description/).
 
-### Sliding window
+### Sliding Window
 
 Used to find valid subarrays.
 
@@ -103,7 +104,7 @@ def f(arr):
     return output
 ```
 
-### Prefix sum
+### Prefix Sum
 
 Used to efficiently calculate the sum of a subarray.
 
@@ -115,7 +116,7 @@ def f(arr):
     return prefix
 ```
 
-### Kadane's algorithm
+### Kadane's Algorithm
 
 Used to find the maximum sum of a contiguous subarray within an array.
 
@@ -131,7 +132,7 @@ def f(arr):
     return best_sum
 ```
 
-### Binary search
+### Binary Search
 
 Used to find an element in a sorted array.
 
@@ -193,7 +194,7 @@ def f(n, arr):
     return -1
 ```
 
-### Merge sort
+### Merge Sort
 
 The intuition behind `mergesort` is that you recursively break the list into left and right sublists. At the base case, the list is length 0 or 1 and is considered sorted. After calling `mergesort` recursively on the left and the right side, the `merge` function merges the now sorted lists.
 
@@ -232,17 +233,17 @@ def merge(left, right):
     return output
 ```
 
-### Bucket sort
+### Bucket Sort
 
 The idea of bucket sort is to distribute the elements into a number of buckets. Each bucket is then sorted individually, either using a different sorting algorithm, or by recursively applying the bucket sort algorithm. Combined with the pigeonhole principle, it can be useful for problems like [Maximum Gap](https://leetcode.com/problems/maximum-gap/description/).
 
-## Linked lists
+## Linked Lists
 
-### Dummy node
+### Dummy Node
 
 Some problems can be simplified by using a dummy node at the start of the linked list. This avoids edge cases when the head needs to be removed or modified. Example problems include [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements/) and [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)).
 
-### Fast and slow pointers
+### Fast and Slow Pointers
 
 Used to detect cycles in a linked list. Notice that the distance between `slow` and `fast` decreases by `1` every turn.
 
@@ -263,7 +264,7 @@ At the point when `slow` and `fast` meet, we have A + B = A + B + C + B. We also
 
 ## Trees
 
-### Tree with pointers
+### Tree with Pointers
 
 Any arbitrary tree can be implemented with pointers. 
 
@@ -274,7 +275,7 @@ class Node:
         self.children = []
 ```
 
-### Complete binary tree with arrays
+### Complete Binary Tree with Arrays
 
 A binary tree is a tree where nodes can have at most two children, referred to as the left and right child. An important type of binary tree are **complete** binary trees, which are trees that fill every level from left to right. Complete binary trees are used in [binary heaps](#binary-heap) and [segment trees](#segment-trees). Complete binary trees are often implemented with arrays for efficiency.
 
@@ -284,7 +285,7 @@ Let the root node be index `0`. For any node at index `i`:
 2. Right child at index `2 * i + 2`
 3. Parent at index `floor((i - 1) / 2)`
 
-### Tree traversal
+### Tree Traversal
 
 There are multiple ways to traverse a tree. They can be categorized by whether they are **breadth-first** (BFS) or depth-first (DFS). 
 
@@ -339,7 +340,7 @@ def traverse(root):
             stack.push(node.left)
 ```
 
-## Segment trees
+## Segment Trees
 
 A segment tree is used for range queries and udpates. It can achieve both in O(log n) time. This is better than simple loops, which take O(n) time for querying, and prefix sums, which take O(n) time for updates.
 
@@ -393,7 +394,7 @@ References: [[1]](https://www.geeksforgeeks.org/dsa/segment-tree-efficient-imple
 
 A heap is a tree-based data structure that satisfies the **heap property**, which states that a parent node should be less than (or greater than) its children nodes. Types of heaps include [binary](#binary-heap), skew, binomial, and fibonacci.
 
-### Binary heap
+### Binary Heap
 
 A binary heap is a heap implemented as a binary tree. It implements `push` and `pop` in O(log n) time. While not the fastest, it can be initialized by inserting every element into it.
 
@@ -407,7 +408,7 @@ A binary heap is a heap implemented as a binary tree. It implements `push` and `
 1. Replace the root with the node at the bottom left
 2. While the new root is larger than either of its children, swap with the smaller child
 
-### Built-in heap
+### Built-In Heap
 
 The python heap library `heapq` implements a min heap.
 
@@ -483,13 +484,13 @@ References:
 1. [Kahn's Algorithm](https://youtu.be/cIBFEhD77b4?si=imuNBdJnPdnJQ6-K)
 2. [Topological Sort with DFS](https://youtu.be/eL-KzMXSXXI?si=L3x33f-LEt1PiOc0)
 
-## Union find 
+## Union Find 
 
 Used to keep track of disjoint sets. 
 
 `union` takes two elements and combines their sets. `find` takes an element and returns the representative element ("parent") in the set.
 
-### Basic union find
+### Basic Union Find
 
 At first, every element is its own parent. `union` makes one element the parent of the other. `find` returns the topmost parent.
 
@@ -506,7 +507,7 @@ def union(a, b):
     parent[pa] = pb
 ```
 
-### Path compression and rank-ordering
+### Path Compression and Rank-Ordering
 
 `find` can be optimized with path compression, which flattens the structure of the tree whenever `find` is called. This means that every node points directly to the topmost parent, speeding up future `find` operations.
 
@@ -582,11 +583,11 @@ def f():
 
 Popular problems include [Permutations](https://leetcode.com/problems/permutations/description) and [Combinations](https://leetcode.com/problems/combinations/description).
 
-## Dynamic programming
+## Dynamic Programming
 
 Might be right for problems that involve looking for the optimum value or the number of ways to do something. Most importantly, future decisions depend on earlier decisions.
 
-### Top-down memoization
+### Top-Down Memoization
 
 ```python
 memo = {}
@@ -598,7 +599,7 @@ def fib(n):
     return memo[n]
 ```
 
-### Bottom-up dynamic programming
+### Bottom-Up Dynamic Programming
 
 Start with base cases and iteratively build up to the solution in order.
 
@@ -612,7 +613,7 @@ def fib(n):
     return curr
 ```
 
-## Bit math
+## Bit Math
 
 Use `bin` to convert an integer to its binary representation:
 
@@ -639,4 +640,3 @@ To check if the `n`th bit of `x` is set with 0-based indexing:
 ```python
 x & (1 << n)
 ```
-

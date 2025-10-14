@@ -1,28 +1,28 @@
 ---
-title: "Software security and exploitation notes"
+title: "Software Security and Exploitation Notes"
 summary: "Control-Flow Hijacking • Code Injection • Shellcode Development"
 publishedAt: 2025-09-13
-updatedAt: 2025-10-08
+updatedAt: 2025-10-14
 tags:
 - notes
 ---
 
 ## Contents
-1. [Basic concepts](#basic-concepts) 
-    - [ELF](#elf), [C language](#c) (9/10) 
-    - [Memory](#memory), [Processes address space](#process-address-space), [Executing a process](#executing-a-process) (9/15) 
-    - [x86 introduction](x86-introduction) (9/17), [x86 instructions](#x86-instructions) (9/24)
-    - [Commandline tools](#commandline-tools) (9/24)
-2. [Control-flow hijacking](#control-flow-hijacking) (9/22)
-3. [Code injection](#code-injection) (9/29)
-    - [NOP sled](nop-slide) 
+1. [Basic Concepts](#basic-concepts) 
+    - [ELF](#elf), [C Language](#c-language) (9/10) 
+    - [Memory](#memory), [Processes Address Space](#process-address-space), [Process Execution](#process-execution) (9/15) 
+    - [x86 Introduction](x86-introduction) (9/17), [x86 Instructions](#x86-instructions) (9/24)
+    - [Commandline Tools](#commandline-tools) (9/24)
+2. [Control-Flow Hijacking](#control-flow-hijacking) (9/22)
+3. [Code Injection](#code-injection) (9/29)
+    - [NOP Sled](nop-slide) 
     - [jmp %esp](jmp-esp)
-4. [Shellcode development](#shellcode-development)
-    - [Shell code](#shell-code), [Writing shell code](#writing-shell-code) (10/1)
-    - [Reverse shell](#reverse-shell) (10/6)
-5. [Non-executable memory | Return-to-libc](#non-executable-memory--return-to-libc) (10/8)
+4. [Shellcode Development](#shellcode-development)
+    - [Shellcode](#shellcode), [Writing Shellcode](#writing-shellcode) (10/1)
+    - [Reverse Shell](#reverse-shell) (10/6)
+5. [Non-Executable Memory | Return-to-libc](#non-executable-memory--return-to-libc) (10/8)
 
-## Basic concepts 
+## Basic Concepts 
 
 ### ELF
 
@@ -49,7 +49,7 @@ ELF file contents:
 
 `readelf` is a useful utility for examining the contents of ELF files. Run it when `readelf -e file`.
 
-### C
+### C Language
 
 C compilation process:
 
@@ -101,7 +101,7 @@ Virtual addresses are used for both resource management and process isolation. T
 
 TLDR: Addressable memory has a granularity of 1 byte, but allocatable memory has a granularity of 4 KB.
 
-### Process address space
+### Process Address Space
 
 A process is a running instance of a program. Each process has its own virtual address space. There is 1 GB dedicated to kernel mappings and 3 GB dedicated to userland.
 
@@ -111,7 +111,7 @@ The **mmap region** is the only region with DYN (dynamically linked) memory. It 
 
 ![Process address space](/csci-1650/process-address-space.jpeg)
 
-### Executing a process
+### Process Execution
 
 The operating system reads the ELF file and does the following:
 
@@ -127,7 +127,7 @@ The INTERP statement is used to describe the bianry's dependencies in dynamicall
 
 `ld.so` is a special helper that will help load all other libraries into memory. Similar to the operating system, `ld.so` will jump to the right place in the MMAP region of memory and copy the relevant dynamically-loaded library, like `libc.so`.
 
-### x86 introduction
+### x86 Introduction
 
 x86 has 8 general-purpose registers (EAX, EBX, ECX, ESI, EDI, EBP, and ESP) and two special-purpose registers (EFLAGS, EIP).
 
@@ -153,7 +153,7 @@ e.g. `mov %eax, %ebx` in AT&T syntax is `mov ebx, eax` in Intel syntax.
 
 x86 uses little-endian format, which means that the least significant byte is stored at the lowest memory address.
 
-### x86 instructions
+### x86 Instructions
 
 The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`.
 
@@ -194,7 +194,7 @@ push   $0x0
 
 `lea` is the only instruction that does not dereference the address. It just load the address it into a register.
 
-### Commandline tools
+### Commandline Tools
 
 `as --32 program.s -o program.o` assembles in 32-bit.  
 `cc -m32 program.c -o program` compiles in 32-bit.  
@@ -216,31 +216,31 @@ Control-flow hijacking is the exploitation of memory vulnerabilities to change t
 
 A common technique is buffer overflow.
 
-## Code injection
+## Code Injection
 
 Stack jitter refers to how much the stack memory location changes across instances because of environment variables placed on top. This causes problems when you hardcode addresses in the return address. 
 
 This problem can be mitigated by NOP sleds and `jmp %esp`.
 
-### NOP sleds
+### NOP Sleds
 
-NOP sleds are sequences of NOP instructions that slide the execution flow to the shell code. You can put the payload anywhere that fits.
+NOP sleds are sequences of NOP instructions that slide the execution flow to the shellcode. You can put the payload anywhere that fits.
 
 ![nop sled diagram](/csci-1650/nop-sled.png)
 
 ### jmp %esp
 
-## Shellcode development
+## Shellcode Development
 
-### Shell code
+### Shellcode
 
-Shell code is code that is injected into the attacker's area of control in order to exploit a memory corruption vulnerability.
+Shellcode is code that is injected into the attacker's area of control in order to exploit a memory corruption vulnerability.
 
-Reverse shell code connects back to the attacker's machine and gives the attacker a shell. Anything the attacker types is executed on the victim's machine; and anything the victim's machine outputs is sent back to the attacker.
+Reverse shellcode connects back to the attacker's machine and gives the attacker a shell. Anything the attacker types is executed on the victim's machine; and anything the victim's machine outputs is sent back to the attacker.
 
-Bind shell code listens on a port and gives the attacker a shell when they connect to that port.
+Bind shellcode listens on a port and gives the attacker a shell when they connect to that port.
 
-### Writing shell code
+### Writing ShellCode
 
 Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`. Note that `as` reads AT&T syntax.
 
@@ -253,15 +253,15 @@ Tricks to remove null bytes:
 
 It might also be necessary to reduce payload size. 
 
-Tricks to reduce shell code size:
+Tricks to reduce shellcode size:
 3. In `mov`, use the lowest register necessary
 
 
 Each system call has a mapping between its arguments and registers. To make a system call, put its syscall number in `%eax` and its arguments in the appropriate registers. Then invoke `int $0x80`. The return value will be in `%eax`.
 
-### Reverse shell
+### Reverse Shell
 
-On the compromised machine, the shell code will:
+On the compromised machine, the shellcode will:
 1. Create a socket
 2. Change stdin, stdout, and stderr to the socket
 3. Connect to the attacker's machine
@@ -276,7 +276,7 @@ connect(sfd, &sin, sizeof(sin));
 execve("/bin/sh", NULL, NULL);
 ```
 
-## Non-executable memory | Return-to-libc
+## Non-Executable Memory | Return-to-libc
 
 Pages have three permission bits: 
 - Present (P)
@@ -291,7 +291,7 @@ Since we can no longer do code injection, there is a new family of exploits call
 
 In `libc`, there is a function called `mprotect` that can set the protection on a region of memory. Thus, we can
 1. Add parameters for `mprotect` to make the stack executable
-2. Add shell code where `mprotect` will return 
+2. Add shellcode where `mprotect` will return 
 3. Hijack the control flow to `mprotect` 
 
 References:

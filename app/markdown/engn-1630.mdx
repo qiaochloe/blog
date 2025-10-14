@@ -1,6 +1,6 @@
 ---
-title: "Digital electronics systems design notes"
-summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits"
+title: "Digital Electronics Systems Design Notes"
+summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits • Sequential Circuits"
 publishedAt: 2025-09-18
 updatedAt: 2025-10-14
 tags:
@@ -10,36 +10,36 @@ tags:
 ## Contents
 
 1. [Introduction](#introduction) (9/4)
-2. [Numbering systems](#numbering-systems) (9/9, 9/11)
-    1. [Binary and hexadecimal numbers](#binary-and-hexadecimal-numbers)
-    2. [Signed numbers](#signed-numbers)
-    3. [Signed arithmetic](#signed-arithmetic)
-3. [Digital logic gates](#digital-logic-gates) (9/11, 9/16, 9/18)
-    1. [Multiple-input logic gates](#multiple-input-logic-gates)
-    2. [Ripple carry adders](#ripple-carry-adders)
-    3. [Ring oscillators](#ring-oscillators)
+2. [Numbering Systems](#numbering-systems) (9/9, 9/11)
+    1. [Binary and Hexadecimal Numbers](#binary-and-hexadecimal-numbers)
+    2. [Signed Numbers](#signed-numbers)
+    3. [Signed Arithmetic](#signed-arithmetic)
+3. [Digital Logic Gates](#digital-logic-gates) (9/11, 9/16, 9/18)
+    1. [Multiple-Input Logic Gates](#multiple-input-logic-gates)
+    2. [Ripple Carry Adders](#ripple-carry-adders)
+    3. [Ring Oscillators](#ring-oscillators)
     4. [Transistors](#transistors)
-    5. [Noise margins](#noise-margins)
-4. [Combinational circuits](#combinational-circuits) (9/23, 9/25, 9/30, 10/2, 10/7, 10/9)
-    1. [Boolean algebra](#boolean-algebra)
+    5. [Noise Margins](#noise-margins)
+4. [Combinational Circuits](#combinational-circuits) (9/23, 9/25, 9/30, 10/2, 10/7, 10/9)
+    1. [Boolean Algebra](#boolean-algebra)
     2. [Decoders](#decoders)
-5. [Sequential circuits](#sequential-circuits) (10/9, 10/14, 10/16, 10/23, 10/25)
-    1. [Bistable circuit](#bistable-circuit)
-    2. [Set-reset latch](#set-reset-latch)
-    3. [Data latch](#data-latch)
-    4. [Data flip-flop](#data-flip-flop)
+5. [Sequential Circuits](#sequential-circuits) (10/9, 10/14, 10/16, 10/23, 10/25)
+    1. [Bistable Circuit](#bistable-circuit)
+    2. [Set-Reset Latch](#set-reset-latch)
+    3. [Data Latch](#data-latch)
+    4. [Data Flip-Flop](#data-flip-flop)
     5. [Registers](#registers)
-    6. [Enabled flip-flops](#enabled-flip-flops)
-    7. [Resettable flip-flops](#resettable-flip-flops)
-    8. [Settable flip-flops](#settable-flip-flops)
+    6. [Enabled Flip-Flops](#enabled-flip-flops)
+    7. [Resettable Flip-Flops](#resettable-flip-flops)
+    8. [Settable Flip-Flops](#settable-flip-flops)
 
 ## Introduction
 
 ![Layers of abstraction](/engn-1630/layers-of-abstraction.png)
 
-## Numbering systems
+## Numbering Systems
 
-### Binary and hexadecimal numbers 
+### Binary and Hexadecimal Numbers 
 
 Powers of 2
 
@@ -80,7 +80,7 @@ To convert a decimal to a binary number, repeatedly divide by 2. The remainder g
 
 For binary to hexadecimal conversion, group bits into nibbles (4 bits), and then convert to a single hex digit.
 
-### Signed numbers 
+### Signed Numbers 
 
 While it is possible to use a signed digit to represent positive and negative numbers, addition doesn't work, and there are multiple representations for 0. This is fixed by the **two's complement** representation.
 
@@ -93,7 +93,7 @@ The MSB indicates the sign.
 
 ![Two's complement number line](/engn-1630/twos-complement-number-line.png)
 
-### Signed arithmetic
+### Signed Arithmetic
 
 In signed addition, overflow occurs when adding two positive numbers produces a negative result, or adding two negative numbers produces a positive result. However, adding a positive number with a negative number cannot result in overflow; you can just drop the carried bits.
 
@@ -106,15 +106,15 @@ In signed division:
 3. Apply the appropriate sign to the quotient
 3. Remainder takes the sign of the divident
 
-## Digital logic gates
+## Digital Logic Gates
 
-### Multiple input logic gates
+### Multiple-Input Logic Gates
 
 Multi-input XNOR gate returns whether this is even parity. In the two-input case, it is the same as an equality gate.
 
 Multi-input XOR returns whether there is an odd parity.
 
-### Ripple carry adders
+### Ripple Carry Adders
 
 The ripple carry adder chains 1-bit adders together and carries the carry out to the next adder.
 
@@ -122,7 +122,7 @@ Here is a ripple carry adder that has been repurposed to subtract $B$ from $A$:
 
 ![Ripple carry adder](/engn-1630/ripple-carry-adder.png)
 
-### Ring oscillators
+### Ring Oscillators
 
 Ring oscillators are made from an odd number of inverters connected in a ring. The oscillation frequency is impacted by the number of inverters $n$ and the propagation delay of each inverter $d_p$ by the equation $f = 1/(2d_pn)$.
 
@@ -142,7 +142,7 @@ Logic gates are built from transistors, which are like voltage-controlled switch
 
 **Transmission gates** are a bidirectional switch made from an nMOS and pMOS transistor in parallel. The nMOS is controlled by the signal, and the pMOS is controlled by the inverted signal. This switch is good at passing both 0s and 1s.
 
-### Noise margins
+### Noise Margins
 
 The high noise margin is the amount of noise that can be added to a high signal before it is interpreted as a low signal. 
 
@@ -156,7 +156,7 @@ The unity gain point is where the slope is equal to 1. That is where $V_{OL}$ an
 
 ![Noise margin](/engn-1630/noise-margin.png)
 
-## Combinational circuits
+## Combinational Circuits
 
 A logic circuit is composed of:
 1. Inputs
@@ -170,7 +170,7 @@ In a combinatorial circuit:
 
 Combinational circuits are memoryless, meaning that the output is solely determined by the input. They are different from sequential circuits, which have memory and whose output is determined by both the input and the current state.
 
-### Boolean algebra
+### Boolean Algebra
 
 A complement is the inverse of a variable, a literal is a variable or its complement, and an **implicant** is a product of literals.  
 
@@ -202,22 +202,22 @@ Can be 2x4, 3x8, 4x16.
 
 Takes in some input and returns a one-hot output.
 
-## Sequential circuits
+## Sequential Circuits
 
-### Bistable circuit
+### Bistable Circuit
 
 - 2 outputs and no inputs
 - 4 transistors
 - Stable at two values
 
-### Set-reset latch
+### Set-Reset Latch
 
 - 2 inputs: S and R
 - 8 transistors
 - Must avoid invalid state 
 - At S = R = 1, we get an invalid state Q = Q' = 0
 
-### Data latch
+### Data Latch
 
 - 2 inputs: CLK and D
 - CLK controls when the output changes 
@@ -226,7 +226,7 @@ Takes in some input and returns a one-hot output.
 - Avoids the invalid state of the SR latch
 - 22 transistors, so expensive
 
-### Data flip-flop
+### Data Flip-Flop
 
 - Two inputs: CLK and D
 - D is sampled on the **rising edge** of CLK. Otherwise, Q holds its value.
@@ -237,12 +237,12 @@ Takes in some input and returns a one-hot output.
 
 Registers are made from multiple flip-flops.
 
-### Enabled flip-flops
+### Enabled Flip-Flops
 
 - 3 inputs: CLK, D, and EN
 - The EN controls whether new data is stored
 
-### Resettable flip-flops
+### Resettable Flip-Flops
 
 - 3 inputs: CLK, D, and Reset
 - Reset Q to initial state 0 
@@ -257,7 +257,7 @@ Asynchronous reset:
   - Need to change internal circuitry
   - Timing is hard
 
-### Settable flip-flops
+### Settable Flip-Flops
 
 - 3 inptus: CLK, D, and Set
 - Set Q to state 1

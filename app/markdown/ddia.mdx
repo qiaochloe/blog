@@ -1,5 +1,5 @@
 ---
-title: "*Designing Data-Intensive Applications* notes"
+title: "*Designing Data-Intensive Applications* Notes"
 summary: "Data Systems • Distributed Data • Derived Data"
 publishedAt: "2025-05-29"
 tags:
@@ -7,30 +7,30 @@ tags:
   - "technical"
 ---
 
-## Table of Contents
+## Contents
 
-Part I. Foundations of data systems
+Part I. Foundations of Data Systems
 
-1. Reliable, scalable, and maintainable applications
-2. Data models and query languages
-3. Storage and retrieval
-4. Encoding and evolution
+1. [Reliable, Scalable, and Maintainable Applications](#reliable-scalable-and-maintainable-applications)
+2. [Data Models and Query Languages](#data-models-and-query-languages)
+3. [Storage and Retrieval](#storage-and-retrieval)
+4. [Encoding and Evolution](#encoding-and-evolution)
 
-Part II. Distributed data
+Part II. Distributed Data
 
-5. Replication
+5. [Replication](#replication)
 6. Partitioning
 7. Transactions
-8. The trouble with distributed systems
-9. Consistency and consensus
+8. The Trouble with Distributed Systems
+9. Consistency and Consensus
 
-Part III. Derived data
+Part III. Derived Data
 
-10. Batch processing
-11. Stream processing
-12. The future of data systems
+10. Batch Processing
+11. Stream Processing
+12. The Future of Data Systems
 
-## Reliable, scalable, and maintainable applications
+## Reliable, Scalable, and Maintainable Applications
 
     Reliability means that the system works even when faults occur.
 
@@ -38,7 +38,7 @@ Part III. Derived data
 
     Maintainability means that life is good for people who need to work with the system.
 
-## Data models and query languages
+## Data Models and Query Languages
 
     **Relational** models have a strict schema.
     Relationships can be many-to-many, _but not deeply nested_.
@@ -47,7 +47,7 @@ Part III. Derived data
 
     **Graph** models have a loose schema. Anything is potentially related to anything. Relationships are many-to-many and queries can traverse over a chain of edges.
 
-## Storage and retrieval
+## Storage and Retrieval
 
     Online transaction processing (OLTP) and online analytic processing (OLAP) have different requirements
 
@@ -58,7 +58,7 @@ Part III. Derived data
 
     Storage engines for OLAP rely less on indexing and more on column-oriented compression. The _star schema_ helps organize data from multiple OLTP databases. It is a fact table with every event with foreign keys to dimension tables.
 
-### Hash indexes
+### Hash Indexes
 
       1. Write requests are appended to a **log**
       2. The most recent write to a key is tracked by the in-memory **hash index**
@@ -74,7 +74,7 @@ Part III. Derived data
       - Keys need to fit in-memory
       - Keys are not ordered, so range queries are not efficient
 
-### LSM tree (log-structured merge tree)
+### Log-Structured Merge Trees
 
       Similar to hash indexes, but keys are sorted.
 
@@ -107,7 +107,7 @@ Part III. Derived data
 
       - Write requests are not resilient to crashes unless there is a write-ahead log (WAL or redo log) or a copy-on-write scheme
 
-## Encoding and evolution
+## Encoding and Evolution
 
 Data can often have two different reprsentations:
 
