@@ -132,9 +132,11 @@ Ring oscillators are made from an odd number of inverters connected in a ring. T
 
 Logic gates are built from transistors, which are like voltage-controlled switches. Two ports get connected depending on the voltage of the third.
 
-**nMOS** transistors pass good 0s, so they should be connected to ground. **pMOS** transistors pass good 1s, so they should be connected to VDD. nMOS and pMOS have opposite behavior.
+**nMos** transistors are connected when the gate voltage is high, and **pMos** transistors are connected when the gate voltage is low.
 
 ![nMOS and pMOS](/engn-1630/nmos-pmos.png)
+
+nMOS transistors pass good 0s, so they should be connected to ground. pMOS transistors pass good 1s, so they should be connected to VDD. 
 
 **CMOS** uses both nMOS and pMOS transistors in a pull-down and pull-up network. Notice that the nMOS is involved in the pull-down network, since it is good at passing 0s. The pMOS is involved in the pull-up network, since it is good at passing 1s. There is always a path to either VDD or GND, but never both at the same time.
 
@@ -174,9 +176,21 @@ Combinational circuits are memoryless, meaning that the output is solely determi
 
 A complement is the inverse of a variable, a literal is a variable or its complement, and an **implicant** is a product of literals.  
 
-A minterm is an implicant that includes all input variables. The sum-of-products is the sum of minterms that produce a 1 output. 
+| Term | Definition | Example |
+| ---- | ---------- | ------- |
+| Literal | Variable or its complement | $A$ |
+| Complement | Inverse of a variable | $\overline{A}$ |
+| Implicant | Product of literals | $\overline{A}B$ |
+| Minterm | Implicant that includes all input variables | $\overline{A}BC$ |
+| Maxterm | Sum that includes all input variables | $A + \overline{B} + C$ |
 
-To do this, list the minterm that would produce $1$ for each row, and then sum each of the minterms where $Y = 1$. The sum-of-products of $Y$ below is $\overline{A}B + AB$
+Sum-of-products (SOP) 
+
+1. Find the inputs where $Y = 1$
+2. Convert the inputs to minterms 
+3. Sum the minterms
+
+e.g. $Y = \overline{A}B + AB$
 
 | $A$ | $B$ | Minterm | Y |
 | - | - | ------- | - |
@@ -185,22 +199,47 @@ To do this, list the minterm that would produce $1$ for each row, and then sum e
 | 1 | 0 | $A\overline{B}$ | 0 |
 | 1 | 1 | $AB$ | 1 |
 
-A maxterm is a sum that includes all input variables. The product-of-sums is the product of maxterms that produce a 0 output. 
 
-To do this, list the maxterms sthat would produce $0$ for each row, and then multiply each of the maxterms where $Y = 0$. The product-of-sums of $Y$ below is $(A + B)(\overline{A} + B)$.
+Product-of-sums (POS)
 
-| $A$ | $B$ | Maxterm | Y |
+1. Find the inputs where $Y = 0$
+2. Convert the inputs to *reversed* maxterms
+3. Multiply the maxterms
+
+e.g. $(A + B)(\overline{A} + B)$
+
+| $A$ | $B$ | Reversed Maxterm | Y |
 | - | - | ------- | - |
 | 0 | 0 | $A + B$ | 0 |
 | 0 | 1 | $A + \overline{B}$ | 1 | 
 | 1 | 0 | $\overline{A} + B$ | 0 |
 | 1 | 1 | $\overline{A} + \overline{B}$ | 1 |
 
+X is used to indicate:
+
+- Uninitialized values
+- Don't care
+- Contention (circuit tries to drive output to both 0 and 1)
+
+### Bubble-Pushing
+
+Using De Morgan's laws, we can push bubbles through AND and OR gates to change the gate type. 
+
+Heuristics:
+1. Begin at the output and work toward the input
+2. Draw gates so that bubbles cancel  
+
+### Tri-State Buffers
+
+A high impedance (Z) output is not being driven to any logic level. It is also called floating, tri-stated, or an open circuit. It is used in tristate busses where there are many different drivers, but only one should be active at a time.
+
+### Multiplexers
+
+A multiplexer (MUX) takes in $2^n$ inputs, $n$ select lines, and 1 output. The output is equal to one of the inputs, determined by the select lines.
+
 ### Decoders
 
-Can be 2x4, 3x8, 4x16.
-
-Takes in some input and returns a one-hot output.
+A decoder takes in $n$ inputs and produces $2^n$ outputs. Only one output is high at a time, determined by the input value. This is called a one-hot output.
 
 ## Sequential Circuits
 
