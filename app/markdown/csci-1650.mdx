@@ -1,32 +1,43 @@
 ---
 title: "Software Security and Exploitation Notes"
-summary: "Control-Flow Hijacking • Code Injection • Shellcode Development"
+summary: "Control-Flow Hijacking • Code Injection • Shellcode Development • Code Reuse"
 publishedAt: 2025-09-13
-updatedAt: 2025-10-14
+updatedAt: 2025-10-20
 tags:
 - notes
 ---
 
 ## Contents
 1. [Basic Concepts](#basic-concepts) 
-    - [ELF](#elf), [C Language](#c-language) (9/10) 
-    - [Memory](#memory), [Processes Address Space](#process-address-space), [Process Execution](#process-execution) (9/15) 
-    - [x86 Introduction](x86-introduction) (9/17), [x86 Instructions](#x86-instructions) (9/24)
-    - [Commandline Tools](#commandline-tools) (9/24)
+    - [ELF](#elf) (9/10)
+    - [C Language](#c-language) (9/10) 
+    - [Memory](#memory) (9/15)
+    - [Processes Address Space](#process-address-space) (9/15)
+    - [Process Execution](#process-execution) (9/15) 
+    - [Registers](#registers) (9/17)
+    - [x86 Instructions](#x86-instructions) (9/24)
+    - [Exploitation Tools](#exploitation-tools) (9/24)
 2. [Control-Flow Hijacking](#control-flow-hijacking) (9/22)
-3. [Code Injection](#code-injection) (9/29)
-    - [NOP Sled](nop-slide) 
-    - [jmp %esp](jmp-esp)
+3. [Code Injection](#code-injection)
+    - [NOP Sled](#nop-slide) (9/29)
+    - [jmp %esp](#jmp-esp) (9/29)
+    - [Register Spring](#register-spring) (9/29)
 4. [Shellcode Development](#shellcode-development)
-    - [Shellcode](#shellcode), [Writing Shellcode](#writing-shellcode) (10/1)
+    - [Shellcode](#shellcode) (10/1)
+    - [Writing Shellcode](#writing-shellcode) (10/1)
     - [Reverse Shell](#reverse-shell) (10/6)
-5. [Non-Executable Memory | Return-to-libc](#non-executable-memory--return-to-libc) (10/8)
+5. [Code Reuse](#code-reuse)
+    - [Non-Executable Memory](#non-executable-memory) (10/8)
+    - [mprotect](#mprotect) (10/8)
+    - [system](#system) (10/15)
+    - [ret2libc Chain](#ret2libc-chain) (10/15)
+    - [Address Space Layout Randomization](#address-space-layout-randomization) (10/20)
 
 ## Basic Concepts 
 
 ### ELF
 
-An **ELF** is an executable, linkable, binary format. It is standard for UNIX-like systems.
+An **ELF** is an executable, linkable, binary format. It is standard for UNIX-like systems. 
 
 An ELF file can represent executables, shared/static library, object files, and core dumps.
 
@@ -127,15 +138,18 @@ The INTERP statement is used to describe the bianry's dependencies in dynamicall
 
 `ld.so` is a special helper that will help load all other libraries into memory. Similar to the operating system, `ld.so` will jump to the right place in the MMAP region of memory and copy the relevant dynamically-loaded library, like `libc.so`.
 
-### x86 Introduction
+### Registers
 
 x86 has 8 general-purpose registers (EAX, EBX, ECX, ESI, EDI, EBP, and ESP) and two special-purpose registers (EFLAGS, EIP).
 
-1. %eip points at the next instruction to be executed.   
-2. %esp points at the top of the stack.  
-3. %eax contains the return value of functions.  
+- %eip points at the next instruction to be executed
+- %esp points at the top of the stack
+- %eax contains the return value of functions
+- %ebp points at the base of the current stack frame
 
 ![Registers](/csci-1650/registers.png)
+
+### x86 Instructions
 
 The x86 instruction set (ISA) is variable length, which makes it more difficult to decode instructions.
 
@@ -152,8 +166,6 @@ e.g. `mov %eax, %ebx` in AT&T syntax is `mov ebx, eax` in Intel syntax.
 | offset(base, index, multipler) | Memory address in offset + base + index * multiplier |
 
 x86 uses little-endian format, which means that the least significant byte is stored at the lowest memory address.
-
-### x86 Instructions
 
 The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`.
 
@@ -194,21 +206,24 @@ push   $0x0
 
 `lea` is the only instruction that does not dereference the address. It just load the address it into a register.
 
-### Commandline Tools
+### Exploitation Tools
 
-`as --32 program.s -o program.o` assembles in 32-bit.  
-`cc -m32 program.c -o program` compiles in 32-bit.  
-`ldd` is a command that prints the shared libraries required by each program.  
-`objdump -d <exec>` can disassemble an executable file.
+Terminal commands
+
+- `as --32 program.s -o program.o` assembles in 32-bit.  
+- `cc -m32 program.c -o program` compiles in 32-bit.  
+- `ldd` is a command that prints the shared libraries required by each program.  
+- `objdump -d <exec>` can disassemble an executable file.
 
 GDB
 
-1. `info proc mappings` will print the memory mappings of the current process
-3. `disassemble main` will disassemble the main function
-4. `b *addr` will set a breakpoint at the given address
-2. `si` will step one instruction
-3. `printf "%x\n", $ebp+0x8` can print addresses
-4. `x/x bffffdb0` can examine memory at the given address
+- `info proc mappings` prints the memory mappings of the current process
+- `disassemble main` disassembles the main function
+- `b *addr` sets a breakpoint at the given address
+- `si` steps one instruction
+- `printf "%x\n", $ebp+0x8` prints addresses
+- `x/x bffffdb0` examines memory
+- `x/i system` examines memory as instructions
 
 ## Control-flow hijacking
 
@@ -218,17 +233,23 @@ A common technique is buffer overflow.
 
 ## Code Injection
 
-Stack jitter refers to how much the stack memory location changes across instances because of environment variables placed on top. This causes problems when you hardcode addresses in the return address. 
+Stack jitter refers to how much the stack memory location changes across instances because of environment variables and commandline arguments placed on the top of the [process address space](#process-address-space). This causes problems with hardcoding addresses in the return address. 
 
 This problem can be mitigated by NOP sleds and `jmp %esp`.
 
-### NOP Sleds
+### NOP Sled
 
 NOP sleds are sequences of NOP instructions that slide the execution flow to the shellcode. You can put the payload anywhere that fits.
 
 ![nop sled diagram](/csci-1650/nop-sled.png)
 
 ### jmp %esp
+
+Need to be able to write beyond the return address.
+
+### Register Spring
+
+Less constrained.
 
 ## Shellcode Development
 
@@ -240,9 +261,9 @@ Reverse shellcode connects back to the attacker's machine and gives the attacker
 
 Bind shellcode listens on a port and gives the attacker a shell when they connect to that port.
 
-### Writing ShellCode
+### Writing Shellcode
 
-Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`. Note that `as` reads AT&T syntax.
+Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`.
 
 Avoid null bytes (`0x00`). They can terminate strings early in function slike `strcpy()`.
 
@@ -254,8 +275,7 @@ Tricks to remove null bytes:
 It might also be necessary to reduce payload size. 
 
 Tricks to reduce shellcode size:
-3. In `mov`, use the lowest register necessary
-
+1. In `mov`, use the lowest register necessary
 
 Each system call has a mapping between its arguments and registers. To make a system call, put its syscall number in `%eax` and its arguments in the appropriate registers. Then invoke `int $0x80`. The return value will be in `%eax`.
 
@@ -276,23 +296,52 @@ connect(sfd, &sin, sizeof(sin));
 execve("/bin/sh", NULL, NULL);
 ```
 
-## Non-Executable Memory | Return-to-libc
+## Code Reuse
 
-Pages have three permission bits: 
+### Non-Executable Memory
+
+Around the early 2000s, computers started to implement non-executable memory to mitigate [code injection](#code-injection) attacks. Pages now had 3 permission bits:
 - Present (P)
 - Read/write (R/W)
 - Executable (X)
 
-These permission bits are enforced by the CPU.
+However, the return address can still be overwritten to point to existing code in the program or libraries. This exploit is called **code reuse**, **ret2libc**, or whole function reuse.
 
-Only the text section should be marked as executable, and everything else should be marked as non-executable. This prevents the injected code on the stack from being executed. 
+### mprotect
 
-Since we can no longer do code injection, there is a new family of exploits called **code reuse**.
-
-In `libc`, there is a function called `mprotect` that can set the protection on a region of memory. Thus, we can
+`mprotect` is a function in libc that can set the protection on a region of memory.
 1. Add parameters for `mprotect` to make the stack executable
 2. Add shellcode where `mprotect` will return 
 3. Hijack the control flow to `mprotect` 
+
+### system
+
+`system` is a function in libc that executes a string as a command.
+1. Add the string `/bin/sh` somewhere in memory
+2. Add the address of `/bin/sh` as a parameter to `system`
+3. Hijack the control flow to `system`
+
+### ret2libc Chain
+
+We can also call multiple functions in a row through a **ret2libc chain**. At each link, we need to push:
+1. The arguments to the function
+2. The return address of the function 
+3. The address of the function to call
+
+Note that the return address of the function should be a gadget that lifts the stack up to the next function and then calls `ret`.
+
+![ret2libc chain](/csci-1650/ret2libc-chain.png)
+
+### Address Space Layout Randomization
+
+Address space layout randomization (ASLR) is a probabilistic defense that artificially randomizes the starting address space of parts of the address space. 
+
+Partial ASLR randomizes the stack, mmap, and heap. Full ASLR also randomizes the main executable.
+
+Constraints:
+- Stack needs to be 16 bit aligned (19 bits of entropy)
+- mmap needs to be 4 KB aligned (8 bits of entropy)
+- brk needs to be 4 KB aligned (13 bits of entropy)
 
 References:
 1. [Linux System Call Table](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64-64-bit)
