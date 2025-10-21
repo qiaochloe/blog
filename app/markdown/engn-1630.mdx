@@ -51,6 +51,8 @@ To convert a decimal to a binary number, repeatedly divide by 2. The remainder g
 
 For binary to hexadecimal conversion, group bits into nibbles (4 bits), and then convert to a single hex digit.
 
+![Binary to hex conversion](/engn-1630/binary-to-hex.png)
+
 ### Signed Numbers 
 
 Signed digit
@@ -67,6 +69,8 @@ The two's complement of a number is `-x = ~x + 1`
 
 1. Start from the LSB and copy all bits up to and including the first 1
 2. Invert all remaining bits
+
+![Signed inversion](/engn-1630/signed-inversion.png)
 
 | Number | Two's complement | 
 | ------ | ---------------- |
@@ -86,6 +90,8 @@ Addition:
 
 Note that adding a positive number with a negative number cannot result in overflow. You can just drop the additional bits.
 
+![Signed addition](/engn-1630/signed-addition.png)
+
 Multiplication:
 1. **Sign-extend** both numbers to the product bit width
 2. Multiply as if they were unsigned
@@ -93,11 +99,15 @@ Multiplication:
 
 Sign-extension involves copying the MSB into the new bits. The product bit width of two n-bit numbers is 2n.
 
+![Signed multiplication](/engn-1630/signed-multiplication.png)
+
 Division:
 1. Convert the numbers to positive
 2. Perform division
 3. Convert the quotient to the appropriate sign
 3. Convert the remainder to take the sign of the number being divided
+
+![Signed division](/engn-1630/signed-division.png)
 
 ## Digital Logic Gates
 
