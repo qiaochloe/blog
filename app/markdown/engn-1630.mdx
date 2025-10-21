@@ -2,7 +2,7 @@
 title: "Digital Electronics Systems Design Notes"
 summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits • Sequential Circuits"
 publishedAt: 2025-09-18
-updatedAt: 2025-10-14
+updatedAt: 2025-10-20
 tags:
 - notes
 ---
@@ -33,6 +33,8 @@ tags:
     7. [Resettable Flip-Flops](#resettable-flip-flops)
     8. [Settable Flip-Flops](#settable-flip-flops)
 
+[Appendix](#appendix)
+
 ## Introduction
 
 ![Layers of abstraction](/engn-1630/layers-of-abstraction.png)
@@ -41,38 +43,7 @@ tags:
 
 ### Binary and Hexadecimal Numbers 
 
-Powers of 2
-
-| n | 2^n |
-|---|-----|
-|0  | 1   |
-|1  | 2   |
-|2  | 4   |
-|3  | 8   |
-|4  | 16  |
-|5  | 32  |
-|6  | 64  |
-|7  | 128 |
-|8  | 256 |
-|9  | 512 |
-|10 | 1024|
-|11 | 2048|
-|12 | 4096|
-
-Large powers of 2
-
-| n | 2^n |
-|---|-----|
-|10 | 1K (10^3) |
-|20 | 1M (10^6) |
-|30 | 1G (10^9) |
-|40 | 1T (10^12)|
-|50 | 1P (10^15)|
-|60 | 1E (10^18)|
-
-For example, 2^32 = 2^2 * 2^30 = 4 billion.
-
-A n-bit binary number ranges from [0, 2^n - 1] and has 2^n values.
+A $n$-bit binary number ranges from $[0, 2^n - 1]$.
 
 To convert a decimal to a binary number, repeatedly divide by 2. The remainder goes in the next most significant bit.
 
@@ -82,49 +53,73 @@ For binary to hexadecimal conversion, group bits into nibbles (4 bits), and then
 
 ### Signed Numbers 
 
-While it is possible to use a signed digit to represent positive and negative numbers, addition doesn't work, and there are multiple representations for 0. This is fixed by the **two's complement** representation.
+Signed digit
+- Direct addition doesn't work
+- Both 1000 and 0000 represent 0
+- The range is $[-2^{n-1}, 2^{n - 1}]$
 
-To reverse the sign of a two's complement number, invert all bits and add 1. A quick way to do this is to start from the LSB and copy all bits up to and including the first 1, and then invert all remaining bits.
+Two's complement
+- Direct addition works
+- 0000 is the only representation of 0
+- The range is $[-2^{n-1}, 2^{n-1} - 1]$.   
 
-The range of an n-bit two's complement number is $[-2^{n-1}, 2^{n-1} - 1]$.  
-The most positive n-bit number is 011111...  
-The most negative n-bit number is 100000...  
-The MSB indicates the sign.  
+The two's complement of a number is `-x = ~x + 1`
+
+1. Start from the LSB and copy all bits up to and including the first 1
+2. Invert all remaining bits
+
+| Number | Two's complement | 
+| ------ | ---------------- |
+| 127    | 01111111         |
+| 1      | 00000001         |
+| 0      | 00000000         |
+| -1     | 11111111         |
+| -128   | 10000000          |
 
 ![Two's complement number line](/engn-1630/twos-complement-number-line.png)
 
 ### Signed Arithmetic
 
-In signed addition, overflow occurs when adding two positive numbers produces a negative result, or adding two negative numbers produces a positive result. However, adding a positive number with a negative number cannot result in overflow; you can just drop the carried bits.
+Addition:
+1. Directly add the numbers together
+2. Check for overflow 
 
-In signed multiplication, you must **sign-extend** to the product bit width. 
+Note that adding a positive number with a negative number cannot result in overflow. You can just drop the additional bits.
+
+Multiplication:
+1. **Sign-extend** both numbers to the product bit width
+2. Multiply as if they were unsigned
+3. Discard overflowed bits
+
 Sign-extension involves copying the MSB into the new bits. The product bit width of two n-bit numbers is 2n.
 
-In signed division:
-1. Convert the binary numbers to positive
+Division:
+1. Convert the numbers to positive
 2. Perform division
-3. Apply the appropriate sign to the quotient
-3. Remainder takes the sign of the divident
+3. Convert the quotient to the appropriate sign
+3. Convert the remainder to take the sign of the number being divided
 
 ## Digital Logic Gates
 
 ### Multiple-Input Logic Gates
 
-Multi-input XNOR gate returns whether this is even parity. In the two-input case, it is the same as an equality gate.
+Multi-input XNOR gate returns whether there is even parity. In the two-input case, it is the same as an equality gate. Multi-input XOR returns whether there is odd parity.
 
-Multi-input XOR returns whether there is an odd parity.
+### Adders
 
-### Ripple Carry Adders
+1-bit adders take in three bits (A, B, Cin) and output two bits (S and Cout).
 
-The ripple carry adder chains 1-bit adders together and carries the carry out to the next adder.
+![Adder](/engn-1630/adder.png)
 
-Here is a ripple carry adder that has been repurposed to subtract $B$ from $A$:
+The ripple carry adder chains 1-bit adders together and carries the carry out to the next adder. This is a ripple carry adder that has been repurposed to subtract $B$ from $A$:
 
 ![Ripple carry adder](/engn-1630/ripple-carry-adder.png)
 
 ### Ring Oscillators
 
-Ring oscillators are made from an odd number of inverters connected in a ring. The oscillation frequency is impacted by the number of inverters $n$ and the propagation delay of each inverter $d_p$ by the equation $f = 1/(2d_pn)$.
+Ring oscillators are made from an odd number of inverters connected in a ring. The signal keeps inverting as it propagates around the ring, creating an oscillation.
+
+The oscillation frequency is $f = 1/(2pn)$, where $n$ is the number of inverters and $p$ is the propagation delay of each inverter.
 
 ![Ring oscillators](/engn-1630/ring-oscillators.png)
 
@@ -140,9 +135,13 @@ nMOS transistors pass good 0s, so they should be connected to ground. pMOS trans
 
 **CMOS** uses both nMOS and pMOS transistors in a pull-down and pull-up network. Notice that the nMOS is involved in the pull-down network, since it is good at passing 0s. The pMOS is involved in the pull-up network, since it is good at passing 1s. There is always a path to either VDD or GND, but never both at the same time.
 
+![Transistors NAND](/engn-1630/transistors-nand.png)
+
 ![CMOS circuit](/engn-1630/cmos-circuit.png)
 
 **Transmission gates** are a bidirectional switch made from an nMOS and pMOS transistor in parallel. The nMOS is controlled by the signal, and the pMOS is controlled by the inverted signal. This switch is good at passing both 0s and 1s.
+
+![Transmission gate](/engn-1630/transmission-gate.png)
 
 ### Noise Margins
 
@@ -231,51 +230,64 @@ Heuristics:
 
 ### Tri-State Buffers
 
-A high impedance (Z) output is not being driven to any logic level. It is also called floating, tri-stated, or an open circuit. It is used in tristate busses where there are many different drivers, but only one should be active at a time.
+A tri-state buffer has 2 inputs (A and EN) and 1 output (Y). 
+
+| EN | A | Y |
+| -- | - | - |
+| 0  | X | Z |
+| 1  | 0 | 0 |
+| 1  | 1 | 1 |
+
+Z represents high impedance. The circuit is not driving the output to any logic level.
+
+![Tri-state buffer](/engn-1630/tri-state-buffer.png)
+
+Tri-state buffers are used in busses where there are many different drivers, but only one should be active at a time.
 
 ### Multiplexers
 
 A multiplexer (MUX) takes in $2^n$ inputs, $n$ select lines, and 1 output. The output is equal to one of the inputs, determined by the select lines.
 
+![Multiplexer](/engn-1630/multiplexer.png)
+
 ### Decoders
 
 A decoder takes in $n$ inputs and produces $2^n$ outputs. Only one output is high at a time, determined by the input value. This is called a one-hot output.
+
+![Decoder](/engn-1630/decoder.png)
 
 ## Sequential Circuits
 
 ### Bistable Circuit
 
-- 2 outputs and no inputs
-- 4 transistors
+- No inputs
 - Stable at two values
+- 4 transistors
 
 ![Bistable circuit](/engn-1630/bistable-circuit.png)
 
 ### Set-Reset Latch
 
-- 2 inputs: S and R
-- 8 transistors
-- Must avoid invalid state 
+- 2 inputs (S and R)
 - At S = R = 1, we get an invalid state Q = Q' = 0
+- 8 transistors
 
 ![SR latch](/engn-1630/sr-latch.png)
 
 ### Data Latch
 
-- 2 inputs: CLK and D
-- CLK controls when the output changes 
-- Transparent at CLK = 1, opaque at CLK = 0
-- D controls what the output changes into
+- 2 inputs (CLK and D)
+- CLK controls whether the output changes in response to the D
 - Avoids the invalid state of the SR latch
-- 22 transistors, so expensive
+- 22 transistors
 
 ![Data latch](/engn-1630/data-latch.png)
 
 ### Data Flip-Flop
 
-- Two inputs: CLK and D
-- D is sampled on the **rising edge** of CLK. Otherwise, Q holds its value.
-- Start signals with unknown state
+- 2 inputs (CLK and D)
+- D is sampled on the **rising edge** of CLK
+- Signals start with unknown state
 - 46 transistors
 
 ![Data flip-flop](/engn-1630/data-flip-flop.png)
@@ -288,15 +300,15 @@ Registers are made from multiple flip-flops.
 
 ### Enabled Flip-Flops
 
-- 3 inputs: CLK, D, and EN
+- 3 inputs (CLK, D, and EN)
 - The EN controls whether new data is stored
 
 ![Enabled flip-flop](/engn-1630/enabled-flip-flop.png)
 
 ### Resettable Flip-Flops
 
-- 3 inputs: CLK, D, and Reset
-- Reset Q to initial state 0 
+- 3 inputs (CLK, D, and Reset)
+- Reset changes Q to initial state 0 
 
 Synchronous reset: 
   - Reset on clock edge
@@ -312,14 +324,18 @@ Asynchronous reset:
 
 ### Settable Flip-Flops
 
-- 3 inptus: CLK, D, and Set
-- Set Q to state 1
+- 3 inputs (CLK, D, and Set)
+- Set changes Q to state 1
+
+### Summary
+
+![sequential-circuits-summary](/engn-1630/sequential-circuits-summary.png)
 
 ### Synchronous sequential circuits
 
 There are two common types osf synchronous sequential circuits: 
-- Pipelines
-- Finite state machines (FSMs)
+1. Pipelines
+2. Finite state machines (FSMs)
 
 ### Finite State Machines
 
@@ -333,3 +349,36 @@ Design procedure:
 3. Sketch a state transition diagram. Nodes represent states and edges represent inputs.
 4. Write a state transition table and output table
 5. Write boolean equations for **next state** and **output logic**
+
+## Appendix
+
+Powers of 2
+
+| n | 2^n |
+|---|-----|
+|0  | 1   |
+|1  | 2   |
+|2  | 4   |
+|3  | 8   |
+|4  | 16  |
+|5  | 32  |
+|6  | 64  |
+|7  | 128 |
+|8  | 256 |
+|9  | 512 |
+|10 | 1024|
+|11 | 2048|
+|12 | 4096|
+
+Large powers of 2
+
+| n | 2^n |
+|---|-----|
+|10 | 1K (10^3) |
+|20 | 1M (10^6) |
+|30 | 1G (10^9) |
+|40 | 1T (10^12)|
+|50 | 1P (10^15)|
+|60 | 1E (10^18)|
+
+For example, 2^32 = 2^2 * 2^30 = 4 billion.
