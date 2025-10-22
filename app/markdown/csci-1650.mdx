@@ -19,7 +19,7 @@ tags:
     - [Exploitation Tools](#exploitation-tools) (9/24)
 2. [Control-Flow Hijacking](#control-flow-hijacking) (9/22)
 3. [Code Injection](#code-injection)
-    - [NOP Sled](#nop-slide) (9/29)
+    - [NOP Sled](#nop-slid) (9/29)
     - [jmp %esp](#jmp-esp) (9/29)
     - [Register Spring](#register-spring) (9/29)
 4. [Shellcode Development](#shellcode-development)
@@ -167,14 +167,20 @@ e.g. `mov %eax, %ebx` in AT&T syntax is `mov ebx, eax` in Intel syntax.
 
 x86 uses little-endian format, which means that the least significant byte is stored at the lowest memory address.
 
-The `push` instruction decrements `%esp` by 4 bytes, then copies 4 bytes of data to the address pointed to by `%esp`.
+### Stack Frame
 
-The prologue starts a function. The CPU:
+To initiate a function call, the caller makes a `call`, which:
 
-1. Pushes the old base pointer on the stack
-2. Sets the base pointer to the current top of the stack
+1. Computes the return address, or the address of the next instruction after the `call`
+2. Pushes the return address onto the stack in little endian
 3. Decrements `%esp` by the size of the data being pushed to the stack
-4. Grows the stack down to allocate 0x218 (536) bytes for local variables
+4. Loads `%eip` with the call target
+
+To set up the new stack frame, the callee has a prologue, which:
+
+1. Pushes the old `%ebp` onto the stack
+2. Sets the base pointer to the current top of the stack
+3. Grows the stack down to allocate space for local variables
 
 ```
 push   %ebp
@@ -182,16 +188,12 @@ mov    %esp,%ebp
 sub    $0x218,%esp
 ```
 
-`call` changes the control flow of the program. The CPU:
+To transfer control back to the caller, the callee makes a `ret`, which:
+1. Pops the return address from the top of the stack
+2. Loads `%eip` with the return address
+3. Resumes executaion at the new `%eip` value
 
-1. Computes the return address, or the address of the next instruction after the `call`
-2. Pushes the return address onto the stack in little endian
-3. Decrements `%esp` by the size of the data being pushed to the stack
-4. Loads `%eip` with the call target
-
-Then the next function starts a new prologue. The stack frame looks like this:
-
-![stack frame](/csci-1650/stack-frame.jpeg)
+![stack frame](/csci-1650/stack-frame.png)
 
 Parameters and local variables are referenced relative to the base pointer `%ebp`. Positive offsets means that you are accessing parameters and negative offsets means that you are accessing local variables. For example, `-0xc(%ebp)` means that there is a local variable 12 bytes from `%ebp`.
 
@@ -245,11 +247,15 @@ NOP sleds are sequences of NOP instructions that slide the execution flow to the
 
 ### jmp %esp
 
-Need to be able to write beyond the return address.
+In the `jmp %esp` technique, the return address is overwritten with an address to the instructions `jmp %esp`. When `ret` is called, the `%esp` is decremented by 4 bytes and the return address is loaded into the `%eip`. At the next execution cycle, the `%eip` jumps to the top of the stack, where the shellcode is located.
+
+Note that the exploiter needs to be able to write beyond the return address.
+
+![jmp esp](/csci-1650/jmp-esp.jpeg)
 
 ### Register Spring
 
-Less constrained.
+A register spring uses any instruction that jumps to a register, such as `jmp %eax` or `call %ebx`. It is less constrained than `jmp %esp`.
 
 ## Shellcode Development
 
