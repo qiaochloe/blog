@@ -8,6 +8,7 @@ tags:
 ---
 
 ## Contents
+
 1. [Basic Concepts](#basic-concepts) 
     - [ELF](#elf) (9/10)
     - [C Language](#c-language) (9/10) 
@@ -41,10 +42,10 @@ An **ELF** is an executable, linkable, binary format. It is standard for UNIX-li
 
 An ELF file can represent executables, shared/static library, object files, and core dumps.
 
-- An executable (EXEC) is a library with a main function. 
-- An object file (REL) is a compiled C file that is not liked yet.
-- A static library is statically linked in, which means that it is included as a big blob in the executable. 
-- A dynamic library (DYN) is linked in at load time. e.g. `libc`
+- An executable (EXEC) is a library with a main function
+- An object file (REL) is a compiled C file that is not liked yet
+- A static library is statically linked in, which means that it is included as a big blob in the executable
+- A dynamic shared library (DYN) is linked in and has relative addresses (e.g. `libc`)
 
 ELF file contents:
 
@@ -169,12 +170,11 @@ x86 uses little-endian format, which means that the least significant byte is st
 
 ### Stack Frame
 
-To initiate a function call, the caller makes a `call`, which:
+To initiate a function call, the caller makes a `call <addr>`, which:
 
 1. Computes the return address, or the address of the next instruction after the `call`
 2. Pushes the return address onto the stack in little endian
-3. Decrements `%esp` by the size of the data being pushed to the stack
-4. Loads `%eip` with the call target
+3. Loads `%eip` with the call target `<addr>`
 
 To set up the new stack frame, the callee has a prologue, which:
 
@@ -287,11 +287,11 @@ Each system call has a mapping between its arguments and registers. To make a sy
 
 ### Reverse Shell
 
-On the compromised machine, the shellcode will:
-1. Create a socket
-2. Change stdin, stdout, and stderr to the socket
-3. Connect to the attacker's machine
-4. Execute `/bin/sh`
+On the compromised machine, the shellcode:
+1. Creates a socket
+2. Changes stdin, stdout, and stderr to the socket
+3. Connects to the attacker's machine
+4. Executes `/bin/sh`
 
 ```c
 sfd = socket(PF_INIT, SOCK_STREAM, 0);
