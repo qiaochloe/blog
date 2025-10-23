@@ -20,7 +20,7 @@ tags:
     - [Exploitation Tools](#exploitation-tools) (9/24)
 2. [Control-Flow Hijacking](#control-flow-hijacking) (9/22)
 3. [Code Injection](#code-injection)
-    - [NOP Sled](#nop-slid) (9/29)
+    - [NOP Sled](#nop-sled) (9/29)
     - [jmp %esp](#jmp-esp) (9/29)
     - [Register Spring](#register-spring) (9/29)
 4. [Shellcode Development](#shellcode-development)
@@ -176,7 +176,7 @@ To initiate a function call, the caller makes a `call <addr>`, which:
 2. Pushes the return address onto the stack in little endian
 3. Loads `%eip` with the call target `<addr>`
 
-To set up the new stack frame, the callee has a prologue, which:
+To set up the new stack frame, the callee has a prologue (`enter`), which:
 
 1. Pushes the old `%ebp` onto the stack
 2. Sets the base pointer to the current top of the stack
@@ -186,6 +186,16 @@ To set up the new stack frame, the callee has a prologue, which:
 push   %ebp
 mov    %esp,%ebp
 sub    $0x218,%esp
+```
+
+To remove a stack frame, the callee has an epilogue (`leave`), which:
+
+1. Copies `%ebp` to `%esp`
+2. Pops the saved ebp from the stack back into `%ebp`
+
+```
+mov   %ebp, %esp
+pop   %ebp
 ```
 
 To transfer control back to the caller, the callee makes a `ret`, which:
@@ -206,7 +216,7 @@ push   %eax
 push   $0x0
 ```
 
-`lea` is the only instruction that does not dereference the address. It just load the address it into a register.
+`lea` is the only instruction that does not dereference the address. It just load the address into a register.
 
 ### Exploitation Tools
 
@@ -229,9 +239,9 @@ GDB
 
 ## Control-flow hijacking
 
-Control-flow hijacking is the exploitation of memory vulnerabilities to change the control flow of a program. This is typically done by overwriting the return address on the stack to point to malicious code.mitigated
+Control-flow hijacking is the exploitation of memory vulnerabilities to change the control flow of a program. 
 
-A common technique is buffer overflow.
+This is commonly done using stack buffer overflows. The stack contains return addresses that are automatically pushed by the CPU during a `call`. Control data can easily be manipulated by changing the return addresses.
 
 ## Code Injection
 
@@ -241,21 +251,23 @@ This problem can be mitigated by NOP sleds and `jmp %esp`.
 
 ### NOP Sled
 
-NOP sleds are sequences of NOP instructions that slide the execution flow to the shellcode. You can put the payload anywhere that fits.
+NOP sleds are sequences of NOP instructions (`0x90`) that slide the execution flow to the shellcode. NOP sleds allow the exploit to compensate for the fact that the shellcode may land in slightly different addresses due to different environment variables. But it does not entirely mitigate stack jitter because you still need to guess the address of the NOP landing pad, which is a specific stack address.
 
-![nop sled diagram](/csci-1650/nop-sled.png)
+![nop sled diagram](/csci-1650/nop-sled.jpeg)
 
 ### jmp %esp
 
-In the `jmp %esp` technique, the return address is overwritten with an address to the instructions `jmp %esp`. When `ret` is called, the `%esp` is decremented by 4 bytes and the return address is loaded into the `%eip`. At the next execution cycle, the `%eip` jumps to the top of the stack, where the shellcode is located.
+In the `jmp %esp` technique, the return address is overwritten with an address to the instructions `jmp %esp` (`ff e4`). When `ret` is called, the `%esp` is decremented by 4 bytes and the return address is loaded into the `%eip`. At the next execution cycle, the `%eip` jumps to the top of the stack, where the shellcode is located. Note that the exploiter needs to be able to write beyond the return address.
 
-Note that the exploiter needs to be able to write beyond the return address.
+This reliably mitigates stack jitter because there is no need to guess a specific stack address. It will always transfer control to the current location of the register.
 
 ![jmp esp](/csci-1650/jmp-esp.jpeg)
 
 ### Register Spring
 
-A register spring uses any instruction that jumps to a register, such as `jmp %eax` or `call %ebx`. It is less constrained than `jmp %esp`.
+A register spring uses any instruction that jumps to a register, such as `jmp %eax` or `call %ebx`. It is less constrained than `jmp %esp`. 
+
+This reliably mitigates stack jitter because it always transfers control to the location pointed by a specific register.
 
 ## Shellcode Development
 
@@ -334,7 +346,9 @@ We can also call multiple functions in a row through a **ret2libc chain**. At ea
 2. The return address of the function 
 3. The address of the function to call
 
-Note that the return address of the function should be a gadget that lifts the stack up to the next function and then calls `ret`.
+The return address of the function should be a gadget that lifts the stack up to the next function and then calls `ret`.
+
+If the function argument is a pointer, make sure that you don't put it in the stack region that will be overwritten by new stack frames.
 
 ![ret2libc chain](/csci-1650/ret2libc-chain.png)
 
