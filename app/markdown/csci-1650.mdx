@@ -135,7 +135,7 @@ The operating system reads the ELF file and does the following:
 
 From then on, the operating system is done.
 
-The INTERP statement is used to describe the bianry's dependencies in dynamically-loaded libraries. For the main ELF file, the INTERP will read like this: `[Requesting program interpreter: /lib/ld-linux.so.2]`. 
+The INTERP statement is used to describe the binary's dependencies in dynamically-loaded libraries. For the main ELF file, the INTERP will read like this: `[Requesting program interpreter: /lib/ld-linux.so.2]`. 
 
 `ld.so` is a special helper that will help load all other libraries into memory. Similar to the operating system, `ld.so` will jump to the right place in the MMAP region of memory and copy the relevant dynamically-loaded library, like `libc.so`.
 
@@ -201,7 +201,7 @@ pop   %ebp
 To transfer control back to the caller, the callee makes a `ret`, which:
 1. Pops the return address from the top of the stack
 2. Loads `%eip` with the return address
-3. Resumes executaion at the new `%eip` value
+3. Resumes execution at the new `%eip` value
 
 ![stack frame](/csci-1650/stack-frame.png)
 
@@ -283,12 +283,12 @@ Bind shellcode listens on a port and gives the attacker a shell when they connec
 
 Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`.
 
-Avoid null bytes (`0x00`). They can terminate strings early in function slike `strcpy()`.
+Avoid null bytes (`0x00`). They can terminate strings early in functions like `strcpy()`.
 
 Tricks to remove null bytes:
 1. Instead of `mov $0x0`, `xor` registers with themselves
-2. `pushw` can sometimes optimize out `00`. e.g. `pushw $0x0012` is `\x66\x6a\x12` instead of `\x66\x6a\x12\x00`. This wroks for values up to `7f`.
-3. Becauseu `/bin/sh` is 7 bytes, there will be a null byte at the end. You can instead push `/bin//sh`.
+2. `pushw` can sometimes optimize out `00`. e.g. `pushw $0x0012` is `\x66\x6a\x12` instead of `\x66\x6a\x12\x00`. This works for values up to `7f`.
+3. Because `/bin/sh` is 7 bytes, there will be a null byte at the end. You can instead push `/bin//sh`.
 
 It might also be necessary to reduce payload size. 
 
