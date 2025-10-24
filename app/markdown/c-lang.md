@@ -1,9 +1,10 @@
 ---
-title: A review of C
+title: A tour through C
 summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
 tags:
   - "technical"
+  - "notes"
 ---
 
 This is a review of C syntax, file structure, and debugging—mainly for folks who are already familiar with computer systems and just need a refresher on C syntax and the C ecosystem.
@@ -12,7 +13,7 @@ I originally put these notes together while sitting in on [CSCI 0300](https://cs
 
 I've included my own thoughts about how to go about debugging.
 
-## Table of Contents
+## Contents
 
 1. [Syntax](#syntax)
 
@@ -85,6 +86,28 @@ int add(int a, int b) { return a + b; }
 void print_hello_world() { printf("Hello, World!\n"); }
 ```
 
+Conditionals, boolean operators, and `for` and `while` loops are very similar to those in other languages.
+
+```c
+for (int i = 1; i <= n; i++) {
+    if (i % 15 == 0) {
+        printf("FizzBuzz\n");
+    } else if (i % 5 == 0) {
+        printf("Buzz\n");
+    } else if (i % 3 == 0) {
+        printf("Fizz\n");
+    } else {
+        printf("%d\n", i);
+    }
+}
+
+int i = 0
+while (i < 10) {
+    printf("%d\n", i);
+    i++;
+}
+```
+
 **Structs** are typed and support destructuring.
 
 ```c
@@ -105,8 +128,6 @@ int test_distance() {
   return distance(p1, p2) == sqrt(2);
 }
 ```
-
-Conditionals, boolean operators, and `for` and `while` loops are very similar to those in other languages.
 
 ### Unsafe memory things
 
@@ -171,7 +192,7 @@ free(s);
 
 This section will be difficult to really understand without a background in computer systems, such as knowing the memory layout.
 
-Variables can be immutable with the `const` keyword.
+Variables can made immutable with the `const` keyword.
 
 ```c
 const int n;
@@ -337,7 +358,7 @@ The gcc compiler accepts a lot of flags to customize the compilation process. He
 
 - `-01` to `-O3` enables optimizations, making your code run faster.
 
-### Debugging
+## Debugging
 
 ### `printf` debugging
 
