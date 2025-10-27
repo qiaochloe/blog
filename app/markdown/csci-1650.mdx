@@ -27,12 +27,15 @@ tags:
     - [Shellcode](#shellcode) (10/1)
     - [Writing Shellcode](#writing-shellcode) (10/1)
     - [Reverse Shell](#reverse-shell) (10/6)
-5. [Code Reuse](#code-reuse)
+5. [Non-Executable Memory | Code Reuse](#non-executable-memory-code-reuse)
     - [Non-Executable Memory](#non-executable-memory) (10/8)
     - [mprotect](#mprotect) (10/8)
     - [system](#system) (10/15)
     - [ret2libc Chain](#ret2libc-chain) (10/15)
+6. [Address Space Layout Randomization | Return-Oriented Programming](#address-space-layout-randomization-return-oriented-programming) 
     - [Address Space Layout Randomization](#address-space-layout-randomization) (10/20)
+    - [Dynamic Linking](#dynamic-linking) (10/27)
+    - [Return-Oriented Programming](#return-oriented-programming) (10/27)
 
 ## Basic Concepts 
 
@@ -314,7 +317,7 @@ connect(sfd, &sin, sizeof(sin));
 execve("/bin/sh", NULL, NULL);
 ```
 
-## Code Reuse
+## Non-Executable Memory | Code Reuse
 
 ### Non-Executable Memory
 
@@ -352,6 +355,8 @@ If the function argument is a pointer, make sure that you don't put it in the st
 
 ![ret2libc chain](/csci-1650/ret2libc-chain.png)
 
+## Address Space Layout Randomization | Return-Oriented Programming
+
 ### Address Space Layout Randomization
 
 Address space layout randomization (ASLR) is a probabilistic defense that artificially randomizes the starting address space of parts of the address space. 
@@ -362,6 +367,41 @@ Constraints:
 - Stack needs to be 16 bit aligned (19 bits of entropy)
 - mmap needs to be 4 KB aligned (8 bits of entropy)
 - brk needs to be 4 KB aligned (13 bits of entropy)
+
+### Dynamic Linking
+
+Dynamic linking
+1. Global offset table (GOT) contains of addresses of external functions and global variables
+2. Procedure linkage table (PLT) contains stubs that jump to the addresses in the GOT
+
+Here is the process of calling an external function:
+
+1. An external function in the `.text` section is called using the `.plt` stub.
+
+    ```
+    bf06327:       e8 14 2d 14 fc          call   8049040 <read@plt>
+    ```
+
+2. The `.plt` stub is a set of three instruction, which starts with a jump to an address in the GOT.
+
+    ```
+    08049040 <read@plt>:
+    8049040:       ff 25 4c 84 f0 0b       jmp    *0xbf0844c
+    8049046:       68 08 00 00 00          push   $0x8
+    804904b:       e9 d0 ff ff ff          jmp    8049020 <_init+0x20>
+    ```
+
+    If the function is being called for the first time, the GOT slot will just point to the next instruction in the PLT stub, which pushes the function index and jumps to the dynamic linker.
+
+    If the function has been called before, the GOT slot will point to the actual function address.
+
+Only functions used in the binary have PLT stubs. PLT addresses are not randomized by partial ASLR because they are part of the main executable.
+
+### Return-Oriented Programming
+
+A gadget is a sequence of instructions that ends with a `ret`. Return-oriented programming (ROP) involves chaining gadgets together to perform arbitrary computation. 
+
+To find unaligned gadgets, search for `ret` (`c3`) instructions. Then, backtrack a few bytes to find useful instructions. One tool to do this automatically is `ROPgadget`
 
 References:
 1. [Linux System Call Table](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64-64-bit)
