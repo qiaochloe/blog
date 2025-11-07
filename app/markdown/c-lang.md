@@ -1,42 +1,46 @@
 ---
-title: A tour through C
+title: A Tour Through C
 summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
 tags:
   - "technical"
   - "notes"
+todo: "union, enums, arrow syntax for pointers, ternaries, goto"
 ---
 
-This is a review of C syntax, file structure, and debugging—mainly for folks who are already familiar with computer systems and just need a refresher on C syntax and the C ecosystem.
+This is a review of C syntax, file structure, and debugging—mainly for folks who are already familiar with computer systems and just need a refresher on syntax and ecosystem.
 
-I originally put these notes together while sitting in on [CSCI 0300](https://csci0300.github.io/) lectures. I had become a TA after not using C for about six months and was worried I’d gotten a bit rusty. These notes pull a lot from the excellent materials on the course website, especially the CS 0300 TAs' C Primer ([1](https://csci0300.github.io/assets/c-primer1.html), [2](https://csci0300.github.io/assets/c-primer2.html), [3](https://csci0300.github.io/assets/c-primer3.html)) and [Lab 1](https://csci0300.github.io/assign/labs/lab1.html).
-
-I've included my own thoughts about how to go about debugging.
+I originally put these notes together while sitting in on Brown's [Computer Systems](https://csci0300.github.io/) lectures. These notes pull a lot from the excellent materials on the course website, especially the TAs' C Primer ([1](https://csci0300.github.io/assets/c-primer1.html), [2](https://csci0300.github.io/assets/c-primer2.html), [3](https://csci0300.github.io/assets/c-primer3.html)) and [Lab 1](https://csci0300.github.io/assign/labs/lab1.html).
 
 ## Contents
 
 1. [Syntax](#syntax)
 
-   1. [Basic syntax](#basic-syntax) covers comments, variables, characters, strings, numbers, types, functions, structs, and other syntaxes.
-   2. [Unsafe memory things](#unsafe-memory-things) covers pointers, arrays, strings, and memory allocation. This is a _very_ quick syntactic review and does not cover the memory layout.
-   3. [Miscellaneous](#miscellaneous) covers `const`, `static`, and `#define`.
+   - [Basic Syntax](#basic-syntax) covers common programming language features like comments, variables, primitive types, functions, and structs.
+   - [Pointers](#pointers) covers pointers, arrays, and strings.
+   - [Heap](#heap) covers `malloc` and `free`.
+   - [Keywords](#keywords) covers `const`, `static`, and `#define`.
 
-2. [File structure](#file-structure)
+2. [File Structure](#file-structure)
 
-   1. [C files](#c-files) covers how to compile and execute the most basic C file.
-   2. [C projects](#c-projects) covers source files, header files, the standard library, and global variables.
-   3. [Compiling C programs](#compiling-c-programs) covers compiling with warnings, sanitizers, and optimizations.
+   - [C Files](#c-files) covers how to compile and execute the most basic C file.
+   - [C Projects](#c-projects) covers source files, header files, the standard library, and global variables.
+   - [C Standard Library](#c-standard-library) covers standard libraries like `stdio.h`, `stdlib.h`, and `string.h`.
+   - [Compilation](#compilation) covers compiling C programs with warnings, sanitizers, and optimizations.
 
 3. [Debugging](#debugging)
-   1. [`printf` debugging](#object-object-debugging) covers how to use `printf` to debug your code.
-   2. [GDB](#gdb) covers how to use the GNU debugger.
-   3. [Inspecting file contents](#inspecting-file-contents) covers `xxd` and `diff`.
+
+   - [`printf` debugging](#object-object-debugging) covers how to use `printf` to debug your code.
+   - [GDB](#gdb) covers how to use the GNU debugger.
+   - [Inspecting file contents](#inspecting-file-contents) covers `xxd` and `diff`.
+
+4. [Algorithms](#algorithms)
 
 ## Syntax
 
-### Basic syntax
+### Basic Syntax
 
-There are both single-line and multi-line **comments**.
+**Comments** start with `//` or `/*`.
 
 ```c
 // This is a single line comment.
@@ -56,37 +60,94 @@ n = 10;  // Initialization
 n = 100; // Mutation
 ```
 
-**Characters** have type `char` and are denoted with single quotes. **Strings** are just arrays of characters! They have type `char*` or `char[]` and are denoted with double quotes. The reason why there are two types is slightly more complicated; see [unsafe memory things](#unsafe-memory-things).
-
-```c
-char c = 'a';
-char* s1 = "Hello, World!";
-char s2[] = "Hello, World!";
-```
-
 C is a statically typed language, which means that you need to specify the **type** of any variable. This is because the compiler needs to know how much memory to allocate for each variable. The size hierarchy of types is roughly as follows:
 
 | Type      | Size                     | Value                       |
 | --------- | ------------------------ | --------------------------- |
 | `void`    | N/A                      | No value                    |
 | `char`    | 1 byte                   | Character                   |
-| `short`   | 2 bytes                  | Whole number                |
-| `int`     | 4 bytes                  | Whole number                |
-| `long`    | 8 bytes                  | Whole number                |
-| `float`   | 4 bytes                  | Decimal number              |
-| `double`  | 8 bytes                  | Decimal number              |
+| `short`   | 2 bytes                  | Integer                     |
+| `int`     | 4 bytes                  | Integer                     |
+| `long`    | 8 bytes                  | Integer                     |
+| `float`   | 4 bytes                  | Decimal                     |
+| `double`  | 8 bytes                  | Decimal                     |
 | `size_t`  | Implementation-dependent | Unsigned size of any object |
 | `ssize_t` | Implementation-dependent | Signed size of any object   |
 
-**Functions** are declared with a return type, a name, and a list of parameters.
-Notice that `void` is used to say that the function has no return value.
+Note: you might also see imported types from `stdint.h`. For example, `uint8_t` represents an unsigned integer with exactly 8 bits (0-255).
+
+**Characters** have type `char` and are denoted with single quotes.
 
 ```c
-int add(int a, int b) { return a + b; }
-void print_hello_world() { printf("Hello, World!\n"); }
+char c = 'a';
 ```
 
-Conditionals, boolean operators, and `for` and `while` loops are very similar to those in other languages.
+**Strings** are just arrays of characters! They have type `char*` or `char[]` and are denoted with double quotes. The reason why there are two types is covered in the [next section](#unsafe-memory-things).
+
+```c
+char* s1 = "Hello, World!";
+char s2[] = "Hello, World!";
+```
+
+**Integers** have type `int` and are denoted as decimal numbers by default. You can also denote them as binary with the `0b` prefix or hexadecimal with the `0x` prefix.
+
+```c
+int n1 = 10;
+int n2 = 0b1010;
+int n3 = 0xA;
+```
+
+Numbers are implicitly _signed_. If you change them to `unsigned`, then the range of values that can be represented changes.
+
+```c
+// x can go from 0 to 4,294,967,295
+unsigned int x;
+
+// y and z can go from -2,147,483,648 to 2,147,483,647
+int y;
+signed int z;
+```
+
+**Functions** are declared with a return type, a name, and a list of parameters. Note that `void` is used to say that the function has no return value.
+
+```c
+int add(int a, int b) {
+  return a + b;
+}
+
+void say_hello() {
+  printf("Hello, World!\n");
+}
+```
+
+**if-else** statements have a condition and a body
+
+```c
+int a = 0;
+int b = 2;
+if (a > b) {
+  printf("A is greater than B\n");
+} else {
+  printf("B is greater than A\n");
+}
+```
+
+`switch` statements are instantiated with a variable and multiple cases. Note that `break` is necessary to prevent fall-through.
+
+```c
+int n = 2;
+switch (n) {
+  case 1:
+    printf("One\n");
+    break;
+  case 2:
+    printf("Two\n");
+    break;
+  default:
+    printf("Other\n");
+```
+
+`for` loops are instantiated with a loop constant, a loop condition, and a loop increment.
 
 ```c
 for (int i = 1; i <= n; i++) {
@@ -100,7 +161,11 @@ for (int i = 1; i <= n; i++) {
         printf("%d\n", i);
     }
 }
+```
 
+`while` loops are instantiated with a loop condition.
+
+```c
 int i = 0
 while (i < 10) {
     printf("%d\n", i);
@@ -129,37 +194,66 @@ int test_distance() {
 }
 ```
 
-### Unsafe memory things
+### Pointers
 
-C is a memory-unsafe language. This means that it is possible to access and manipulate memory directly. This is the biggest difference between C and other high-level languages. This section only covers some _syntactic constructions_ and not conceptual topics like **memory representation**, **alignment**, and **collection rules**.
+C is a memory-unsafe language, which means that it is possible to access and manipulate memory directly. This is the biggest difference between C and other high-level languages.
 
-**Pointers** are variables that store memory addresses.
-Adding `*` to a _type_ makes it a pointer to that type.
-Adding `*` to a variable gives you the value at that memory address.
-Adding `&` to a variable gives you the memory address of that variable.
+**Pointers** are variables that store memory addresses. Here are a few rules:
+
+1. The operator `&` returns the memory address of the variable. In a 64-bit system, a memory address is 64 bits, or 8 bytes. For example, the memory address of `n` below could be something like `0x16ce3afa8`.
+
+   ```c
+   int n = 10;   // 10
+   &n            // Memory address of n
+   ```
+
+2. The type of a pointer is the type of the variable it points to, followed by a `*`.
+
+   ```c
+   int n = 10;       // 10
+   int* n_ptr = &n;  // Memory address of n
+   ```
+
+3. The operand `*` dereferences a pointer to get the value at the memory address.
+
+   ```c
+   int n = 10;        // 10
+   int* n_ptr = &n;   // Memory address of n
+   *n_ptr += 1;
+   printf("%d\n", n); // 11
+   ```
+
+When you increment a pointer, it moves forward by the size of the type it points to. This is called **pointer arithmetic**.
 
 ```c
-// An int with a value of 10
-int n = 10;
-
-// An int pointer whose value is the memory address of n
-// Like 0x16ce3afa8 or something
-int* n_ptr = &n;
-
-// Dereferencing the pointer and adding 1 to the value 10
-*n_ptr += 1;
+int* n_ptr = (int*)0x16ce3afa8; // 0x16ce3afa8
+n_ptr += 4;
+printf("%p\n", n_ptr);          // 0x16ce3afb8 = 0x16ce3afa8 + 4 * 4
 ```
+
+Note: In practice, no one types out memory addresses by hand. We almost always use `&` to get a handle on a memory address.
 
 **Arrays** are pointers to the first element in the array. This works because arrays occupy contiguous blocks of memory, and each element in the array has a known type and size. You can do pointer arithmetic to get the memory of any element in the array.
 
 ```c
-char arr[7] = {'h', 'e', 'l', 'l', 'o', '!', '\0'};
-char fifth = arr[4];           // o
-char* fifth_ptr = arr + 4;     // 0x16ce3afa8 or something
-char fifth_again = *fifth_ptr; // o
+int arr[7] = {1, 2, 3, 4, 5, 6, 7};   // Memory address
+int fifth = arr[4];                   // 5
+int* fifth_ptr = arr + 4;             // Memory address
+char fifth_again = *fifth_ptr;        // 5
 ```
 
-As alluded to before, there are really two types of strings. **String objects** are arrays of chars and have type `char[]`. They are stored in the stack section of memory, which means that they are modifiable.
+As alluded to before, there are really two types of strings: string objects and string literals.
+
+**String objects** are arrays of chars and have type `char[]`. They need to be manually null-terminated with the `\0` character.
+
+Unlike string literals, string objects are stored in the stack section of memory and can be modified.
+
+```c
+char arr[7] = {'h', 'e', 'l', 'l', 'o', '!', '\0'}; // hello!\0
+arr[0] = 'H';
+*(arr + 5) = '?';
+printf("%s\n", arr);                                // Hello?\0
+```
 
 **String literals** are sequences of chars and have type `char*`. _Unlike string objects, string literals are not mutable._ The compiler automatically adds the terminating null characters `\0` to string literals.
 
@@ -177,71 +271,91 @@ a[0] = 'h';
 b[0] = 'h';
 ```
 
+**Function pointers** are pointers that point to functions.
+
+```c
+int add(int a, int b) {
+  return a + b;
+}
+int (*addPtr)(int,int);
+addPtr = &add;
+int sum = (*addPtr)(2, 3); // 5
+```
+
+You can also use pointers in parameters or return values.
+
+`addFactory` is a function that takes in an integer `n` and returns a function pointer of type `int (*)(int, int)`.
+
+```c
+int (*addFactory(int n))(int, int) {
+  int (*addPtr)(int, int) = &add;
+  return addPtr
+}
+```
+
+### Heap
+
 The compiler can **automatically** allocate memory on the **stack** using type information. However, if we don't know the size of the memory until runtime, the programmer needs to **dynamically** allocate memory on the **heap**.
 
-We can allocate memory on the heap with `malloc` and `free` from `stdlib.h`.
+We can allocate memory on the heap with `malloc` and `free` from `stdlib.h`. `malloc` allocates memory on the heap and returns a `void*` pointer to the address.
+
 Every call to `malloc` should be paired with a call to `free` to avoid memory leaks.
 
 ```c
 #include <stdlib.h>
-char* s = (char*)malloc(10); // Malloc returns a void*, so we need to type cast
+char* s = (char *)malloc(10);
+memcpy(s, "Goodbye", 8);
+printf("%s\n", s);
 free(s);
 ```
 
-### Miscellaneous
+### Keywords
 
-This section will be difficult to really understand without a background in computer systems, such as knowing the memory layout.
-
-Variables can made immutable with the `const` keyword.
+The `const` keyword guarantees that a variable will be immutable. This is reinforced by the compiler.
 
 ```c
-const int n;
+const int n = 2;
+n = 3; // Compilation error
 ```
 
-And it can allocated on static memory with the `static` keyword.
+The `static` keyword has multiple functions:
 
-```c
-int g() {
-  static int n = 0;
-  n++;
-  return n;
-}
+1. A `static` local variable will be allocated on the data section rather than the stack. This means that the variable will persist for the entire duration of the program.
 
-int main() {
-  // Prints out 1 2 3 4 5
-  for (int i = 0; i < 5; i++) {
-    printf("%d ", g());
-  }
-}
-```
+   ```c
+   int g() {
+     static int n = 0;
+     n++;
+     return n;
+   }
 
-**Numbers** are implicitly _signed_. If you change them to _unsigned_, then the range of values that can be represented changes.
+   int main() {
+     // Prints out 1 2 3 4 5
+     for (int i = 0; i < 5; i++) {
+       printf("%d ", g());
+     }
+   }
+   ```
 
-```c
-// x can go from 0 to 4,294,967,295
-unsigned int x;
+2. A `static` global variable is not seen outside of the C file it is defined in.
 
-// y and z can go from -2,147,483,648 to 2,147,483,647
-int y;
-signed int z;
-```
+3. A `static` function is also not seen outside of the C file it is defined in.
 
 `#define` is a directive used to define macros.
 Macros are replaced by their value by the preprocessor before the code is compiled.
-They are not variables, and they are not allocated memory in the program.
 
 ```c
 #define PI 3.14159
 #define AREA(r) (PI * r * r)
 ```
 
-## File structure
+## File Structure
 
-### C files
+### C Files
 
 C files have a `.c` extension. A valid file name, for example, would be `program.c`.
 
-Most C program need to have a `main` function. The `main` function is the first function that is executed. There are two accepted signatures for `main`:
+Most C programs begin with a `main` function, which will be the first function executed. There are two accepted signatures for `main`:
 
 ```c
 // No command-line arguments
@@ -259,22 +373,27 @@ int main(int argc, char* argv[]) {
 The C compiler works in one pass, which means that functions must be declared before they are used.
 
 ```c
-int add(int a, int b) { return a + b; }
-int main() { return add(1, 2); }
+int add(int a, int b) {
+  return a + b;
+}
+
+int main() {
+  return add(1, 2);
+}
 ```
 
 ### C Projects
 
 In a C project, **header files** are files with a `.h` extension. They are _technically_ the exact same as the **source files** (with the `.c` extension), but by convention, we put declarations in header files and definitions in source files.
 
-We also tend to declare functions, constants, and macros that are _shared_ across multiple files in a header file. For example, we can declare functions like this:
+For example, we may declare functions in `math.h`:
 
 ```c
 // math.h
 int add(int a, int b);
 ```
 
-And then initialize them like this:
+And then initialize them in `math.c`:
 
 ```c
 // math.c
@@ -293,22 +412,48 @@ int main() {
 }
 ```
 
-The **C standard library** provides extra functions in header files like `stdio.h` and `stdlib.h`. We can also use functions from the C standard library with the `#include` preprocessor too!
+### C Standard Library
 
-There are two different syntaxes, depending whether the header file is pre-defined or user-defined.
+The **C standard library** provides extra functions in header files like `stdio.h` and `stdlib.h`. Because these header files are predefined, the `#include` syntax is slightly different:
 
 ```c
-#include <stdio.h> // Pre-defined in the system, like standard libraries
-#include "math.h"  // User-defined. Should be the path to the header file
+#include <stdio.h> // Pre-defined
+#include "math.h"  // User-defined path
 ```
 
-Here is a brief tour of some common libraries:
+`stdlib.h` is a general library. It contains `malloc` and `free`, `abs` and `rand`, and other useful functions.
 
-- `stdlib.h` is a general library. It contains `malloc` and `free`, `abs` and `rand`, and other useful functions.
-- `stdio.h` is for standard input and output. It contains `printf` to print to the console and `fopen` to open a file.
-- `string.h` is for manipulating strings. It contains `memcpy`, `strcmp`, and `strlen`.
+`stdio.h` is used for standard input and output.
 
-### Compiling C programs
+- `scanf` reads from the console
+- `printf` prints to the console
+
+```c
+#include <stdio.h>
+char name[50];
+scanf("%49s", name);
+printf("Hello, %s!\n", name);
+```
+
+`string.h` is used for string manipulation.
+
+- `strlen` gets the length of a string
+- `strcpy` copies one string to another string
+- `strcmp` compares two strings and returns `0` if they are equal
+- `strcat` concatenates two strings
+
+```c
+char str1[20] = "Hello";              // str1 = Hello
+char str2[] = "World";                // str2 = World
+printf("%zu\n", strlen(str1));        // 5
+strcpy(str1, "Hi \0");                // str1 = Hi
+strcat(str1, str2);                   // str1 = Hi World
+if (strcmp(str1, "Hi World") == 0) {  // true
+  printf("Strings are equal!\n");
+}
+```
+
+### Compilation
 
 GCC, the GNU Compiler Collection, is the most common C compiler. To compile a single C program into an executable, do:
 
@@ -344,13 +489,13 @@ The gcc compiler accepts a lot of flags to customize the compilation process. He
 
 **Sanitizers**
 
-**Warning:** sanitizers can mess with GDB and the memory layout of the program.
-
 - `-fsanitize=address` enables the address sanitizers, which can detect memory bugs such as out-of-bounds access and dangling pointers. This flag also adds the leak sanitizer (`-fsanitize=leak`), which detects memory leaks.
 
 - `-fsanitize=undefined` enables the undefined behavior sanitizer, which detects undefined behavior such as integer overflows and invalid type conversions.
 
 - `-g` adds debugging information to the executable. This gives you more debugging information when you're using GDB or address sanitizers.
+
+Warning: sanitizers can mess with GDB and the memory layout of the program.
 
 **Optimization**
 
@@ -364,17 +509,17 @@ The gcc compiler accepts a lot of flags to customize the compilation process. He
 
 `printf` debugging is useful when the code compiles but produces unexpected results.
 
-To print variables to the console, use a _format specifier_ at the place where you want the variable to be.
-Then pass the variable as an additional argument to `printf`. They will replace the format specifiers in the string.
+To print variables to the console, use a _format specifier_ at the place where you want the variable to be. Then pass the variable as an additional argument to `printf`. They will replace the format specifiers in the string.
 
-Here are the different format specifiers:
+Format specifiers include:
 
 - `%d` for decimal (base 10) integers
 - `%x` for hexadecimal (base 16) integers
-- `%ld` for longs
-- `%c` for ASCII characters
+- `%ld` for `long`
+- `%zu` for `size_t`
 - `%p` for pointers or memory addresses
 - `%s` for strings
+- `%c` for ASCII characters
 
 ```c
 #include <stdio.h>
@@ -431,7 +576,7 @@ You can also do `info` on `break`points, `threads`, and `frame`s.
 
    I think you should know enough about GDB to feel comfortable reaching for it when you have no idea what to do. **GDB is one of the best ways to get unstuck.**
 
-   To be honest though, GDB is not the best for quick, iterative work. Every time you change your program, you have to recompile, run GDB, and then reenter your commands. Even with a gdbinit file, this can be a pain.
+   But to be honest, GDB is not the best for quick, iterative work. Every time you change your program, you have to recompile, run GDB, and then reenter your commands.
 
    If you have a clear idea of where the bug is, `printf` debugging is better. You can quickly change something in your code, recompile and execute, and see the results.
 
@@ -466,3 +611,74 @@ xxd <file1> > file1.hex
 xxd <file2> > file2.hex
 diff -u file1.hex file2.hex
 ```
+
+## Algorithms
+
+Bitwise operations:
+
+```c
+n & 1; // mod 2
+n << 1; // multiply by 2
+n >> 1; // divide by 2
+```
+
+Use bitmasks if you only want certain bits of a number. For example, we can calculate mod 16 by getting the 4 bits of the integer, or bit-masking every bit before it.
+
+```c
+n & 0b0000'0000'0000'0000'0000'0000'0000'1111
+n & 0xf
+```
+
+Linked lists:
+
+```c
+typedef struct {
+  int data;
+  struct Node* next;
+} Node;
+```
+
+Reversing a linked list:
+
+```c
+ListNode* reverseList(ListNode* head) {
+  ListNode* currNode = head;
+  ListNode* nextNode = NULL;
+  ListNode* prevNode = NULL;
+
+  while (currNode) {
+    nextNode = currNode->next;
+    currNode->next = prevNode;
+    prevNode = currNode;
+    currNode = nextNode;
+  }
+
+  return prevNode;
+}
+```
+
+Valid Anagram:
+
+```c
+bool isAnagram(char* s, char* t) {
+    if (strlen(s) != strlen(t)) {
+        return 0;
+    }
+
+    int count[26] = {0};
+
+    for (int i = 0; s[i] != '\0'; i++) {
+        count[s[i] - 'a']++;
+        count[t[i] - 'a']--;
+    }
+
+    for (int i = 0; i < 26; i++) {
+        if (count[i] != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+```
+
+Problems: [Single Number](https://leetcode.com/problems/single-number/description/).
