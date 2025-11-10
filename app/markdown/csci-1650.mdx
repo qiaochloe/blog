@@ -2,7 +2,7 @@
 title: "Software Security and Exploitation Notes"
 summary: "Control-Flow Hijacking • Code Injection • Shellcode Development • Code Reuse"
 publishedAt: 2025-09-13
-updatedAt: 2025-10-20
+updatedAt: 2025-11-10
 tags:
 - notes
 ---
@@ -32,7 +32,7 @@ tags:
     - [mprotect](#mprotect) (10/8)
     - [system](#system) (10/15)
     - [ret2libc Chain](#ret2libc-chain) (10/15)
-6. [Address Space Layout Randomization | Return-Oriented Programming](#address-space-layout-randomization-return-oriented-programming) 
+6. [Partial ASLR | Return-Oriented Programming](#partial-aslr-return-oriented-programming)
     - [Address Space Layout Randomization](#address-space-layout-randomization) (10/20)
     - [Dynamic Linking](#dynamic-linking) (10/27)
     - [Return-Oriented Programming](#return-oriented-programming) (10/27)
@@ -227,8 +227,9 @@ Terminal commands
 
 - `as --32 program.s -o program.o` assembles in 32-bit.  
 - `cc -m32 program.c -o program` compiles in 32-bit.  
-- `ldd` is a command that prints the shared libraries required by each program.  
-- `objdump -d <exec>` can disassemble an executable file.
+- `ldd` prints the shared libraries required by each program.  
+- `objdump -d <exec>` disassembles executable files.
+- `readelf -s <file>` or `nm <file>` lists symbols from object files.
 
 GDB
 
@@ -286,6 +287,8 @@ Bind shellcode listens on a port and gives the attacker a shell when they connec
 
 Write the assembly. Assemble it. Then disassemble it to get the opcodes. A nice one-liner is `as --32 program.s -o program && objdump -d program`.
 
+Each system call has a mapping between its arguments and registers. To make a system call, put its syscall number in `%eax` and its arguments in the appropriate registers. Then invoke `int $0x80`. The return value will be in `%eax`.
+
 Avoid null bytes (`0x00`). They can terminate strings early in functions like `strcpy()`.
 
 Tricks to remove null bytes:
@@ -298,7 +301,25 @@ It might also be necessary to reduce payload size.
 Tricks to reduce shellcode size:
 1. In `mov`, use the lowest register necessary
 
-Each system call has a mapping between its arguments and registers. To make a system call, put its syscall number in `%eax` and its arguments in the appropriate registers. Then invoke `int $0x80`. The return value will be in `%eax`.
+You can also look for strings in the `.rodata` section instead of pushing byte-by-byte
+1. Find the string in the binary with `strings -t x <file> | grep <string>`
+
+  ```
+  strings -t x exec | grep string
+  3008 string
+  ```
+
+2. Find the offset and address of `.rodata` section  using `readelf -S <file> | grep .rodata`
+      
+      ```
+      readelf -S exec | grep .rodata
+      [15] .rodata           PROGBITS        0bf07000 003000 0001b2 00   A  0   0  4
+      ```
+3. Calculate the address of the string by summing address of the `.rodata` section with the offset of the string within `.rodata`.
+
+    ```
+    0bf07000 + (3008 - 3000) = 0bf07008
+    ```
 
 ### Reverse Shell
 
@@ -355,7 +376,7 @@ If the function argument is a pointer, make sure that you don't put it in the st
 
 ![ret2libc chain](/csci-1650/ret2libc-chain.png)
 
-## Address Space Layout Randomization | Return-Oriented Programming
+## Partial ASLR | Return-Oriented Programming
 
 ### Address Space Layout Randomization
 
@@ -399,9 +420,83 @@ Only functions used in the binary have PLT stubs. PLT addresses are not randomiz
 
 ### Return-Oriented Programming
 
-A gadget is a sequence of instructions that ends with a `ret`. Return-oriented programming (ROP) involves chaining gadgets together to perform arbitrary computation. 
+A gadget is a sequence of instructions that ends with a `ret`. Return-oriented programming (ROP) involves chaining gadgets together to perform arbitrary computation. Often, this involves setting up the stack frame above the original return address. 
 
 To find unaligned gadgets, search for `ret` (`c3`) instructions. Then, backtrack a few bytes to find useful instructions. One tool to do this automatically is `ROPgadget`
 
+For partial ASLR, we can use ROP to set up arguments, particularly if they are memory addresses. Then we can call functions in the PLT, which is not randomized. 
+
+![Return-oriented programming](/csci-1650/rop.png)
+
+## Full ASLR | Just-In-Time Code Reuse
+
+### Full ASLR
+
+Full ASLR randomizes the main executable in addition to everything that the partial ASLR randomizes. To have full ASLR, the main executable must not contain any absolute addresses; i.e. it must be **position-independent code** (PIC). 
+
+An executable with full ASLR is a DYN (Position-Independent Executable file). This is slightly different from library files, which are DYN (Shared object file).
+
+### Memory Disclosure
+
+In **format strings**, `%x` will always print the last value from the stack and interpret it as a hexadecimal. This can be exploited to find the return address, creating a **memory disclosure** vulnerability. 
+
+```c
+printf("XXXX %x %x %x %x");
+```
+
+In practice, putting too many `%x` in the input string will result in overwriting the return address before we get to read it. Instead, we should use the `%N$x` notation to read specific stack locations.
+
+```c
+printf("%138$x")
+```
+
+### Just-In-Time Code Reuse
+
+1. Get the return address through a memory disclosure vulnerability.
+
+2. Calculate the base address of the main executable by subtracting the offset of the return address from the base address. 
+
+    In other words, `base addr = return addr - offset`. We can find this offset using `info proc mappings` in GDB.
+
+3. Calculate the addresses of gadgets and functions in the main executable 
+
+    Note that gadgets must be taken from the main executable, not from libraries.
+    Gadgets and functions will have fixed offsets from the base address, given by `readelf -e <executable>`.
+
+4. Use a [ROP chain](#return-oriented-programming) to call functions in the PLT once again.
+
+![Just-in-time code reuse](/csci-1650/jit-code-reuse.png)
+
+Note that GDB disables ASLR by default. To enable it, run `set disable-randomization off`.
+
+## Stack Canaries/Cookies
+
+### Stack Canaries
+
+A stack canary is a tripwire defense against return address overwrites. In particular, it defends against contiguous spatial memory violations in the stack. This defense needs to be enabled by the compiler.
+
+The canary is a random 4-byte value that is placed in the stack frame of the protected function. A master "copy" of the canary is placed somewhere effectively random in the heap. When the function returns, the epilogue checks that the canary in the stack frame matches the master copy. If the canary matches, we can assume that all values above the canary in the stack frame are intact.
+
+![Stack canary](/csci-1650/stack-canary.png)
+
+Note that this defense is not effective if there is a memory disclosure vulnerability that allows the attacker to read the canary value.
+
+### x86 Segmentation
+
+The memory management unit (MMU) has a segmentation unit and a paging unit. The segmentation unit takes physical memory, divides it into chunks (segments), and runs processes in separate segments. The global descriptor table (GDT) is a data structure in the kernel that contains a segment descriptor for each segment. The segment descriptor which describes the segment's base address and limit address.
+
+There are six, 2-byte segment selectors in x86: `%cs`, `%ds`, `%es`, `%fs`, `%gs`, and `%ss`. These selectors can be used to index the GDT to get a particular segment selector. Every address that references the code segment uses the %cs selector. Every address that references the stack segment uses the %ss selector. 
+
+Specifically, the 13 most-significant bits in the registers are used for indexing into the GDT to get a segment selector. The 3rd bit is the table indicator (TI), which specifies whether to use the GDT (0) or the local descriptor table (LDT) (1). The 2 least-significant bits are the requested privilege level (RPL).
+
+For example, the address below resolves to `GDT[%fs].base + 0x00010203`.
+
+```asm
+mov %fs:0x00010203, %eax
+```
+
+The nice thing about segmentation is that it is not possible to find the address of the segment base through memory disclosure vulnerabilities. This is because the segment base is stored in the GDT, which lives in kernel space and is only accessible through segment selectors.
+
 References:
+1. [CSCI 1650 Lectures](https://cs.brown.edu/courses/csci1650/lectures.html)
 1. [Linux System Call Table](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64-64-bit)
