@@ -2,7 +2,7 @@
 title: "Digital Electronics Systems Design Notes"
 summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits • Sequential Circuits"
 publishedAt: 2025-09-18
-updatedAt: 2025-10-20
+updatedAt: 2025-11-11
 tags:
 - notes
 ---
@@ -16,7 +16,7 @@ tags:
     3. [Signed Arithmetic](#signed-arithmetic)
 3. [Digital Logic Gates](#digital-logic-gates) (9/11, 9/16, 9/18)
     1. [Multiple-Input Logic Gates](#multiple-input-logic-gates)
-    2. [Ripple Carry Adders](#ripple-carry-adders)
+    2. [Adders](#adders)
     3. [Ring Oscillators](#ring-oscillators)
     4. [Transistors](#transistors)
     5. [Noise Margins](#noise-margins)
@@ -32,6 +32,20 @@ tags:
     6. [Enabled Flip-Flops](#enabled-flip-flops)
     7. [Resettable Flip-Flops](#resettable-flip-flops)
     8. [Settable Flip-Flops](#settable-flip-flops)
+    9. [Summary](#summary)
+    10. [Synchronous sequential circuits](#synchronous-sequential-circuits)
+    11. [Finite State Machines](#finite-state-machines)
+6. [Verilog](#verilog)
+    1. [Built-In Gates](#built-in-gates)
+    2. [Buses](#buses)
+    3. [Assign Statements](#assign-statements)
+    4. [Always Blocks](#always-blocks)
+7. [Timing](#timing)
+    1. [Physical Reasons for Delay](#physical-reasons-for-delay)
+    2. [Propagation and Contamination Delay](#propagation-and-contamination-delay)
+    3. [Flip-Flop Delays](#flip-flop-delays)
+    4. [Combinational Delays](#combinational-delays)
+    5. [Static Timing Analysis](#static-timing-analysis)
 
 [Appendix](#appendix)
 
@@ -240,15 +254,7 @@ Heuristics:
 
 ### Tri-State Buffers
 
-A tri-state buffer has 2 inputs (A and EN) and 1 output (Y). 
-
-| EN | A | Y |
-| -- | - | - |
-| 0  | X | Z |
-| 1  | 0 | 0 |
-| 1  | 1 | 1 |
-
-Z represents high impedance. The circuit is not driving the output to any logic level.
+A tri-state buffer has 2 inputs (A and EN) and 1 output (Y). Z represents high impedance. The circuit is not driving the output to any logic level.
 
 ![Tri-state buffer](/engn-1630/tri-state-buffer.png)
 
@@ -359,6 +365,171 @@ Design procedure:
 3. Sketch a state transition diagram. Nodes represent states and edges represent inputs.
 4. Write a state transition table and output table
 5. Write boolean equations for **next state** and **output logic**
+
+## Verilog
+
+### Built-In Gates
+
+For built-in gates, the first terminal in the list of terminals is an output and the other terminals are inputs.
+
+```verilog
+// 1-bit full adder
+module FA(a, b, cin, s, cout);
+input a, b, cin;
+output s, cout;
+wire t1, c1, c2;
+
+xor g1(t1, a, b);
+xor g2(s, t1, cin);
+and g3(c1, t1, cin);
+and g4(c2, a, b);
+or g5(cout, c1, c2);
+endmodule
+```
+
+### Buses
+
+Buses are declared with the `[n:m]` syntax, where `n` is the most significant bit and `m` is the least significant bit.
+
+```verilog
+// 4-bit full-adder
+module fulladd4(A, B, Cin, S, Cout);
+input [3:0] A, B;
+input Cin;
+output [3:0] S;
+output Cout;
+wire C1, C2, C3;
+
+FA f1(A[0], B[0], Cin, S[0], C1);
+FA f2(A[1], B[1], C1, S[1], C2);
+FA f3(A[2], B[2], C2, S[2], C3);
+FA f4(A[3], B[3], C3, S[3], Cout);
+endmodule
+```
+
+### Assign Statements
+
+`assign` statements can be used to create combinational logic without instantiating gates. Supported operations include arithmetic, logic, relational, bitwise, and ternary. 
+
+Note that the left-hand side cannot appear in more than one assign or gate output statement.
+
+```verilog
+module fulladd4(A, B, S);
+input [3:0] A, B;
+output [3:0] S;
+assign S = A+B;
+endmodule
+```
+
+Concatenation and replication can be done with the `{}` syntax.
+
+```verilog
+// concatenation
+wire [7:0] busA, busB;
+wire [15:0] busC;
+assign busC = {busA, busB};
+```
+
+```verilog
+// replication
+wire [3:0] a;
+wire [11:0] c;
+assign c = {3{a}};
+```
+
+### Always Blocks
+
+The `always` block executes whenever a signal in the sensitivity list changes. Multiple statements are grouped in a `begin` and `end` block.
+
+Rules:
+- Control flow like if-else, case, and looping are only allowed inside always blocks.
+- Variables assigned within an `always` block must be declared as `reg` or `integer`.
+- The same variable can be assigned multiple times in an always block. The last assignment takes precendence.
+- Use `posedge` or `negedge` to trigger on clock edges.
+
+`always` can model combinational or sequential logic.
+- Use `always @(*)` and blocking assignments (`=`) to model combinational logic 
+- Use `always @(posedge clk)` and non-blocking assignments (`<=`) to model sequential elements
+- Avoid mixing blocking and non-blocking assignments in the same always block
+
+```verilog
+// d-latch
+reg c;
+  always @clock
+    if (clock) c = a + b;
+```
+
+```verilog
+// data flip-flop
+reg c;
+always @(posedge clock)
+    c <= a + b;
+```
+
+```verilog
+// finite state machine
+module fsm(clk, inp, out);
+input clk, inp;
+output out;
+wire sig;
+reg [1:0] state, next_state;
+
+parameter S1 = 0, S2 = 1, S3 = 2, S4 = 3;
+initial state = S1;
+
+assign sig = state[0] & state[1];
+not a1(out, sig);
+
+always @(posedge clock)
+  case(state)
+  S1: state <= inp ? S2:S1;
+  S2: state <= inp ? S3:S1;
+  S3: state <= inp ? S4:S2;
+  S4: state <= inp ? S3:S4;
+  endcase
+endmodule
+```
+
+## Timing
+
+### Physical Reasons for Delay
+
+1. Gate delay is impacted by gate type, size, load, and temperature
+2. Wire delay is impacted by length, fanout, and load of wire
+
+Note that the gate delay when switching from LOW to HIGH is not necessarily the same as the delay when switching from HIGH to LOW. 
+
+### Propagation and Contamination Delay
+
+Propagation delay $t_{pd}$ is the max delay from input to output. Contamination delay $t_{cd}$ is the min delay from input to output. 
+
+The critical path is the longest path through a circuit and is associated with $t_{pd}$. The short path is the shortest path through a circuit and is associated with $t_{cd}$.
+
+### Flip-Flop Delays
+
+For flip-flops, we care about the delay between the clock and the output, not the delay between the input and the output.
+
+The propagation delay $t_{pcq}$ is the time after the clock edge that Q is guaranteed to be stable; i.e. max delay The contamination delay $t_{ccq}$ is the time after the clock edge that Q may start changing; i.e. min delay.
+
+The setup time $t_{setup}$ is the time before the clock edge where data must be stable. The hold time $t_{hold}$ is the time after the clock edge where data must be stable. Finally, the aperture time is the time around the clock edge where data must be stable. $t_{a} = t_{setup} + t_{hold}$.
+
+The setup time is really the propagation time through the first data latch in the flip-flop. The hold time is the propagation time from the CLK to the first data latch.
+
+### Combinational Delays
+
+The delay between registers have a minimum and maximum delay due to combinational logic.
+
+The setup time constraint states that $T_c >= t_{pcq} + t_{pd} + t_{setup}$. Usually $T_c$ is a design constraint, $t_{pcq}$ and $t_{setup}$ is given, and we want to optimize $t_{pd}$ in the combinational logic.
+
+Some ways to fix setup time violations include:
+1. Restructuring the combinational logic
+2. Inserting buffers on long wires
+3. Minimizing wirelength
+4. Increase the clock period $T_c$ and take the hit
+
+### Static Timing Analysis
+
+Static timing analysis (STA) is a method to determine if a circuit meets timing constraints without simulating all possible input combinations.
 
 ## Appendix
 
