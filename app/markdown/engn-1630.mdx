@@ -2,7 +2,7 @@
 title: "Digital Electronics Systems Design Notes"
 summary: "Numbering Systems • Digital Logic Gates • Combinatorial Circuits • Sequential Circuits"
 publishedAt: 2025-09-18
-updatedAt: 2025-11-11
+updatedAt: 2025-11-13
 tags:
 - notes
 ---
@@ -490,6 +490,10 @@ always @(posedge clock)
 endmodule
 ```
 
+### Tips
+
+1. The simulator might complain if the code doesn't match any of its templates for asyncrhonous reset. [[1](https://stackoverflow.com/questions/52232515/cannot-match-operands-in-the-condition-to-the-corresponding-edges-in-the-enclo)]
+
 ## Timing
 
 ### Physical Reasons for Delay
@@ -519,7 +523,11 @@ The setup time is really the propagation time through the first data latch in th
 
 The delay between registers have a minimum and maximum delay due to combinational logic.
 
-The setup time constraint states that $T_c >= t_{pcq} + t_{pd} + t_{setup}$. Usually $T_c$ is a design constraint, $t_{pcq}$ and $t_{setup}$ is given, and we want to optimize $t_{pd}$ in the combinational logic.
+The **setup time constraint** requires that $T_c \geq t_{pcq} + t_{pd} + t_{setup}$. Usually $T_c$ is a design constraint, $t_{pcq}$ and $t_{setup}$ is given, and we want to optimize $t_{pd}$ in the combinational logic.
+
+![Setup time timing](/engn-1630/setup-time-timing.png)
+
+![Setup time constraint](/engn-1630/setup-time-constraint.png)
 
 Some ways to fix setup time violations include:
 1. Restructuring the combinational logic
@@ -527,9 +535,39 @@ Some ways to fix setup time violations include:
 3. Minimizing wirelength
 4. Increase the clock period $T_c$ and take the hit
 
+The **hold time constraint** requires that $t_{hold} < t_{ccq} + t_{cd}$. Usually $t_{hold}$ and $t_{ccq}$ are given, and we want to optimize $t_{cd}$ in the combinational logic.
+
+![Hold time timing](/engn-1630/hold-time-timing.png)
+
+Some ways to fix setup time violations include:
+1. Adding delay buffers on short paths
+2. Increasing the length of short wires
+
+Hold time violations can cause glitches, wasting power.
+
 ### Static Timing Analysis
 
 Static timing analysis (STA) is a method to determine if a circuit meets timing constraints without simulating all possible input combinations.
+
+![Static timing analysis](/engn-1630/static-timing-analysis.png)
+
+### Clock Skew
+
+When the clock arrives at different flip-flops at different times, this is called **clock skew**. Skew eats from both our setup time and hold time budget.
+
+```math
+T_c \geq t_{pcq} + t_{pd} + t_{setup} + t_{skew}
+```
+
+```math
+t_{hold} + t_{skew} < t_{ccq} + t_{cd}
+```
+
+### Synchronizers
+
+Asynchronous inputs can create timing violations.
+
+Synchronizers are used to safely transfer signals between different clock domains. A common synchronizer is a chain of two flip-flops.
 
 ## Appendix
 
