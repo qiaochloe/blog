@@ -2,7 +2,7 @@
 title: "Software Security and Exploitation Notes"
 summary: "Control-Flow Hijacking • Code Injection • Shellcode Development • Code Reuse"
 publishedAt: 2025-09-13
-updatedAt: 2025-11-10
+updatedAt: 2025-11-19
 tags:
 - notes
 ---
@@ -36,6 +36,12 @@ tags:
     - [Address Space Layout Randomization](#address-space-layout-randomization) (10/20)
     - [Dynamic Linking](#dynamic-linking) (10/27)
     - [Return-Oriented Programming](#return-oriented-programming) (10/27)
+7. [Toolchain-Based Hardening](#toolchain-based-hardening)
+    - [Stack Canaries](#stack-canaries) (11/10)
+    - [x86 Segmentation](#x86-segmentation) (11/10)
+    - [Memory Disclosure (Cont.)](#memory-disclosure-cont) (11/12)
+    - [RELRO and Bindnow](#relro-and-bindnow) (11/19)
+    - [FORTIFY_SOURCE](#fortify_source) (11/19)
 
 ## Basic Concepts 
 
@@ -469,7 +475,7 @@ printf("%138$x")
 
 Note that GDB disables ASLR by default. To enable it, run `set disable-randomization off`.
 
-## Stack Canaries/Cookies
+## Toolchain-Based Hardening
 
 ### Stack Canaries
 
@@ -497,6 +503,47 @@ mov %fs:0x00010203, %eax
 
 The nice thing about segmentation is that it is not possible to find the address of the segment base through memory disclosure vulnerabilities. This is because the segment base is stored in the GDT, which lives in kernel space and is only accessible through segment selectors.
 
-References:
+### Memory Disclosure (Cont.)
+
+Previously, we only used format string vulnerabilities to read values in the stack. e.g. `%d`, `%x`, and `%p`. However, `printf` can also take pointer arguments like `%s` and `%n`.
+
+The `%s` format specifier reads a string from a memory location until it hits a null byte. If we have the ability to push an address onto the stack, we can use the `%s` format specifier to read a string from any arbitrary memory location.
+
+e.g. If we write `%7\$s\x00\x00\x00\x00\x32\x17\x00\x41` into a buffer, when `printf` is called, it will interpret the 7th argument on the stack as a pointer. Then, it will dereference that address and print the string until it hits a null byte. 
+
+We make sure that the 7th argument on the stack is the address `0x41001732`, which we had also written into the buffer. The reason why there is 4 NULL bytes in the middle is because we don't want to also print the return address.
+
+The `%n` format specifier writes the number of bytes printed so far into the address pointed to by the corresponding argument. This can be exploited to write to arbitrary memory locations, like the GOT.
+
+1. Get the address of the GOT entry to overwrite. 
+
+    For example, to find the GOT entry for `perror`, we first find the PLT stub for `perror`. The GOT entry for `perror` is at the base address of the GOT + 0x24.
+
+    ```
+    <perror@plt>
+    jmp *0x24(%ebx)
+    ```
+
+    This GOT entry should not interfere with the normal execution of the read loop.
+
+2. Write a new address to the GOT entry byte by btye.
+
+    The format string should begin with `n` arbitrary bytes, where `n` is the value of the byte to write. The rest of the format string will look like `%31\$hhn\x00\x18\x40\x00\x41`, where `%31` refers to the location of the address on the stack, `$hnn` indicates that we are writing a single byte, `\x00` is padding to make the pointer aligned, and `0x00401800` is the address of the GOT entry for `perror`.
+
+### RELRO and Bindnow
+
+Relocation read-only (RELRO) marks the .got section (not .got.plt) as read-only after dynamic linking is done. It is enabled with `z relro`.
+
+Bindnow is a feature that forces all dynamic linking to be done eagerly instead of lazily, merging the .got and the .got.plt sections. When combined with RELRO, this ensures that both the .got and .got.plt section is read-only. It is enabled with `-z now`.
+
+### FORTIFY_SOURCE
+
+When FORTIFY_SOURCE is enabled, functions like `read` and `strcpy` are replaced with safer versions that check the size of the destination buffer before performing the operation. If the operation would overflow the buffer, the program is terminated.
+
+To run with FORTIFY_SOURCE, we must 
+1. Define a macro `#define FORTIFY_SOURCE 3` in the code or run with `-D_FORTIFY_SOURCE=3` 
+2. Run the program with optimizations `-O1`
+
+## References
 1. [CSCI 1650 Lectures](https://cs.brown.edu/courses/csci1650/lectures.html)
 1. [Linux System Call Table](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64-64-bit)
