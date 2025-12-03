@@ -1,8 +1,8 @@
 ---
 title: "Software Security and Exploitation Notes"
-summary: "Control-Flow Hijacking • Code Injection • Shellcode Development • Code Reuse"
+summary: "Control-Flow Hijacking • Code Injection • Code Reuse • Return-Oriented Programming"
 publishedAt: 2025-09-13
-updatedAt: 2025-11-19
+updatedAt: 2025-12-02
 tags:
 - notes
 ---
@@ -36,7 +36,13 @@ tags:
     - [Address Space Layout Randomization](#address-space-layout-randomization) (10/20)
     - [Dynamic Linking](#dynamic-linking) (10/27)
     - [Return-Oriented Programming](#return-oriented-programming) (10/27)
-7. [Toolchain-Based Hardening](#toolchain-based-hardening)
+7. [Full ASLR | Just-In-Time Code Reuse](#full-aslr-just-in-time-code-reuse)
+    - [Full ASLR](#full-aslr) (10/29)
+    - [Memory Disclosure](#memory-disclosure) (10/29)
+    - [Just-In-Time Code Reuse](#just-in-time-code-reuse) (11/3)
+8. [Advanced Code Reuse](#advanced-code-reuse)
+    - [Stack Pivoting](#stack-pivoting) (11/5)
+9. [Toolchain-Based Hardening](#toolchain-based-hardening)
     - [Stack Canaries](#stack-canaries) (11/10)
     - [x86 Segmentation](#x86-segmentation) (11/10)
     - [Memory Disclosure (Cont.)](#memory-disclosure-cont) (11/12)
@@ -458,22 +464,22 @@ printf("%138$x")
 
 ### Just-In-Time Code Reuse
 
-1. Get the return address through a memory disclosure vulnerability.
+Just-In-Time (JIT) code reuse is a technique to defeat full ASLR. The idea is to dynamically calculate the base address of the main executable at runtime, and then use that to calculate the addresses of gadgets and functions in the main executable.
 
-2. Calculate the base address of the main executable by subtracting the offset of the return address from the base address. 
-
-    In other words, `base addr = return addr - offset`. We can find this offset using `info proc mappings` in GDB.
-
-3. Calculate the addresses of gadgets and functions in the main executable 
-
-    Note that gadgets must be taken from the main executable, not from libraries.
-    Gadgets and functions will have fixed offsets from the base address, given by `readelf -e <executable>`.
-
+1. Use a memory disclosure vulnerability to get a return address in the main executable.
+2. Calculate the base address of the main executable with `base addr = return addr - offset`.
+3. Calculate the addresses of gadgets and functions in the main executable.
 4. Use a [ROP chain](#return-oriented-programming) to call functions in the PLT once again.
 
 ![Just-in-time code reuse](/csci-1650/jit-code-reuse.png)
 
 Note that GDB disables ASLR by default. To enable it, run `set disable-randomization off`.
+
+## Advanced Code Reuse
+
+### Stack Pivoting
+
+Stack pivoting is a generalization of `%esp` lifting. It involves modifying the stack pointer `%esp` to point to an attacker-controlled region of memory, such as the heap or a buffer in the stack. This allows the attacker to use a larger area of memory for their ROP chain or shellcode.
 
 ## Toolchain-Based Hardening
 
@@ -485,13 +491,41 @@ The canary is a random 4-byte value that is placed in the stack frame of the pro
 
 ![Stack canary](/csci-1650/stack-canary.png)
 
+Stack canaries can be enabled or disabled with one of the following compiler flags:
+- `-fno-stack-protector` disables stack canaries
+- `-fstack-protector` enables stack canaries for "vulnerable" functions 
+- `-fstack-protector-strong` enables stack canaries for more functions
+- `-fstack-protector-all` enables stack canaries for all functions
+
+You can figure out if a binary has stack canaries by checking the prologues or epilogues of the functions. 
+
+The prologues will load the canary from a fixed location in memory, like `%fs:0x28`, into a register and then push it onto the stack. 
+
+```asm
+55                      push   %rbp
+48 89 e5                mov    %rsp,%rbp
+48 83 ec 10             sub    $0x10,%rsp
+64 48 8b 04 25 28 00    mov    %fs:0x28,%rax
+```
+
+The epilogue will pop the canary from the stack and compare it to the value in memory. If they don't match, it will call `__stack_chk_fail`, which terminates the program.
+
+```asm
+74 05                   je     1169 <main+0x30>
+e8 c7 fe ff ff          call   1030 <__stack_chk_fail@plt>
+c9                      leave
+c3                      ret
+```
+
 Note that this defense is not effective if there is a memory disclosure vulnerability that allows the attacker to read the canary value.
 
 ### x86 Segmentation
 
-The memory management unit (MMU) has a segmentation unit and a paging unit. The segmentation unit takes physical memory, divides it into chunks (segments), and runs processes in separate segments. The global descriptor table (GDT) is a data structure in the kernel that contains a segment descriptor for each segment. The segment descriptor which describes the segment's base address and limit address.
+The memory management unit (MMU) has a **segmentation unit** and a paging unit. Nowadays the paging unit is primarily used for memory management, but the segmentation unit is still kept for backward compatibility.
 
-There are six, 2-byte segment selectors in x86: `%cs`, `%ds`, `%es`, `%fs`, `%gs`, and `%ss`. These selectors can be used to index the GDT to get a particular segment selector. Every address that references the code segment uses the %cs selector. Every address that references the stack segment uses the %ss selector. 
+The segmentation unit takes physical memory, divides it into chunks (segments), and runs processes in separate segments. The global descriptor table (GDT) is a data structure in the kernel that contains a segment descriptor for each segment. The segment descriptor includes the segment's base address and limit address.
+
+There are six, 2-byte segment selectors in x86: `%cs`, `%ds`, `%es`, `%fs`, `%gs`, and `%ss`. These selectors can be used to index the GDT to get a particular segment selector. Every address that references the code segment uses the `%cs` selector. Every address that references the stack segment uses the `%ss` selector. 
 
 Specifically, the 13 most-significant bits in the registers are used for indexing into the GDT to get a segment selector. The 3rd bit is the table indicator (TI), which specifies whether to use the GDT (0) or the local descriptor table (LDT) (1). The 2 least-significant bits are the requested privilege level (RPL).
 
@@ -509,7 +543,7 @@ Previously, we only used format string vulnerabilities to read values in the sta
 
 The `%s` format specifier reads a string from a memory location until it hits a null byte. If we have the ability to push an address onto the stack, we can use the `%s` format specifier to read a string from any arbitrary memory location.
 
-e.g. If we write `%7\$s\x00\x00\x00\x00\x32\x17\x00\x41` into a buffer, when `printf` is called, it will interpret the 7th argument on the stack as a pointer. Then, it will dereference that address and print the string until it hits a null byte. 
+For example, if we write `%7\$s\x00\x00\x00\x00\x32\x17\x00\x41` into a buffer, when `printf` is called, it will interpret the 7th argument on the stack as a pointer. Then, it will dereference that address and print the string until it hits a null byte. 
 
 We make sure that the 7th argument on the stack is the address `0x41001732`, which we had also written into the buffer. The reason why there is 4 NULL bytes in the middle is because we don't want to also print the return address.
 
@@ -532,13 +566,15 @@ The `%n` format specifier writes the number of bytes printed so far into the add
 
 ### RELRO and Bindnow
 
-Relocation read-only (RELRO) marks the .got section (not .got.plt) as read-only after dynamic linking is done. It is enabled with `z relro`.
+`RELRO` (relocation read-only) marks the .got section (not .got.plt) as read-only after dynamic linking is done. It is enabled with `-z relro`. Programs compiled with RELRO will have `GNU_RELRO` as a program header.
 
-Bindnow is a feature that forces all dynamic linking to be done eagerly instead of lazily, merging the .got and the .got.plt sections. When combined with RELRO, this ensures that both the .got and .got.plt section is read-only. It is enabled with `-z now`.
+`BINDNOW` forces all dynamic linking to be done eagerly instead of lazily, merging the .got and the .got.plt sections. When combined with RELRO, this ensures that both the .got and .got.plt section is read-only. It is enabled with `-z now`.
 
 ### FORTIFY_SOURCE
 
 When FORTIFY_SOURCE is enabled, functions like `read` and `strcpy` are replaced with safer versions that check the size of the destination buffer before performing the operation. If the operation would overflow the buffer, the program is terminated.
+
+For example, a function like `fprintf@plt` would be replaced with `__fprintf_chk@plt`.
 
 To run with FORTIFY_SOURCE, we must 
 1. Define a macro `#define FORTIFY_SOURCE 3` in the code or run with `-D_FORTIFY_SOURCE=3` 
