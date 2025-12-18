@@ -43,7 +43,7 @@ export default function Page() {
         </Link>
         ,{" "}
         <Link
-          href="/writing"
+          href="/writings"
           className="underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em]"
         >
           writing
