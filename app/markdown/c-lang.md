@@ -629,18 +629,51 @@ n & 0b0000'0000'0000'0000'0000'0000'0000'1111
 n & 0xf
 ```
 
-Linked lists:
+Single number:
+
+Every element appears twice except for one. Find that single one.
+
+```c
+int singleNumber(int* nums, int numsSize) {
+    int output = 0;
+    for (size_t i = 0; i < numsSize; i++) {
+        output ^= nums[i];
+    }
+    return output;
+}
+```
+
+Power of Two:
+
+```c
+bool isPowerOfTwo(int n) {
+    return n > 0 && (n & (n - 1)) == 0;
+}
+```
+
+Gray code:
+
+```c
+int* grayCode(int n, int* returnSize) {
+    int numElems = (1<<n);
+    int *ret = (int*)malloc(sizeof(int) * numElems);
+
+    for (int i = 0; i < numElems; i++) {
+        ret[i] = i ^ (i>>1);
+    }
+    *returnSize = numElems;
+    return ret;
+}
+```
+
+Reversing a linked list:
 
 ```c
 typedef struct {
   int data;
   struct Node* next;
 } Node;
-```
 
-Reversing a linked list:
-
-```c
 ListNode* reverseList(ListNode* head) {
   ListNode* currNode = head;
   ListNode* nextNode = NULL;
@@ -680,5 +713,3 @@ bool isAnagram(char* s, char* t) {
     return 1;
 }
 ```
-
-Problems: [Single Number](https://leetcode.com/problems/single-number/description/).
