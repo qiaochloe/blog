@@ -97,6 +97,20 @@ html {
   @apply list-disc pl-6;
 }
 
+.prose ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose li.task-list-item {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose li.task-list-item input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
 .prose ol {
   @apply list-decimal pl-6;
 }
