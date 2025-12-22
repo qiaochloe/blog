@@ -42,7 +42,7 @@ html {
 }
 
 .prose a {
-  @apply underline transition-all decoration-neutral-400 underline-offset-2 decoration-[0.1em];
+  @apply hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
 }
 
 .prose .anchor:after {
@@ -143,7 +143,7 @@ html {
 }
 
 .prose-notes a {
-  @apply text-sm underline text-neutral-600;
+  @apply text-sm hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
 }
 
 .prose-notes a:hover {

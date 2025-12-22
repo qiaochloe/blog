@@ -1,0 +1,190 @@
+---
+title: "System Design Interview Notes"
+summary: "Web Architecture • Rate Limiter • Key Value Store • Unique ID Generator • URL Shortener"
+publishedAt: "2025-12-20"
+updatedAt: "2025-12-22"
+tags:
+  - "technical"
+  - "notes"
+---
+
+## Contents
+
+1. [Web Architecture](#web-architecture)
+
+    Summary: Client. DNS. CDN. Load balancer. API endpoints. Message queue.
+
+1. [Rate Limiter](#rate-limiter)
+    1. [Rate Limiting Algorithms](#rate-limiting-algorithms)
+    2. [Rate Limiting Architecture](#rate-limiting-architecture)
+    3. [Distributed Rate Limiting](#distributed-rate-limiting)
+
+1. [Key Value Store](#-key-value-store)
+    1. [Single Server](#single-server)
+    2. [Distributed Server](#distributed-server)
+    3. [Data Partitioning and Replication](#data-partitioning-and-replication)
+    4. [Consistency Models](#consistency-models)
+    5. [Conflict Resolution](#conflict-resolution)
+    6. [Failure Detection and Recovery](#failure-detection-and-recovery)
+
+    Summary: CAP theorem. Data partitioning and replication. Consistent hashing. Strong consistency. Quorum-based model. Eventual consistency. Conflict resolution. Last write wins (LWW). Vector clocks. Failure detection. Gossip protocol. Failure recovery. Sloppy quorum. Hinted handoff. Anti-entropy protocol. Merkle trees.
+
+2. [Unique ID Generator](#unique-id-generator)
+
+    Summary: Disjoint ID ranges. UUID or hashing. Centralized ticket server. Twitter Snowflake.
+
+3. [URL Shortener](#url-shortener)
+
+    Summary: URL shortening. URL redirecting. Hashing with collision handling. Bloom filter. Unique ID generation. Base-62 encoding.
+
+## Web Architecture
+
+First, the **client** has a domain name (e.g. example.com). It queries the **DNS** to resolve the domain to an IP address. The IP address returned by DNS typically belongs to a traffic entry point, such as a CDN edge or a load balancer, rather than a single origin server.
+
+The client then sends an HTTPS request to that IP. If a **CDN** is in front, the request is handled by a nearby edge server, which may serve cached static content directly or forward the request to the origin infrastructure on a cache miss.
+
+Requests that reach the origin are handled by a **load balancer**, which distributes traffic across multiple application servers. These servers expose **API endpoints** (often RESTful), using standard HTTP methods (GET, POST, PUT, DELETE) to operate on resources.
+
+To fulfill a request, application servers may query a database, cache, or other backend services before returning a response to the client.
+
+Application servers may also use a **message queue** to offload tasks to background workers. A message queue enables asynchronous communication by decoupling task producers from consumers, allowing each to scale independently. In production, queues are typically backed by a durable broker, such as Redis, RabbitMQ, or Kafka, that manages message storage, delivery, and coordination between workers.
+
+## Rate Limiter
+
+A rate limiter restricts the number of requests a client can make to a server within a specified time window. 
+
+Benefits of rate limiting:
+1. Avoid Denial of Service (DoS) attacks
+2. Reduce costs, especially for third party APIs
+3. Reduce server load
+
+Here are the main design questions for a rate limiter:
+1. Which rate limiting algorithm should we use?
+2. Is the rate limit is applied per user, per IP address, or globally?
+3. Where should we check for rate limits (client, server, middleware)?
+4. How should we store data for the algorithm?
+5. How should we handle rate limited requests?
+
+### Rate Limiting Algorithms
+
+Rate limiting algorithms include:
+1. Token bucket
+2. Leaking bucket
+3. Fixed window counter 
+4. Sliding window log algorithm
+5. Sliding window counter algorithm
+
+In a **token bucket** algorithm, tokens are added to a bucket at a fixed rate. Each request consumes a token. If the bucket is empty, requests are denied. This allows for bursts of traffic if tokens are available.
+
+In a **leaking bucket** algorithm, requests are added to a queue (the bucket) and processed at a fixed rate. If the bucket is full, incoming requests are denied. This enforces a constant output rate.
+
+In a **fixed window counter** algorithm, the number of requests is counted within fixed time windows (e.g., per minute). If the count exceeds the limit, further requests are denied until the next window. This can lead to bursts of traffic at the edges of windows.
+
+In a **sliding window log** algorithm, each request is timestamped and stored in a log. To check the rate limit, the log is scanned to count requests within the sliding time window. This provides accurate rate limiting but can be memory-intensive.
+
+In a **sliding window counter** algorithm, the time window is divided into smaller intervals. Each interval maintains a count of requests. To check the rate limit, counts from the relevant intervals are summed. This reduces memory usage compared to the sliding window log.
+
+### Rate Limiting Architecture
+
+Generally, rate limiting should be done on the server side to ensure that clients cannot bypass it. Middleware solutions (such as API gateways) can also be used to offload rate limiting from application servers.
+
+Each of the algorithms requires some form of data storage to keep track of request counts or timestamps. We cannot store this data in a database because disk access is slow. Instead, we should store this in an in-memory data store like Redis or Memcached. Redis offers commands like INCR and EXPIRE to increase the counter and set a time-to-live (TTL) for the key.
+
+Rate limiting rules should be written in a configuration file or database so that they can be easily updated without changing code. Workers should frequently pull rules from the disk and store them in the cache. The rate limiter should check the cache for the latest rules before processing each request.
+
+When a request exceeds the rate limit, the server should respond with HTTP status code 429 to indicate that the user has sent too many requests. The system can either drop the request or queue it for later processing.
+
+### Distributed Rate Limiting
+
+There are two challenges to distributed rate limiting: (1) race conditions and (2) synchronization issues. To handle race conditions where the data is incorrectly updated, locks or sorted sets can be used. To handle synchronization issues where data is inconsistent across multiple servers, a centralized data store like Redis can be used.
+
+## Key Value Store
+
+A KV store supports the `put(key, value)` and `get(key)` operations.
+KV stores can either be **single server** or **distributed**.
+
+### Single Server
+
+Two single server optimizations are (1) data compression and (2) in-memory or disk storage based on access-frequency.
+
+### Distributed Server
+
+The **CAP theorem** states that a store can only guarantee two of the following three properties: (1) **consistency**, (2) **availability**, and (3) **partition tolerance**. Because it is not possible to avoid network partitions, distributed KV stores must either be CP or AP.
+
+There are many components to a distributed store:
+1. Data partitioning
+2. Data replication
+3. Consistency model & conflict resolution
+4. Failure detection and recovery
+
+### Data Partitioning and Replication
+
+**Data partitioning** increases scalability by distributing data across multiple nodes. An ideal scheme would (1) distribute data evenly and (2) minimize data movement when nodes are added or removed.
+
+**Data replication** increases availability and fault-tolerance by storing multiple copies of data on different nodes. However, it increases storage costs and complicates consistency.
+
+One common approach to partitioning and replication is **consistent hashing**.
+1. Create a hash rings with virtual nodes
+2. Partition data on the first node found on the hash ring
+2. Replicate data across the first $N$ unique nodes found on the hash ring
+
+### Consistency Models
+
+There are two types of consistency models: (1) strong consistency and (2) weak but eventual consistency. **Strong consistency** ensures that a read always returns the latest write. **Eventual consistency** allows for stale reads, but guarantees that all replicas will converge to the latest write eventually. 
+
+A **quorum-based model** is often used to manage consistency. Given $N$ replicas, we choose a write quorum $W$ and a read quorum $R$. The **coordinator node** forwards client requests to replicas and ensures that a quorum of nodes respond.
+
+1. If $W + R > N$, we have strong consistency. It is not possible to choose $R$ nodes such that none of them have the latest write.
+2. If $R = 1$ and $W = N$, then the system is optimized for a fast read. 
+3. If $W = 1$ and $R = N$, then the system is optimized for a fast write.
+
+### Conflict Resolution
+
+In eventual consistency, we must resolve conflicting writes. 
+
+One approach is to use **last write wins (LWW)**, where each write is timestamped and the latest timestamp is chosen as the winner. This can lead to data loss.
+
+Another approach is to use **vector clocks** to track causality between different versions of a value. 
+
+1. Each data item is associated with a vector clock, which is a map from nodes to counters.
+2. Each time a node updates a data item, it increments its counter in the vector clock.
+3. If two versions of a data item have vector clocks that are not comparable, then they are considered conflicting versions that need to be resolved by the client.
+
+For example, if one node has the vector clock `{A:1, B:0}` and another node has the vector clock `{A:2, B:2}`, then the second version is considered to have happened after the first version. However, if one node has the vector clock `{A:1, B:2}` and another node has the vector clock `{A:2, B:1}`, then neither version happened before the other, and they are considered conflicting.
+
+### Failure Detection and Recovery
+
+Multiple servers are needed to independently confirm that a server is down. All-to-all multicasting is inefficient, so a common approach is to use a **gossip protocol**. Each node maintains a list of known nodes and periodically exchanges heartbeats with a random subset of them. Once other nodes confirm that a node's heartbeat has not been updated for a long time, the node is marked down, and the information is gossiped to other nodes.
+
+A **sloppy quorum** can be used to maintain availability during partitions. If a node is down, writes can be sent to other nodes outside of the normal replica set. Once the down node recovers, the data is synchronized back to it.
+
+To handle temporary failures, a **hinted handoff** strategy can be used. When a node is down, another node temporarily stores the data intended for the down node. Once the down node recovers, the temporary node forwards the stored data to it.
+
+If data becomes inconsistent due to a failure, then an **anti-entropy protocol** must be used to reconcile differences between replicas. Common approaches include **Merkle trees**.
+
+## Unique ID Generator
+
+A traditional database can use an `auto_increment` field to generate unique IDs. However, in a distributed system, this approach does not work because multiple servers may try to generate IDs simultaneously, leading to collisions.
+
+Here are some common approaches to generating unique IDs in a distributed system:
+- Each server calls `auto_increment` on a disjoint ID range (such as in mod k)
+- Each server generates IDs as UUIDs or with hashing
+- Each server communicates with a centralized ticket server that calls `auto_increment`
+- Each server generates IDs as a concatenation of timestamp, machine ID, and sequence number
+
+## URL Shortener
+
+The system should support the following operations:
+1. URL shortening
+2. URL redirecting
+
+First define the API endpoints:
+1. `POST /api/shorten`
+   - Request: `{ "original_url": "https://example.com" }`
+   - Response: `{ "short_url": "https://short.ly/abc" }`
+2. `GET /\{short_url}`
+   - Response: 301 redirect to original URL
+
+To implement URL shortening, there are two options. The first option is to hash the original URL to generate a unique key. Most hash functions produce long strings, so take the first $n$ characters of the hash and rehash if a collision is found in the database. To avoid expensive database lookups, a bloom filter can be used to quickly check for potential collisions. The second option is to [generate a unique ID](#unique-id-generator). The ID can also be shorted by converting it to base-62.
+
+To implement URL redirecting, the system should look up the original URL from the database using the unique key and return a 301 redirect response to the client.

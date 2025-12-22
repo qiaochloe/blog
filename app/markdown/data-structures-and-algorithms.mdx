@@ -4,9 +4,9 @@ publishedAt: 07-16-25
 updatedAt: 09-20-25
 summary: "Arrays • Linked Lists • Trees • Heaps • Segment Trees • Graphs • Union Find • Multisets • Maps"
 tags:
-  - "notes"
   - "technical"
-todo: Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, time complexity
+  - "notes"
+todo: "Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, time complexity, sets The time complexity of a set: Average O(1) for insertion, deletion, membership Usually implemented as a hashset, tree, simple array The time complexity of a Hash map: Average O(1) for insertion, deletion, lookup via hashing Worst case O(n). If all keys hash to the same bucket, them all elements in the bucket need to be traversed linearly to find the desired key. How to handle collisions - Separate chaining Open addressing via linear probing Implementation of stack"
 ---
 
 ## Contents
@@ -535,18 +535,6 @@ def union(a, b):
         parent[pa] = pb
         rank[pb] += 1 
 ```
-
-## Multisets
-
-### Counter
-
-`Counter` takes an iterator and returns the count of each element. It return a zero count for missing elements. Methods: `items()`, `most_common([n])`
-
-## Maps
-
-### Defaultdict
-
-`defaultdict` takes a `default_factory` function and returns a dictionary that returns the default value for missing keys. eg. `defaultdict(list)` or `defaultdict(lambda x: x)`.
 
 ## Backtracking
 
