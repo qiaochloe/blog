@@ -1,0 +1,175 @@
+---
+title: "Physiology Notes"
+summary: "Cell Transport • Osmosis • Tonicity • Filtration and Absorption"
+publishedAt: 2026-01-30
+updatedAt: 2026-02-02
+tags:
+- notes
+---
+
+## Contents
+1. [Introduction](#introduction)
+    - [Homeostasis](#homeostasis)
+    - [Cell Physiology](#cell-physiology)
+    - [Proteins](#proteins)
+2. [Cell Transport](#cell-transport)
+    - [Diffusion](#diffusion) (and [Ion Trapping](#ion-trapping))
+    - [Facilitated Diffusion](#facilitated-diffusion)
+    - [Active Transport](#active-transport)
+3. [Osmosis](#osmosis)
+4. [Tonicity](#tonicity)
+5. [Filtration and Absorption](#filtration-and-absorption)
+
+## Introduction
+
+Lumen are cavities that extend into the body.
+
+There are four main fluid compartments:
+1. **Intracellular** fluid inside of cells
+2. **Interstitial** fluid outside of cells and blood vessels
+3. **Plasma** inside of blood vessels
+4. **Glycocalyx** 
+
+### Homeostasis
+
+**Homeostasis** is the ability to keep the internal environment within a tolerable range. 
+
+**Feedback systems** maintain homeostasis. In a positive feedback system, stimuli is received by the receptor, which sends the information to the integrating center, which sends instructions to the effector, which carries out the response. For example, a drop in blood pressure causes the heart to speed up and the kidneys to retain fluid.
+
+### Cell Physiology 
+
+Mitochondria converts sugar, fats, proteins, and O2 into ATP and CO2 through cellular respiration.
+
+The cell membrane is a protein-studded phospholipid bilayer. The head of the phospholipid is polar (hydrophilic) and the fatty tails are nonpolar (hydrophobic).
+
+The membrane is selectively permeable, allowing some substances to pass while blocking others. Small, nonpolar molecules (O2, CO2, ethanol) can pass through easily. Large polar molecules (glucose) and ions (Na+, K+) require assistance.
+
+Oxygen and nitrogen are highly electronegative, causing them to pull electrons toward themselves in a covalent bond. This creates a polar molecule with partial positive and negative charges.
+
+### Proteins
+
+Amino acids can link together to form:
+- Peptides (2-9 amino acids)
+- Polypeptides (10-100 amino acids)
+- Proteins (>100 amino acids)
+
+The structure of proteins can be described in four levels:
+1. 1st structure is the sequence of amino acids
+2. 2nd structure is folding into α-helixes and β-pleated sheets
+3. 3rd structure is the overall fibrous or globular shape
+4. 4th structure is the combination of multiple proteins
+
+There are four forces that fold a polypeptide chain:
+1. Hydrogen bonds form between polar groups
+2. van der Waals forces form from temporary dipoles
+3. Ionic bonds form between charged groups
+4. Covalent bonds form from sharing electrons
+
+Hemoglobin is dull red when deoxygenated and bright red when oxygenated. This is an example of how conformational changes in proteins can affect their function.
+
+## Cell Transport 
+
+Molecules can get across the membrane in four ways:
+1. Diffusion
+2. Facilitated diffusion (ion channels, carrier proteins)
+3. Active transport (primary, secondary, vesicular)
+
+### Diffusion
+
+The rate of diffusion, or flux, is affected by 
+- Solubility of molecule ($S$)
+- Surface Area ($A$)
+- Concentration gradient ($C_0 - C_1$)
+- Size of molecule ($M$)
+- Distance ($d$)
+- Temperature
+
+This is given by the equation:
+
+```math
+\frac{SA(C_0 - C_1)}{Md^2}
+```
+
+Sometimes the solubility, size of the molecule, and distance are combined into a permeability coefficient ($P$):
+
+```math
+PA(C_0 - C_1)
+```
+
+Permeability is affected by several factors:
+1. Non-polar molecules are more permeable than polar molecules
+2. Weak acids are permeable when protonated 
+    ```math
+    A^- + H^+ \rightleftharpoons HA
+    ```
+3. Weak bases are permeable when unprotonated
+    ```math
+    A + H^+ \rightleftharpoons HA^+
+    ```
+
+### Ion Trapping
+
+Suppose there is a pH gradient across the membrane. Then more weak acids will protonated into $HA$ on the side that has a higher concentration of $H^+$. This will increase diffusion of $HA$ across the membrane. Once inside the cell, the weak acid will dissociate again, trapping it inside.
+
+Note that $\text{pH} = -\log[H^+]$. That means that a lower pH corresponds to a higher concentration of $H^+$ ions.
+
+### Facilitated Diffusion
+
+Facilitated diffusion can happen through ion channels and carrier proteins. 
+
+**Ion channels** have three properties: selectivity, permeability, and gating. Outside of the cell, each ion is surrounded by water molecules (sphere of hydration), which gives the ion some geometry. The aqueous pore of the ion channel has the same geometry as the sphere of hydration, allowing the ion to pass through.
+
+**Carrier proteins** have three properties: specificity, saturability and competition. Saturability and competition arise because there are a limited number of carrier proteins and potentially multiple types of molecules that can bind to them.
+
+### Active Transport
+
+**Primary** active transport uses ATP to move molecules against their concentration gradient. An example is the sodium-potassium pump, which moves 3 Na+ ions out of the cell and 2 K+ ions into the cell for each ATP hydrolyzed.
+
+**Secondary** active transport uses the energy from one molecule moving down its concentration gradient to move another molecule against its concentration gradient. This can be done via cotransport (same direction) or countertransport (opposite direction).
+
+**Vesicular transport** uses vesicles to move large molecules across the membrane. Endocytosis brings molecules into the cell, while exocytosis sends molecules out of the cell.
+
+## Osmosis
+
+Osmosis is the diffusion of water across a selectively permeable membrane (through aquaporin channels).
+
+Osmotic pressure ($\pi$) is a measure of how strongly water wants to move into a solution. If one side of the membrane has more solute particles (and higher osmotic pressure), then water will move toward that side. 
+
+The equation for osmotic pressure is given by:
+
+```math
+\pi = \Delta CRT
+```
+
+Where:
+
+1. $C$ is the concentration of solute particles in mOsm/L
+3. $T$ is the temperature in K
+2. $R$ is the gas constant in atm/mol · K
+
+Note that mOsm is the number of particles a substance dissolves into in the solution. For example, NaCl dissolves into Na+ and Cl-, so 1 mole of NaCl produces 2 Osm.
+
+## Tonicity
+
+**Tonicity** is a measure of how a solution affects cell volume. 
+1. Hypertonic solutions cause cells to shrink
+2. Isotonic solutions cause no change in cell volume
+3. Hypotonic solutions cause cells to swell
+
+For human cells, an isotonic solution is generally 300 mOsm/L. 
+
+Note that tonicity is only affected by the concentration of non-penetrating solutes. There is also a measure called **osmolarity** that depends on the total concentration of solutes (both penetrating and non-penetrating).
+
+## Filtration and Absorption
+
+Fluid moves from the capillaries into the interstitial fluid (**filtration**), and from the interstitial fluid back into the capillaries (**absorption**). To do this, it must pass through the endothelial cells that line the capillaries. This can happen through diffusion, bulk flow, or vesicular transport.
+
+Fluid exchange between capillaries (plasma) and interstitial fluid is governed by Starling forces:
+1. **Hydrostatic pressure** caused by the pumping action of the heart pushes fluid out of the capillaries. This pressure decreases along the length of the capillary.
+2. **Colloid osmotic pressure** from the proteins within the capillary pulls fluid into the capillaries. It remains relatively constant along the length of the capillary.
+
+This is why filtration generally occurs at the **arterial** end of the capillary (higher hydrostatic pressure) and absorption occurs at the **venous** end of the capillary (lower hydrostatic pressure).
+
+Starling forces also explains why elevating an injured limb helps reduce swelling. It decreases hydrostatic pressure, reducing fluid leakage into the interstitial space.
+
+Recently, the **glycocalyx** layer lining the endothelial cells has been found to play an important role in fluid exchange. It acts as a barrier to protein movement, modulating colloid osmotic pressure across the capilary. This promotes more filtration and less absorption.
