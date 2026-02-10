@@ -2,7 +2,7 @@
 title: "Physiology Notes"
 summary: "Cell Transport • Osmosis • Tonicity • Filtration and Absorption"
 publishedAt: 2026-01-30
-updatedAt: 2026-02-02
+updatedAt: 2026-02-09
 tags:
 - notes
 ---
@@ -173,3 +173,69 @@ This is why filtration generally occurs at the **arterial** end of the capillary
 Starling forces also explains why elevating an injured limb helps reduce swelling. It decreases hydrostatic pressure, reducing fluid leakage into the interstitial space.
 
 Recently, the **glycocalyx** layer lining the endothelial cells has been found to play an important role in fluid exchange. It acts as a barrier to protein movement, modulating colloid osmotic pressure across the capilary. This promotes more filtration and less absorption.
+
+## Endocrine System
+
+The **hypothalamus** produces **releasing factors** that stimulate the **anterior pituitary** gland. The anterior pituitary gland then releases hormones through the bloodstream. These hormones can have direct effects on target tissues or stimulate other endocrine glands to release hormones. 
+
+For example, the hypothalamus releases thyrotropin-releasing hormone (TRH), which stimulates the anterior pituitary to release thyroid-stimulating hormone (TSH). TSH then stimulates the thyroid gland to release thyroid hormones (T3 and T4) in the bloodstream. T3 and T4 are lipid-soluble hormones that enter cells and bind to nuclear receptors, affecting gene transcription.
+
+**Question**: How do you store something that is lipid-soluble?
+
+T3 and T4 are covalently bonded together in a non-penentrating protein called **thyroglobulin** and stored in the **colloid** of the thyroid gland. When T3 and T4 are needed, the cell endsocytoses the thyroglobulin, breaks the covalent bond, and releases T3 and T4 into the bloodstream.
+
+**Question**: What is determining the volume of the thyroid gland?
+
+Most of the volume of the thyroid gland comes from the colloid. When the colloid swells up, the thyroid gland swells up and becomes a goiter. The colloid swells up when there is high osmotic pressure (caused by a high concentration of thyroglobulin).
+
+## Nervous System
+
+Neurons are very large cells with high metabolic demands. As soon as resources are cut off, they immediately start to malfunction. Long projecting neurons are the first to show signs of disease, which manifests as tingling or numbness in hands in feet.
+
+**Astrocytes** line the capillaries and tightly regulate what can come out of it (blood-brain barrier).
+
+**Afferent** neurons receive signals from sensory receptors. **Interneurons** in the central nervous system connect the afferent neurons to the efferent neurons. The **efferent** neuron sends signals to muscles, glands, and other tissue through the axon terminal.
+
+1. Dendrites receive inputs from other cells
+2. Soma (cell body) integrates all input
+3. Axon hillock decides whether to fire an action potential
+3. Axon conducts the action potential down the length of the neuron
+4. Presynaptic axon terminals release chemical signalling molecules
+
+## Membrane Potential
+
+All cells exhibit a **membrane potential** (Vm) across the membrane. The inside of the cell is typically negative relative to the outside. The potential energy can be used to do work.
+
+Excitable cells (neurons, muscles) use changes in membrane potential to send signals. 
+
+Cells use energy (ATP) to create a chemical gradient with K+ and Na+. K+ has a higher concentration inside the cell, while Na+ has a higher concentration outside the cell.*
+
+If more K+ channels are opened, then more K+ will leave the cell, making the inside more negative. If more Na+ channels are opened, then more Na+ will enter the cell, making the inside more positive. **Note that the ion channels will not appreciably change the concentration of K+ and Na+.**
+
+*Note that 3 Na+ are pumped out of the cell and 2 K+ are pumped into the cell for each ATP hydrolyzed, so there is also a small membrane potential from that. 
+
+To reach electrochemical equilibrium, the chemical gradient must be balanced by the electrical gradient. Relatively few ions need to move to create a significant electrical gradient. This is described by the Nernst equation:
+
+```math
+E_{\text{ion}} = \frac{RT}{zF} \ln{\frac{[\text{ion}]}{[\text{ion}]}}
+```
+
+Where:
+1. $R$ is the gas constant
+2. $T$ is the temperature
+3. $z$ is the valency of the ion
+4. $F$ is Faraday's constant
+
+This gives us this equation for current:
+
+```math
+I = g(V_m - E_{\text{ion}})
+```
+
+Where:
+1. $I$ is current
+2. $g$ is the conductance of the membrane
+3. $V_m$ is the membrane potential
+4. $E_{\text{ion}}$ is the equilibrium potential
+
+Note that $V_m$ can change rapidly. $g$ has some components that can change rapidly (gated channels) and some that are constant (leak channels).
