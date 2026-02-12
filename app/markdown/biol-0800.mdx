@@ -1,6 +1,6 @@
 ---
 title: "Physiology Notes"
-summary: "Cell Transport • Osmosis • Tonicity • Filtration and Absorption"
+summary: "Cell Transport • Osmosis and Tonicity"
 publishedAt: 2026-01-30
 updatedAt: 2026-02-09
 tags:
@@ -16,9 +16,15 @@ tags:
     - [Diffusion](#diffusion) (and [Ion Trapping](#ion-trapping))
     - [Facilitated Diffusion](#facilitated-diffusion)
     - [Active Transport](#active-transport)
-3. [Osmosis](#osmosis)
-4. [Tonicity](#tonicity)
-5. [Filtration and Absorption](#filtration-and-absorption)
+3. [Osmosis and Tonicity](#osmosis-and-tonicity)
+    - [Osmosis](#osmosis)
+    - [Tonicity](#tonicity)
+    - [Filtration and Absorption](#filtration-and-absorption)
+4. [Endocrine System](#endocrine-system)
+5. [Nervous System](#nervous-system)
+    - [Neurons](#neurons)
+    - [Membrane Potential](#membrane-potential)
+    - [Action Potential](#action-potential)
 
 ## Introduction
 
@@ -113,6 +119,8 @@ Suppose there is a pH gradient across the membrane. Then more weak acids will pr
 
 Note that $\text{pH} = -\log[H^+]$. That means that a lower pH corresponds to a higher concentration of $H^+$ ions.
 
+Drugs are usually weak acids or weak bases, so they can take advantage of ion trapping. Pharmaceutical companies designing drugs must take into account that the pH of the stomach is between 1-2, and the pH of the small intestine is between 6-7.
+
 ### Facilitated Diffusion
 
 Facilitated diffusion can happen through ion channels and carrier proteins. 
@@ -129,7 +137,9 @@ Facilitated diffusion can happen through ion channels and carrier proteins.
 
 **Vesicular transport** uses vesicles to move large molecules across the membrane. Endocytosis brings molecules into the cell, while exocytosis sends molecules out of the cell.
 
-## Osmosis
+## Osmosis and Tonicity
+
+### Osmosis
 
 Osmosis is the diffusion of water across a selectively permeable membrane (through aquaporin channels).
 
@@ -149,7 +159,7 @@ Where:
 
 Note that mOsm is the number of particles a substance dissolves into in the solution. For example, NaCl dissolves into Na+ and Cl-, so 1 mole of NaCl produces 2 Osm.
 
-## Tonicity
+### Tonicity
 
 **Tonicity** is a measure of how a solution affects cell volume. 
 1. Hypertonic solutions cause cells to shrink
@@ -160,7 +170,7 @@ For human cells, an isotonic solution is generally 300 mOsm/L.
 
 Note that tonicity is only affected by the concentration of non-penetrating solutes. There is also a measure called **osmolarity** that depends on the total concentration of solutes (both penetrating and non-penetrating).
 
-## Filtration and Absorption
+### Filtration and Absorption
 
 Fluid moves from the capillaries into the interstitial fluid (**filtration**), and from the interstitial fluid back into the capillaries (**absorption**). To do this, it must pass through the endothelial cells that line the capillaries. This can happen through diffusion, bulk flow, or vesicular transport.
 
@@ -190,6 +200,8 @@ Most of the volume of the thyroid gland comes from the colloid. When the colloid
 
 ## Nervous System
 
+### Neurons
+
 Neurons are very large cells with high metabolic demands. As soon as resources are cut off, they immediately start to malfunction. Long projecting neurons are the first to show signs of disease, which manifests as tingling or numbness in hands in feet.
 
 **Astrocytes** line the capillaries and tightly regulate what can come out of it (blood-brain barrier).
@@ -202,40 +214,82 @@ Neurons are very large cells with high metabolic demands. As soon as resources a
 3. Axon conducts the action potential down the length of the neuron
 4. Presynaptic axon terminals release chemical signalling molecules
 
-## Membrane Potential
+### Membrane Potential
 
-All cells exhibit a **membrane potential** (Vm) across the membrane. The inside of the cell is typically negative relative to the outside. The potential energy can be used to do work.
-
-Excitable cells (neurons, muscles) use changes in membrane potential to send signals. 
+All cells exhibit a **membrane potential** (Vm) across the membrane. The inside of the cell is typically negative relative to the outside. The potential energy can be used to do work. Excitable cells (neurons, muscles) use changes in membrane potential to send signals. 
 
 Cells use energy (ATP) to create a chemical gradient with K+ and Na+. K+ has a higher concentration inside the cell, while Na+ has a higher concentration outside the cell.*
 
-If more K+ channels are opened, then more K+ will leave the cell, making the inside more negative. If more Na+ channels are opened, then more Na+ will enter the cell, making the inside more positive. **Note that the ion channels will not appreciably change the concentration of K+ and Na+.**
+If more K+ channels are opened, then more K+ will leave the cell, making the inside more negative. If more Na+ channels are opened, then more Na+ will enter the cell, making the inside more positive. **Ion channels will not appreciably change the concentration of K+ and Na+.**
 
 *Note that 3 Na+ are pumped out of the cell and 2 K+ are pumped into the cell for each ATP hydrolyzed, so there is also a small membrane potential from that. 
 
 To reach electrochemical equilibrium, the chemical gradient must be balanced by the electrical gradient. Relatively few ions need to move to create a significant electrical gradient. This is described by the Nernst equation:
-
 ```math
 E_{\text{ion}} = \frac{RT}{zF} \ln{\frac{[\text{ion}]}{[\text{ion}]}}
 ```
-
 Where:
 1. $R$ is the gas constant
 2. $T$ is the temperature
-3. $z$ is the valency of the ion
+3. $z$ is the ion charge
 4. $F$ is Faraday's constant
 
-This gives us this equation for current:
+If there are multiple permeable ions, then the membrane potential is given by the Goldman-Hodgkin-Katz equation:
 
+```math
+V_m = \frac{RT}{F} \ln{\frac{P_{K^+}[K^+]_{\text{out}} + P_{Na^+}[Na^+]_{\text{out}} + P_{Cl^-}[Cl^-]_{\text{in}}}{P_{K^+}[K^+]_{\text{in}} + P_{Na^+}[Na^+]_{\text{in}} + P_{Cl^-}[Cl^-]_{\text{out}}}}
+```
+Where:
+- $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
+- $[\text{ion}]$ is the concentration of the ion
+
+From Ohm's Law, we can derive this equation for current:
 ```math
 I = g(V_m - E_{\text{ion}})
 ```
-
 Where:
 1. $I$ is current
-2. $g$ is the conductance of the membrane
+2. $g$ is the membrane conductance
 3. $V_m$ is the membrane potential
 4. $E_{\text{ion}}$ is the equilibrium potential
 
-Note that $V_m$ can change rapidly. $g$ has some components that can change rapidly (gated channels) and some that are constant (leak channels).
+Note that:
+- When $I$ is positive, there is an outward current (positive charge exiting the cell or negative charge entering the cell).
+- $E_{\text{ion}}$ is maintained at a constant level.
+- $V_m$ changes rapidly.
+- $g$ has some components that are constant (leak channels) and some components that change rapidly (gated channels). $g$ can change rapidly.
+- Driving force $V$ is the difference between the membrane potential $V_m$ and the equilibrium potential $E_{\text{ion}}$.
+
+If the number of open ion channels changes, then the conductance $g$ changes, which changes the current $I$. This causes more particles to either enter or leave the cell, which changes membrane potential $V_m$. Membrane potential $V_m$ asymptote toward equilibrium potential $E_{\text{ion}}$. At steady-state, the net current should be zero.
+
+If there is a delayed rectifier potassium channel, the membrane potential may undershoot the equilibrium potential. 
+
+### Action Potential
+
+![Action potential](/biol-0800/action-potential.png)
+
+**Voltage-gated sodium channels** have three states: closed, open, and inactivated. When depolarizing stimulus brings the membrane to a threshold potential, the voltage-gated sodium channels rapidly open, allowing Na⁺ to enter the cell and further depolarize the membrane. This depolarization triggers additional sodium channels to open through positive feedback, creating the action potential. Shortly after opening, the channel becomes inactivated, preventing further Na⁺ influx even if the membrane remains depolarized. The channel cannot reopen until the membrane repolarizes toward its resting potential, at which point it returns to the closed state. 
+
+**Delayed rectifier potassium channels** are voltage-gated channels that open in response to depolarization. As the voltage-gated sodium channels are inactivated, the potassium channels open up, allowing the membrane to return back toward its resting potential. This is an example of a negative feedback loop.
+
+![Voltage-gated channels](/biol-0800/voltage-gated-channels.png)
+
+### Conduction and Synapses
+
+Graded potentials can only travel a short distance before diminishing in amplitude. To send signals beyond a very short distance, action potentials must be generated and propagated along the entire length of neuron.
+
+Current enters the cell and has three pathways:
+1. Down the inside of the axon ($R_\text{internal}$)
+2. Through the cell membrane ($R_\text{membrane}$)
+3. To the cell membrane to charge up the capacitance ($C_\text{membrane}$)
+
+We would like current to travel down the axon, but the problem is that axons are poor conductors ($R_\text{internal}$ is high), and pathways (2) and (3) are significant drains on overall current.
+
+These problems are solved by several adaptations:
+1. Having larger axon diameters, decreasing $R_\text{internal}$
+2. Having no open ion channels between nodes, increasing $R_\text{membrane}$ 
+3. Having a thick myelin sheath, decreasing $C_\text{membrane}$
+
+Every so often, there are gaps in the myelin sheath called **nodes of Ranvier** where the voltage-gated sodium channels are concentrated. These regions are where the action potential is regenerated.
+
+Local anesthetic works by blocking action potentials in small diameter axons (like those that handle pain). It spares large diameter axons like touch and motor.
