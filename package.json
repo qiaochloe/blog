@@ -11,6 +11,8 @@
     "@types/react": "18.2.55",
     "@types/react-dom": "18.2.19",
     "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.28",
     "lucide-react": "^0.522.0",
     "markdown-it": "^14.1.1",
     "next": "canary",
@@ -21,7 +23,7 @@
     "rehype-highlight": "^7.0.2",
     "rehype-katex": "^7.0.1",
     "remark-comment": "^1.0.0",
-    "remark-gfm": "^3.0.1",
+    "remark-gfm": "^2.0.0",
     "remark-math": "^6.0.0",
     "sugar-high": "^0.6.1",
     "tailwindcss": "4.0.0-alpha.13",
@@ -29,5 +31,12 @@
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "micromark-extension-gfm-table@1.0.7": "patches/micromark-extension-gfm-table@1.0.7.patch",
+      "micromark-extension-math@3.1.0": "patches/micromark-extension-math@3.1.0.patch",
+      "remark-comment@1.0.0": "patches/remark-comment@1.0.0.patch"
+    }
   }
 }
