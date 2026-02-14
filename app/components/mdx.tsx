@@ -112,7 +112,6 @@ let components = {
   PuzzlethonHinting,
   PuzzlethonMap,
   PuzzlethonCarberry,
-  Manga,
 };
 
 export function CustomMDX(props) {
