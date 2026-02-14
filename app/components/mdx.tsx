@@ -16,7 +16,6 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
-import { Manga } from "./About";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -60,7 +59,9 @@ function slugify(str: React.ReactNode): string {
       ? str
       : Array.isArray(str)
         ? str.map(slugify).join("-")
-        : typeof str === "object" && "props" in str && str.props?.children != null
+        : typeof str === "object" &&
+            "props" in str &&
+            str.props?.children != null
           ? slugify((str as React.ReactElement).props.children)
           : String(str);
   return s
