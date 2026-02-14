@@ -76,14 +76,14 @@ export function PostsList({ allPosts }: PostsListProps) {
   // Filtered and sorted posts
   const currPosts = useMemo(() => {
     const alphaSort = (a: Post, b: Post) => {
-      const aNormalized = a.data.title.replace(/^[_*~`]+/, "").trim();
-      const bNormalized = b.data.title.replace(/^[_*~`]+/, "").trim();
+      const aNormalized = (a.data.title ?? "").replace(/^[_*~`]+/, "").trim();
+      const bNormalized = (b.data.title ?? "").replace(/^[_*~`]+/, "").trim();
       return aNormalized.localeCompare(bNormalized);
     };
     const chronoSort = (a: Post, b: Post) => {
-      const aDate = a.data.publishedAt;
-      const bDate = b.data.publishedAt;
-      return new Date(bDate).getTime() - new Date(aDate).getTime();
+      const aDate = a.data.publishedAt ?? a.data.updatedAt;
+      const bDate = b.data.publishedAt ?? b.data.updatedAt;
+      return (bDate?.getTime() ?? 0) - (aDate?.getTime() ?? 0);
     };
 
     return allPosts
@@ -147,7 +147,7 @@ export function PostsList({ allPosts }: PostsListProps) {
               >
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: md.renderInline(post.data.title),
+                    __html: md.renderInline(post.data.title ?? post.slug),
                   }}
                 />{" "}
                 {post.data.isExternalLink && (
@@ -156,10 +156,10 @@ export function PostsList({ allPosts }: PostsListProps) {
               </Link>
             </h2>
             <p className="text-neutral-600 tracking-tight text-sm">
-              {formatDate(post.data.updateeAt ?? post.data.publishedAt)}
+              {formatDate(post.data.updatedAt ?? post.data.publishedAt)}
             </p>
             <div></div>
-            <p className="text-neutral-600 text-sm my-1">{post.data.summary}</p>
+            <p className="text-neutral-600 text-sm my-1">{post.data.summary ?? ""}</p>
             <div></div>
           </div>
         ))}

@@ -3,11 +3,11 @@ import path from "path";
 import matter from "gray-matter";
 
 type Frontmatter = {
-  title: string;
-  summary: string;
-  publishedAt: Date;
+  title?: string;
+  summary?: string;
+  publishedAt?: Date;
   updatedAt?: Date;
-  tags: string[];
+  tags?: string[];
 };
 
 type Post = {
@@ -29,11 +29,27 @@ function getMDXData(dir: string): Post[] {
     const frontmatter = data as Frontmatter;
     const slug = path.basename(fileName, path.extname(fileName));
 
+    const rawPublished = frontmatter.publishedAt;
+    const publishedAt =
+      rawPublished != null && String(rawPublished).trim() !== ""
+        ? rawPublished instanceof Date
+          ? rawPublished
+          : new Date(rawPublished as string | number)
+        : undefined;
+    const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
+    const validPublished =
+      publishedAt != null && Number.isFinite(publishedAt.getTime())
+        ? publishedAt
+        : undefined;
+    const validUpdated =
+      updatedAt != null && Number.isFinite(updatedAt.getTime())
+        ? updatedAt
+        : undefined;
     return {
       data: {
         ...frontmatter,
-        publishedAt: new Date(frontmatter.publishedAt),
-        updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined,
+        publishedAt: validPublished,
+        updatedAt: validUpdated,
       },
       slug,
       content,

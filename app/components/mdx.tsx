@@ -2,8 +2,8 @@ import React from "react";
 import Link from "next/link";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
-import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import remarkComment from "remark-comment";
 import "highlight.js/styles/github.css";
 
 import "katex/dist/katex.min.css";
@@ -16,6 +16,7 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
+import { Manga } from "./About";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -52,20 +53,28 @@ function CustomLink(props) {
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
 }
 
-function slugify(str: string) {
-  return str
-    .toString()
+function slugify(str: React.ReactNode): string {
+  if (str == null) return "";
+  const s =
+    typeof str === "string"
+      ? str
+      : Array.isArray(str)
+        ? str.map(slugify).join("-")
+        : typeof str === "object" && "props" in str && str.props?.children != null
+          ? slugify((str as React.ReactElement).props.children)
+          : String(str);
+  return s
     .toLowerCase()
-    .trim() // Remove whitespace from both ends of a string
-    .replace(/\s+/g, "-") // Replace spaces with -
-    .replace(/&/g, "-and-") // Replace & with 'and'
-    .replace(/[^\w\-]+/g, "") // Remove all non-word characters except for -
-    .replace(/\-\-+/g, "-"); // Replace multiple - with single -
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/&/g, "-and-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
 }
 
 function createHeading(level) {
-  const Heading = ({ children }) => {
-    let slug = slugify(children);
+  const Heading = ({ children }: { children?: React.ReactNode }) => {
+    const slug = slugify(children ?? "") || "section";
     return React.createElement(
       `h${level}`,
       { id: slug },
@@ -102,6 +111,7 @@ let components = {
   PuzzlethonHinting,
   PuzzlethonMap,
   PuzzlethonCarberry,
+  Manga,
 };
 
 export function CustomMDX(props) {
@@ -115,7 +125,7 @@ export function CustomMDX(props) {
             rehypeKatex,
             [rehypeHighlight, { ignoreMissing: true }],
           ],
-          remarkPlugins: [remarkMath, remarkGfm],
+          remarkPlugins: [remarkMath, remarkComment],
         },
       }}
     />

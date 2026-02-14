@@ -4,17 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  micromark-extension-gfm-table@1.0.7:
-    hash: 5ssqr3xpr2r7y5iwb65fev5by4
-    path: patches/micromark-extension-gfm-table@1.0.7.patch
-  micromark-extension-math@3.1.0:
-    hash: qrjm4zid3xr5gtjqet453xjbfi
-    path: patches/micromark-extension-math@3.1.0.patch
-  remark-comment@1.0.0:
-    hash: ffkuxnnpfteiulpskvufs7vluy
-    path: patches/remark-comment@1.0.0.patch
-
 importers:
 
   .:
@@ -69,7 +58,7 @@ importers:
         version: 7.0.1
       remark-comment:
         specifier: ^1.0.0
-        version: 1.0.0(patch_hash=ffkuxnnpfteiulpskvufs7vluy)
+        version: 1.0.0
       remark-gfm:
         specifier: ^2.0.0
         version: 2.0.0
@@ -2195,7 +2184,7 @@ snapshots:
       micromark-util-types: 1.1.0
       uvu: 0.5.6
 
-  micromark-extension-gfm-table@1.0.7(patch_hash=5ssqr3xpr2r7y5iwb65fev5by4):
+  micromark-extension-gfm-table@1.0.7:
     dependencies:
       micromark-factory-space: 1.1.0
       micromark-util-character: 1.2.0
@@ -2219,13 +2208,13 @@ snapshots:
     dependencies:
       micromark-extension-gfm-autolink-literal: 1.0.5
       micromark-extension-gfm-strikethrough: 1.0.7
-      micromark-extension-gfm-table: 1.0.7(patch_hash=5ssqr3xpr2r7y5iwb65fev5by4)
+      micromark-extension-gfm-table: 1.0.7
       micromark-extension-gfm-tagfilter: 1.0.2
       micromark-extension-gfm-task-list-item: 1.0.5
       micromark-util-combine-extensions: 1.1.0
       micromark-util-types: 1.1.0
 
-  micromark-extension-math@3.1.0(patch_hash=qrjm4zid3xr5gtjqet453xjbfi):
+  micromark-extension-math@3.1.0:
     dependencies:
       '@types/katex': 0.16.8
       devlop: 1.1.0
@@ -2694,7 +2683,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  remark-comment@1.0.0(patch_hash=ffkuxnnpfteiulpskvufs7vluy):
+  remark-comment@1.0.0:
     dependencies:
       micromark-factory-space: 1.1.0
       micromark-util-character: 1.2.0
@@ -2713,7 +2702,7 @@ snapshots:
     dependencies:
       '@types/mdast': 4.0.4
       mdast-util-math: 3.0.0
-      micromark-extension-math: 3.1.0(patch_hash=qrjm4zid3xr5gtjqet453xjbfi)
+      micromark-extension-math: 3.1.0
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color

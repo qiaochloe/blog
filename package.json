@@ -31,12 +31,5 @@
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "micromark-extension-gfm-table@1.0.7": "patches/micromark-extension-gfm-table@1.0.7.patch",
-      "micromark-extension-math@3.1.0": "patches/micromark-extension-math@3.1.0.patch",
-      "remark-comment@1.0.0": "patches/remark-comment@1.0.0.patch"
-    }
   }
 }

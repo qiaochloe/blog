@@ -21,7 +21,9 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   const post = getPosts().find((post) => post.slug === slug);
   if (!post) return {};
 
-  const { title, publishedAt, summary: description } = post.data;
+  const title = post.data.title ?? post.slug ?? "Untitled";
+  const description = post.data.summary ?? "";
+  const publishedAt = post.data.publishedAt;
   const ogImage = `${baseUrl}/og?title=${encodeURIComponent(title)}`;
 
   return {
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       title,
       description,
       type: "article",
-      publishedTime: String(publishedAt),
+      ...(publishedAt && { publishedTime: publishedAt.toISOString() }),
       url: `${baseUrl}/${post.slug}`,
       images: [
         {
@@ -58,6 +60,8 @@ export default async function Page({ params }) {
     notFound();
   }
 
+  const title = post.data.title ?? post.slug ?? "Untitled";
+
   return (
     <section>
       <script
@@ -67,11 +71,15 @@ export default async function Page({ params }) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Blogposting",
-            headline: post.data.title,
-            datePublished: post.data.publishedAt,
-            dateModified: post.data.updatedAt,
-            description: post.data.summary,
-            image: `/og?title=${encodeURIComponent(post.data.title)}`,
+            headline: title,
+            ...(post.data.publishedAt && {
+              datePublished: post.data.publishedAt.toISOString(),
+            }),
+            ...(post.data.updatedAt && {
+              dateModified: post.data.updatedAt.toISOString(),
+            }),
+            description: post.data.summary ?? "",
+            image: `/og?title=${encodeURIComponent(title)}`,
             url: `${baseUrl}/${post.slug}`,
             author: {
               "@type": "Person",
@@ -85,12 +93,14 @@ export default async function Page({ params }) {
           <h1 className="title font-semibold text-2xl tracking-tighter">
             <div
               dangerouslySetInnerHTML={{
-                __html: md.renderInline(post.data.title),
+                __html: md.renderInline(title),
               }}
             />
           </h1>
           <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
-            <p className="">{formatDate(post.data.publishedAt)}</p>
+            {post.data.publishedAt && (
+              <p className="">{formatDate(post.data.publishedAt)}</p>
+            )}
             {post.data.updatedAt && (
               <p>Updated {formatDate(post.data.updatedAt)}</p>
             )}
@@ -104,7 +114,7 @@ export default async function Page({ params }) {
           <h1 className="title font-semibold text-2xl tracking-tighter">
             <div
               dangerouslySetInnerHTML={{
-                __html: md.renderInline(post.data.title),
+                __html: md.renderInline(title),
               }}
             />
           </h1>

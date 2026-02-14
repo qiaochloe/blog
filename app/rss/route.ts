@@ -14,14 +14,19 @@ export async function GET() {
   const allWritings = getPosts();
 
   const itemsXml = allWritings
-    .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
+    .filter((post) => post.data.publishedAt != null)
+    .sort(
+      (a, b) =>
+        (b.data.publishedAt?.getTime() ?? 0) -
+        (a.data.publishedAt?.getTime() ?? 0),
+    )
     .map(
       (post) => `
         <item>
-          <title>${escapeXml(post.data.title)}</title>
+          <title>${escapeXml(post.data.title ?? post.slug)}</title>
           <link>${escapeXml(`${baseUrl}/${post.slug}`)}</link>
           <description>${escapeXml(post.data.summary ?? "")}</description>
-          <pubDate>${post.data.publishedAt.toUTCString()}</pubDate>
+          <pubDate>${post.data.publishedAt!.toUTCString()}</pubDate>
         </item>`,
     )
     .join("\n");
