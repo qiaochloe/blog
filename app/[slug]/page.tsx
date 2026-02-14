@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
+import { preprocessGfmTables } from "app/utils/gfm-tables";
 import { baseUrl } from "app/sitemap";
 import MarkdownIt from "markdown-it";
 
@@ -106,7 +107,7 @@ export default async function Page({ params }) {
             )}
           </div>
           <article className="prose">
-            <CustomMDX source={post.content} />
+            <CustomMDX source={preprocessGfmTables(post.content)} />
           </article>
         </div>
       ) : (
@@ -119,7 +120,7 @@ export default async function Page({ params }) {
             />
           </h1>
           <article>
-            <CustomMDX source={post.content} />
+            <CustomMDX source={preprocessGfmTables(post.content)} />
           </article>
         </div>
       )}
