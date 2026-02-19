@@ -2,7 +2,7 @@
 title: "Physiology Notes"
 summary: "Cell Transport • Osmosis and Tonicity"
 publishedAt: 2026-01-30
-updatedAt: 2026-02-15
+updatedAt: 2026-02-19
 tags:
 - notes
 todo: review specific organs and receptor types, muscles
@@ -21,11 +21,20 @@ todo: review specific organs and receptor types, muscles
     - [Osmosis](#osmosis)
     - [Tonicity](#tonicity)
     - [Filtration and Absorption](#filtration-and-absorption)
-4. [Endocrine System](#endocrine-system)
-5. [Nervous System](#nervous-system)
-    - [Neurons](#neurons)
+    - [Cystic Fibrosis](#cystic-fibrosis)
+4. [Cell Communication](#cell-communication)
+    - [Chemical Messengers](#chemical-messengers)
+5. [Endocrine System](#endocrine-system)
+6. [Neuronal Signaling](#neuronal-signaling)
     - [Membrane Potential](#membrane-potential)
+    - [Equilibrium Potential](#equilibrium-potential)
+    - [Current](#current)
     - [Action Potential](#action-potential)
+    - [Conduction and Synapses](#conduction-and-synapses)
+    - [Neurotransmitters](#neurotransmitters)
+7. [Nervous System](#nervous-system)
+    - [Activation Pathways](#activation-pathways)
+    - [Visceral and Somatic Motor](#visceral-and-somatic-motor)
 
 ## Introduction
 
@@ -277,7 +286,7 @@ Most of the volume of the thyroid gland comes from the colloid. When the colloid
 | Thyroid failure or low iodine | High | Low | Yes |
 | Inactive hypothalamus or anterior pituitary | Low | Low | No |
 
-## Neurons
+## Neuronal Signaling
 
 Neurons are very large cells with high metabolic demands. As soon as resources are cut off, they immediately start to malfunction. Long projecting neurons are the first to show signs of disease, which manifests as tingling or numbness in hands in feet.
 
@@ -294,13 +303,24 @@ Neuron anatomy:
 
 ### Membrane Potential
 
-All cells exhibit a **membrane potential** (Vm) across the membrane. The inside of the cell is typically negative relative to the outside. The potential energy can be used to do work. Excitable cells (neurons, muscles) use changes in membrane potential to send signals. 
+All cells exhibit a **membrane potential** (Vm) across the membrane. The inside of the cell is typically negative relative to the outside. This potential energy can be used to do work. Excitable cells (neurons, muscles) use changes in membrane potential to send signals. 
 
-Cells use energy (ATP) to create a chemical gradient with K+ and Na+. K+ has a higher concentration inside the cell, while Na+ has a higher concentration outside the cell.*
+Cells use energy (ATP) to create a chemical gradient with K+ and Na+. K+ has a higher concentration inside the cell, while Na+ has a higher concentration outside the cell. 
 
 If more K+ channels are opened, then more K+ will leave the cell, making the inside more negative. If more Na+ channels are opened, then more Na+ will enter the cell, making the inside more positive. **Ion channels will not appreciably change the concentration of K+ and Na+.**
 
-*Note that 3 Na+ are pumped out of the cell and 2 K+ are pumped into the cell for each ATP hydrolyzed, so there is also a small membrane potential from that. 
+Note that 3 Na+ are pumped out of the cell and 2 K+ are pumped into the cell for each ATP hydrolyzed, so there is also a small membrane potential from that. 
+
+If there are multiple permeable ions, then the membrane potential is given by the Goldman-Hodgkin-Katz equation:
+
+```math
+V_m = \frac{RT}{F} \ln{\frac{P_{K^+}[K^+]_{\text{out}} + P_{Na^+}[Na^+]_{\text{out}} + P_{Cl^-}[Cl^-]_{\text{in}}}{P_{K^+}[K^+]_{\text{in}} + P_{Na^+}[Na^+]_{\text{in}} + P_{Cl^-}[Cl^-]_{\text{out}}}}
+```
+Where:
+- $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
+- $[\text{ion}]$ is the concentration of the ion
+
+### Equilibrium potential
 
 To reach electrochemical equilibrium, the chemical gradient must be balanced by the electrical gradient. Relatively few ions need to move to create a significant electrical gradient. This is described by the Nernst equation:
 ```math
@@ -312,14 +332,7 @@ Where:
 3. $z$ is the ion charge
 4. $F$ is Faraday's constant
 
-If there are multiple permeable ions, then the membrane potential is given by the Goldman-Hodgkin-Katz equation:
-
-```math
-V_m = \frac{RT}{F} \ln{\frac{P_{K^+}[K^+]_{\text{out}} + P_{Na^+}[Na^+]_{\text{out}} + P_{Cl^-}[Cl^-]_{\text{in}}}{P_{K^+}[K^+]_{\text{in}} + P_{Na^+}[Na^+]_{\text{in}} + P_{Cl^-}[Cl^-]_{\text{out}}}}
-```
-Where:
-- $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
-- $[\text{ion}]$ is the concentration of the ion
+### Current
 
 From Ohm's Law, we can derive this equation for current:
 ```math
@@ -383,31 +396,26 @@ Neurons communicate with each other through chemical messengers called **neurotr
 
 ## Nervous System
 
-### Central Nervous System
-
 The central nervous system (CNS) is comprised of the brain and spinal cord.
 - The hypothalamus controls the pituitary hormones.
 - The medulla controls breathing and heart rate.
 
-### Peripheral Nervous System
+The peripheral nervous system (PNS) has three components:
+1. The **somatic** controls voluntary movements by skeletal muscles. 
+2. The **autonomic** controls involuntary functions by smooth muscles and glands. 
+3. The **enteric** controls the gastrointestinal system (gut).
 
-The peripheral nervous system (PNS) is comprised of the somatic nervous system, autonomic nervous system, and enteric nervous system (gut). 
-
-The **somatic** nervous system controls voluntary movements by skeletal muscles. 
-
-The **autonomic** nervous system controls involuntary functions by smooth muscles and glands. It can be divided into the **sympathetic nervous system**, which is responsible for the fight-or-flight response, and the **parasympathetic nervous system**, which is responsible for rest-and-digest functions.
-
-The **enteric** nervous system controls the gastrointestinal system (gut).
+The autonomic nervous system can be divided into the **sympathetic**, which is responsible for the fight-or-flight response, and the **parasympathetic**, which is responsible for rest-and-digest functions.
 
 ### Activation Pathways
 
-In the somatic nervous system, the axon releases **acetylcholine** (ACh), which binds to nicotinic ACh receptors on the skeletal muscle, causing it to contract.
+In the somatic nervous system, the axon releases **acetylcholine** (ACh), which binds to **nicotinic ACh** receptors on the skeletal muscle, causing it to contract.
 
 In the automatic nervous system, preganglionic neurons releases ACh, which binds to nicotinic ACh receptors on the postganglionic neuron. The postganglionic then releases a different neurotransmitter depending on whether it is part of the sympathetic or parasympathetic nervous system.
 
-In the parasympathetic nervous system, the postganglionic neuron then releases ACh, which binds to **muscarinic** ACh receptors on the target tissue
-
 In the sympathetic nervous system, the postganglionic neuron then releases **norepinephrine**, which binds to **adrenergic** receptors on the target tissue. The adrenergic receptors can be either alpha or beta, and they can have different effects on the target tissue. Alpha-1 adrenergic receptors cause vasoconstriction, while beta-2 adrenergic receptors cause vasodilation.
+
+In the parasympathetic nervous system, the postganglionic neuron then releases ACh, which binds to **muscarinic** ACh receptors on the target tissue
 
 ### Visceral and Somatic Motor
 
@@ -415,7 +423,7 @@ Muscles are made of muscle fibers, which contain myofibrils composed of repeatin
 
 ![Muscles](/biol-0800/muscles.png)
 
-The neuromuscular junction is the synapse between a motor neuron and a skeletal muscle fiber. The motor neuron releases ACh, which binds to nicotinic ACh receptors on the muscle fiber, causing depolarization of the sarcolemma and propagation of an action potential. 
+The **neuromuscular junction** is the synapse between a motor neuron and a skeletal muscle fiber. The motor neuron releases ACh, which binds to nicotinic ACh receptors on the muscle fiber, causing depolarization of the sarcolemma and propagation of an action potential. 
 
 **T-tubules** conduct the action potentials, allowing them to reach the interior of the cell. In the T-tubules, depolarization activates dihydropyridine (**DHP**) receptors. They are mechanically coupled to **ryanodine** receptors on the **sarcoplasmic reticulum**, so their conformational change causes Ca++ to release from the sarcoplasmic reticulum.
 
