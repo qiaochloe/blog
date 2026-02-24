@@ -133,7 +133,14 @@ export function preprocessGfmTables(content: string): string {
   return result.join("\n");
 }
 
-/** Escape only characters that could break out of the tag; leave markdown intact */
+const BR_PLACEHOLDER = "\u0000BR\u0000";
+
+/** Escape only characters that could break out of the tag; allow <br/> for line breaks */
 function escapeCell(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const withPlaceholder = text.replace(/<br\s*\/?>/gi, BR_PLACEHOLDER);
+  const escaped = withPlaceholder
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return escaped.split(BR_PLACEHOLDER).join("<br />");
 }
