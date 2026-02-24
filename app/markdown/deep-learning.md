@@ -1,5 +1,5 @@
 ---
-title: "Something like a deep disinterest in intelligence"
+title: "Something Like a Deep Disinterest in Intelligence"
 summary: "This semester I took a course in Deep Learning. My friend—a former TA, and now a PhD candidate at Yale—had told me that deep learning was state-of-the-art, and that if I was only going to pick one AI course, it should be deep learning."
 publishedAt: "2024-03-25"
 tags:
@@ -24,7 +24,7 @@ Now, this is no complaint about the economy or the society or the Valley or anyt
 
 What is so interesting about this?
 
-So the model can extrapolate from data. It might even be able to extrapolate from very little data, or no data. But it's not Ultron, it's not Skynet, it's not even JARVIS yet. It's just a program that let's us do more of what we've already been doing, at a faster rate.
+So the model can extrapolate from data. It might even be able to extrapolate from very little data, or no data. But it's not Ultron, it's not Skynet, it's not even JARVIS yet. It's just a program that lets us do more of what we've already been doing, at a faster rate.
 
 From a sort of sociological perspective, AI (the technology) is interesting. But compared to everything else in mathematical and computer science theory, AI hardly pushes the boundaries of what is possible. We still don't know a thing about the nature of mathematics,[^2] or the nature of computation,[^5] much less the universe itself.[^3] Anything else—biology, chemistry, linguistics—forget it!
 
