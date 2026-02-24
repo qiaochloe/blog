@@ -45,6 +45,10 @@ html {
   @apply hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
 }
 
+.prose p a {
+  @apply underline decoration-neutral-400 underline-offset-2 decoration-[0.1em] hover:underline;
+}
+
 .prose .anchor:after {
   @apply text-neutral-300;
   content: "#";
@@ -146,7 +150,11 @@ html {
   @apply text-sm hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
 }
 
-.prose-notes a:hover {
+.prose-notes p a {
+  @apply underline decoration-neutral-400 underline-offset-2 decoration-[0.1em] hover:underline;
+}
+
+.prose-notes p a:hover {
   @apply text-inherit;
 }
 
