@@ -24,10 +24,10 @@ export default function Page() {
 
   return (
     <section>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight">Hi.</h1>
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight">Chloe Qiao</h1>
       <p className="mb-4">
-        I'm Chloe Qiao. I am an undergraduate student at Brown University
-        studying computer science. I am broadly interested in building systems.
+        I am an undergraduate student at Brown University studying computer
+        science. I am broadly interested in building systems.
       </p>
 
       <p className="mb-8">
