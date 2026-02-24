@@ -1,6 +1,6 @@
 ---
-title: "Datacenter and cloud operating systems notes"
-summary: "Multicore • OS Structure and Abstractions • High-Performance I/O • RDMA"
+title: "Datacenter and Cloud Operating Systems Notes"
+summary: "Multicore • OS Structure and Abstractions • High-Performance I/O • RDMA Kernel Bypass • NIC Interfaces • CPU Scheduling • Signals vs. Interrupts"
 publishedAt: 2025-09-06
 updatedAt: 2025-09-23
 tags:
@@ -11,47 +11,47 @@ todo: virtualization background for os structure, prism notes
 ## Topics
 
 1. [Multicore](#multicore)  
-    - Background: [Processors and cores](#processors-and-cores), [Cache coherence](#cache-coherence)  
+    - Background: [Processors and Cores](#processors-and-cores), [Cache Coherence](#cache-coherence)  
     - Papers: [Multikernels](#multikernels), [COST](#cost) 
-2. [OS structure and abstractions](#os-structure-and-abstractions)
+2. [OS Structure and Abstractions](#os-structure-and-abstractions)
     - Papers: [Exokernels](#exokernels), [Dune](#dune)
-3. [High-performance I/O](#high-performance-io)
-    - Background: [Linux network stack](#linux-network-stack), [User-level network stack](#user-level-network-stack)
+3. [High-Performance I/O](#high-performance-io)
+    - Background: [Linux Network Stack](#linux-network-stack), [User-Level Network Stack](#user-level-network-stack)
     - Papers: [IX](#ix), [Arrakis](#arrakis)
-4. [High-performance I/O (cont.)](#high-performance-io-cont)
-    - Background: [eBPF](#ebpf), [Polling vs. interrupts](#polling-vs-interrupts)
+4. [High-Performance I/O (cont.)](#high-performance-io-cont)
+    - Background: [eBPF](#ebpf), [Polling vs. Interrupts](#polling-vs-interrupts)
     - Papers: [XDP](#xdp), [XRP](#xrp)
-5. [Remote direct memory access](#remote-direct-memory-access)
-    - Background: [RDMA protocol](#rdma-protocol)
+5. [Remote Direct Memory Access](#remote-direct-memory-access)
+    - Background: [RDMA Protocol](#rdma-protocol)
     - Papers: [FaRM](#farm), [PRISM](#prism)
-4. [Kernel bypass and OS abstractions](#kernel-bypass-and-os-abstractions)
+4. [Kernel Bypass and OS Abstractions](#kernel-bypass-and-os-abstractions)
     - Background: [IOMMU](#iommu), [Zero-copy memory allocation](#zero-copy-memory-allocation)
     - Papers: [Demikernel](#demikernel)
 6. [NIC Interfaces](#nic-interfaces)
-    - Background: [Packetized interface](#packetized-interface)
+    - Background: [Packetized Interface](#packetized-interface)
     - Papers: [Enso](#enso)
 7. [CPU Scheduling](#cpu-scheduling)
     - Background
     - Papers: [Shenango](#shenango), [Attack of the Killer Microseconds](#attack-of-the-killer-microseconds)
 8. [CPU Scheduling (cont.)](#cpu-scheduling-cont)
     - Background:
-    - Papers: [Syrup](#syrup), [Ghost](#ghost)
-10. [CPU Scheduling & Interference](#cpu-scheduling-interference)
-    - Background:
-    - Papers: [Caladan](#caladan)
+    - Papers: [Syrup](#syrup), [Ghost](#ghost), [Caladan](#caladan)
 9. [Signals vs. Interrupts](#signals-vs-interrupts)
     - Background:
     - Papers: [Aspen](#aspen)
+10. [Warehouse-Scale Memory Management](#warehouse-scale-memory-management)
 
 ## Multicore
 
-### Processors and cores
+### Processors and Cores
 
 A **processor** contains cores, a memory controller unit (MCU), a shared L3 cache, I/O interfaces (such as the PCI express), and interconnects. **Cache lines** are the fixed-sized blocks of data that are loaded into the shared L3 cache. A **core** is a basic computational unit which maintains its own set of registers. 
 
 ![Diagram of a system, a processor, and a core](/csci-2690/processor.jpeg)
 
-A system may have multiple **processors**, which may have multiple **cores** that support multiple **hardware threads** or contexts. 
+A system may have multiple **processors**, which may have multiple **cores** that each support a single **hardware threads** or contexts. 
+
+A *process* is simply a running program. It owns resources such as memory, file handles, and sockets. It has its own address space. Each process can have one thread or multiple threads. A thread is a unit of scheduling and execution. Threads share the same address space within a process. The operating system scheduler assigns software threads to run on available hardware threads for a fixed time slice.
 
 In a **symmetric/shared memory multiprocessor** (SMP), all processors can run any task and access any memory. The OS is responsible for scheduling threads across processors. Sometimes non-uniform memory access (NUMA) is used, which means that each processor has local RAM but can also access remote RAM attached to another processor.
 
@@ -59,7 +59,7 @@ In massively parallel processing (MPP), there are many processors, each with the
 
 ![Diagram of a multiprocessor system](/csci-2690/multiprocessor-system.jpeg)
 
-### Cache coherence
+### Cache Coherence
 
 One big problem with multiprocessors and multicores is **cache incoherence**. When a memory location is modified, the cached copies of that memory location are no longer valid. It is necessary to have a cache coherence protocol to make sure that all copies are the same. The policy needs to guarantee:
 1. **Write propagation**: writes to a memory location must be seen by everyone
@@ -78,13 +78,17 @@ Nevertheless, cache coherence comes with its own set of problems:
 2. The idea of a multikernel is to have a distributed system of OS instances on each core that communicate with each other via message-passing rather than shared state. The problem with this idea was that core-count didn't actually increase dramatically in the last few decades.
 3. Its important to think about the benefits of **shared state** versus **message-passing**. Shared state is the traditional way of building operating systems, where all cores share the same memory space and communicate by reading and writing to shared memory. It can be hard to reason about. Message-passing involves asynch-programming, which can complicated in its own right.
 
-### COST paper
+### COST
 
 [Scalability! But at what COST?](https://www.usenix.org/system/files/conference/hotos15/hotos15-paper-mcsherry.pdf)
 
 The authors argue that parallelizable overheads in many distributed systems paper cause the scalability of the system to be exaggerated. Instead, distributed systems papers should also consider the COST (configuration that outperforms a single thread) metric in order to gauge the true performance benefits of the system.
 
-## OS structure and abstractions
+## OS Structure and Abstractions
+
+### Virtualization
+
+Fidelity, performance, and security
 
 ### Exokernels
 
@@ -101,7 +105,7 @@ The authors argue that parallelizable overheads in many distributed systems pape
 2. The prototype of this solution is Dune, which comprises of a loadable kernel module on top of the OS (2.5k lines of code) and a user-level library, libDune.
 3. Dune is an example of how advancements in hardware can motivate new papers.
 
-## High-performance I/O
+## High-Performance I/O
 
 ### Metrics
 
@@ -115,13 +119,13 @@ Important metrics:
 1. Tail latency, since end-to-end response times are determined by the slowest individual response
 2. CPU utilization under variable load
 
-### Linux network stack
+### Linux Network Stack
 
 The Linux network stack is slow because it involves many memory copies, context switches, interrupts, and queueing delays.
 
 ![kernel network stack](/csci-2690/kernel-network-stack.jpeg)
 
-### User-level network stacks
+### User-Level Network Stacks
 
 To achieve higher performance, user-level network stacks allow applications to directly read and write to **device driver queues**, bypassing the kernel. This reduces the number of memory copies, context switches, and interrupts. Having a **run-to-completion model** also allows the application to avoid context switches and interrupts. 
 
@@ -144,7 +148,7 @@ The authors propose creating a dataplane operating system which separate the con
 
 Similar solution to IX.
 
-## High-performance I/O (cont.)
+## High-Performance I/O (cont.)
 
 ### eBPF
 
@@ -156,7 +160,7 @@ eBPF maps provide a mechanism for eBPF to store and share data within the kernel
 
 eBPF must be run on bare-metal; it is not supported in virtual machines or containers.
 
-### Polling vs. interrupts
+### Polling vs. Interrupts
 
 When the NIC writes into pre-prepared packet buffers, the CPU should be notified when a packet arrives. There are two ways to do this: polling and interrupts. With polling, the CPU constantly monitors a particular memory address and wastes resources. With interrupts, the kernel sends a signal to the CPU when a packet arrives.
 
@@ -176,9 +180,9 @@ XDP showed higher performance than baseline Linux but lower than DPDK for packet
 
 Similar to XDP, but for storage.
 
-## Remote direct memory access
+## Remote Direct Memory Access
 
-### RDMA protcol
+### RDMA Protcol
 
 RDMA (Remote Direct Memory Access) allows one machine to make remote memory reads or writes *without server CPU involvement*. This is different from DPDK, where the server needs the CPU to poll for incoming messages in the NIC queues (tx_burst, rx_burst).
 
@@ -243,7 +247,7 @@ To do a transaction:
 3. Update write objects
 4. Unlock
 
-## Kernel bypass and OS abstractions
+## Kernel Bypass and OS Abstractions
 
 ### IOMMU
 
@@ -259,7 +263,7 @@ There are two ways to use physically_backed memory and pinned memory:
 1. `mprotect()` pins the memory you pass in
 2. OS mantains huge pages (2MB or 1GB). The 2MB pages are always pinned and physically backed. The NIC can register the huge pages with the IOMMU.
 
-### Zero-copy memory allocation
+### Zero-Copy Memory Allocation
 
 ZC send:
 - App copies app memory into the network stack
@@ -288,7 +292,7 @@ To provide use-after free protection, when memory is allocated, the Demikernel r
 
 ## NIC Interfaces
 
-### Packetized interface
+### Packetized Interface
 
 Traditionally, NICs and applications communicate through buffers that contain packet descriptors. Packet descriptors hold metadata, a flag bit, and a pointer to a **fixed-sized packet buffer** which holds the data. 
 
@@ -313,9 +317,9 @@ Enso showed that you can increase
 
 DDIO, when NIC recv data, can put in L3 cache
 
-## CPU scheduling
+## CPU Scheduling
 
-### CPU scheduling algorithms
+### CPU Scheduling Algorithms
 
 Most Theoretical
 1. First come first serve (FCFS)
@@ -368,9 +372,9 @@ e.g. Disk I/Os, WAN network events, and low-end flash devices are 10s of millise
 
 Nothing can effectively mask the latency of microsecond-scale events. e.g. Datacenter round trip time and high-end flash devices. 
 
-## CPU scheduling (cont.)
+## CPU Scheduling (cont.)
 
-## ghOSt
+### ghOSt
 
 Problem:
 - Scheduling is good but hard
@@ -402,7 +406,7 @@ Memory bandwidth interference
 LLC interference
 - Measure increased queueing delays caused by reductions in compute capacity
 
-## Signals vs. interrupts
+## Signals vs. Interrupts
 
 ### Aspen
 
