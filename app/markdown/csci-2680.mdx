@@ -1,0 +1,137 @@
+---
+title: "Networks and the Internet"
+summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control"
+publishedAt: 2026-02-22
+updatedAt: 2026-02-24
+tags: 
+- notes
+---
+
+## Contents
+
+1. [Internet Architecture](#internet-architecture)
+    - [Clark 88](#clark-88)
+    - [E2E](#e2e)
+2. [Internet Infrastructure](#internet-infrastructure)
+    - [B4 and After](#b4-and-after)
+    - [Edge Caching as Differentiation](#edge-caching-as-differentiation)
+    - [CityMesh](#citymesh)
+3. [Congestion Control](#congestion-control)
+    - [Dismantling a Religion](#dismantling-a-religion)
+4. [Access](#access)
+    - [cISP](#cisp)
+5. [Traffic Control](#traffic-control)
+    - [L4S](#l4s)
+    - [RCS](#RCS)
+
+## Internet Architecture
+
+The Internet is a BIG distributed system with a large dynamic range.
+
+Design principles
+1. Federated design: no single entity controls the entire system
+2. Best effort: the network does not guarantee delivery, but it tries its best to deliver packets
+3. End-to-end principle: network is as simple as possible, endpoints are responsible for reliability, security, etc.
+
+The tradeoff is that the Internet is hard to manage, has no performance guarantees, and is slow.
+
+### Clark 88
+
+[The design philosophy of the DARPA internet protocols](https://dl.acm.org/doi/10.1145/52325.52336)
+
+TCP/IP was first proposed by the Defense Advanced Research Projects Agency (DARPA). Its main goal was to effectively multiplex across existing networks. Some other goals were:
+1. Survivability and fault-tolerance
+2. Supporting a variety of networks
+3. Distributed management of resources
+4. Cost-effectiveness
+5. Accountability
+
+Some design decisions made were:
+- Datagrams
+- Packet switching instead of circuit switching
+- Storing state at the endpoints instead of the network
+
+Circuit-switched packet forwarding involves setting up a dedicated path between the source and destination before data can be sent. By reserving resources, the networks can make performance guarantees. Ex. telephone networks. 
+
+Store/forward packet switching allows data to be sent in small packets that can take different paths to the destination. While this supports a flexible topology and benefits from statistical multiplexing, it does not allow for performance guarantees. Ex. the Internet.
+
+### E2E
+
+[End-to-end arguments in system design](https://dl.acm.org/doi/10.1145/357401.357402)
+
+The end-to-end argument is that only endpoints can provide certain functions correctly, and that implementing these functions in the network can be redundant and inefficient. Examples of these functions include: 
+1. Reliable data transmission
+2. Acknowledgment of delivery 
+3. Data security
+4. Duplicate message suppression 
+
+For example, consider the problem of reliable data transfer. Data transfer may involve the host and client application, the operating system, the disk, and the communication subsystem, all of which could be a point of failure. Thus, reliable data transfer can only be fully implemented at the application layer with end-to-end check and retry, and it may be inefficient to implement reliability in the network as well.
+
+## Internet Infrastructure
+
+### B4 And After
+
+[B4 and After: Managing Hierarchy, Partitioning, and Asymmetry for Availability and Scale in Google's Software-Defined WAN](https://research.google/pubs/b4-and-after-managing-hierarchy-partitioning-and-asymmetry-for-availability-and-scale-in-googles-software-defined-wan/)
+
+Private Wide Area Networks (WANs) are used by large organizations to connect their offices and data centers. They often have a centralized control plane, which allows for more efficient traffic engineering and better performance than the broader Internet.
+
+B4 is Google's private WAN. One of the main scalability issues in B4 is that increasing site counts (1) complicated capacity planning, (2) slowed the TE algorithm and (3) put pressure on the switch forwarding tables. 
+
+One of the things Google did to solve that problem was add more hierarchy to the network topology. Each site now has multiple supernodes (leaf and spine architecture) connected in a full mesh.
+
+### Edge Caching as Differentiation
+
+[Edge Caching as Differentiation](https://dl.acm.org/doi/10.1145/3718958.3754350)
+
+Edge caching leads to performance differences for end-users, similar to traffic differentiation. Furthermore, these differences do not explicitly come about as a result of service differentiation, but rather arise implicitly from the nature of shared caching.
+
+### CityMesh 
+
+[Scalable Routing in a City-Scale Wi-Fi Network for Disaster Recovery](https://nines-conference.org/papers/p010-Liu.pdf)
+
+CityMesh uses static access points and mobile devices equipped by Wi-Fi to provide connectivity in cases where (1) the network is down but (2) the physical infrastructure is still intact.
+
+It uses map data to determine the best path for routing packets between buildings, and it uses grid-based addressing to allow for scalable routing. 
+
+## Congestion Control
+
+### Dismantling a Religion
+
+[Flow rate fairness: dismantling a religion](https://dl.acm.org/doi/10.1145/1232919.1232926)
+
+Briscoe '08 argues that flow rate fairness is not a good measure of 'fairness'. For one, most flow rate fairness schemes can be taken advantage of by users who open multiple flows, and thus receive more bandwidth.
+
+Instead, cost fairness, which considers the congestion caused by a user, is a better measure. "You get what you pay for."
+
+## Access
+
+### cISP
+
+[cISP: A Speed-of-Light Internet Service Provider](https://www.usenix.org/conference/nsdi22/presentation/bhattacherjee)
+
+The best latency between two points on Earth is the speed of light in a vacuum, or c-latency. Protocol inefficiencies account for the fact that most Internet traffic is 36-100x c-latency. However, infrastructural inefficiencies account for around 3-4x c-latency. This is mainly because fiber cable has a transmission speed around two-thirds that of c. 
+
+cISP is a service provider that uses microwave antennas for long-haul routing and uses fiber for the last mile. Microwave has a short range (~100 km) and limited bandwidth, but also a transmission speed essentially equal to c. However, it is very sensitive to weather and obstructions, and is currently only widely used in high-frequency trading (HFT).
+
+## Traffic Control
+
+### L4S
+
+Low, Latency, Low-Loss, Scalable Throughput (L4S) is an architecture for Internet congestion control. It uses Explicit Congestion Notification (ECN) to transmit information about congestion ahead of time.
+
+Endpoints using L4S is given preferential treatment in exchange for cooperating using improved CCAs. Remarkably, both L4S and non-L4S traffic see improved performance.
+
+### RCS
+
+[Principles for Internet Congestion Management](https://dl.acm.org/doi/10.1145/3651890.3672247)
+
+The Internet relies on host-based congestion control algorithms (CCAs) to prevent overloads. However, users have an incentive to deploy more aggressive CCAs to receive more bandwidth. To prevent this, the Internet informally requires all CCAs to be TCP-friendly (TCPF), which means
+
+> its arrival rate does not exceed the arrival of a conformant TCP connection in the same circumstances
+
+There are multiple problems with TCPF:
+1. Difficult to enforce
+2. Limits CCAs' ability to achieve full efficiency
+3. In practice, non-TCPF CCAs like CCA BBR is deployed widely
+
+The authors' proposal is to have the network actively enable all reasonable CCAs to achieve the same bandwidth in the same static circumstances, or CCA independence (CCAI). They describe a Recursive Congestion Shares (RCS) framework which uses existing commercial agreements to determine packets' relative rights in a link. 
