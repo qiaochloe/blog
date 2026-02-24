@@ -123,6 +123,32 @@ html {
   @apply border-l-4 border-neutral-200 pl-4 my-4;
 }
 
+/* Footnotes */
+.prose .footnote-ref {
+  @apply no-underline;
+}
+.prose .footnote-ref a {
+  @apply text-neutral-500 hover:text-neutral-700 font-normal;
+}
+.prose .footnotes {
+  @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
+}
+.prose .footnote-item {
+  @apply my-1;
+}
+.prose .footnotes .footnote-item p {
+  @apply my-0 inline;
+  display: inline;
+}
+.prose .footnotes .footnote-item .footnote-back {
+  @apply ml-0.5 text-neutral-400 no-underline hover:underline;
+  display: inline;
+  vertical-align: middle;
+}
+.prose .footnote-back {
+  @apply ml-0.5 text-neutral-400 no-underline hover:underline;
+}
+
 /*.prose > :first-child {*/
 /*  margin-top: 1.25em !important;*/
 /*  margin-bottom: 1.25em !important;*/
@@ -176,6 +202,27 @@ html {
 
 .prose-notes strong {
   @apply font-bold;
+}
+
+.prose-notes .footnote-ref a {
+  @apply text-neutral-500 hover:text-neutral-700 font-normal;
+}
+.prose-notes .footnotes {
+  @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
+}
+.prose-notes .footnote-item p {
+  display: inline;
+}
+.prose-notes .footnotes .footnote-item p {
+  @apply my-0 inline;
+  display: inline;
+}
+.prose-notes .footnotes .footnote-item .footnote-back {
+  display: inline;
+  vertical-align: middle;
+}
+.prose-notes .footnote-back {
+  @apply ml-0.5 text-neutral-400 no-underline hover:underline;
 }
 
 .prose-notes table {

@@ -4,6 +4,7 @@ import { CustomMDX } from "app/components/mdx";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { preprocessGfmTables } from "app/utils/gfm-tables";
+import { preprocessFootnotes } from "app/utils/footnotes";
 import { baseUrl } from "app/sitemap";
 import MarkdownIt from "markdown-it";
 
@@ -98,7 +99,7 @@ export default async function Page({ params }) {
               }}
             />
           </h1>
-          <div className="justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
+          <div className="flex justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
             {post.data.publishedAt && (
               <p className="">{formatDate(post.data.publishedAt)}</p>
             )}
@@ -107,7 +108,7 @@ export default async function Page({ params }) {
             )}
           </div>
           <article className="prose">
-            <CustomMDX source={preprocessGfmTables(post.content)} />
+            <CustomMDX source={preprocessFootnotes(preprocessGfmTables(post.content))} />
           </article>
         </div>
       ) : (
@@ -120,7 +121,7 @@ export default async function Page({ params }) {
             />
           </h1>
           <article>
-            <CustomMDX source={preprocessGfmTables(post.content)} />
+            <CustomMDX source={preprocessFootnotes(preprocessGfmTables(post.content))} />
           </article>
         </div>
       )}
