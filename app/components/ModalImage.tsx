@@ -1,9 +1,15 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export function ModalImage(props) {
   const [modalImage, setModalImage] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     alt,
@@ -12,6 +18,26 @@ export function ModalImage(props) {
     height = 500, // default height
     ...rest
   } = props;
+
+  const modal = modalImage && mounted && (
+    <div
+      className="fixed inset-0 bg-neutral-900/90 flex justify-center items-center z-50"
+      onClick={() => setModalImage(false)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Escape" && setModalImage(false)}
+      aria-label="Close image"
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={width * 2}
+        height={height * 2}
+        className="rounded-lg h-[50vh] w-auto"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -24,22 +50,7 @@ export function ModalImage(props) {
         className="rounded-sm relative cursor-pointer"
         {...rest}
       />
-
-      {/* Fullscreen Modal */}
-      {modalImage && (
-        <div
-          className="fixed inset-0 bg-neutral-900/90 flex justify-center items-center z-50"
-          onClick={() => setModalImage(false)}
-        >
-          <Image
-            src={src}
-            alt={alt}
-            width={width * 2}
-            height={height * 2}
-            className="rounded-lg h-[50vh] w-auto"
-          />
-        </div>
-      )}
+      {mounted && modal && createPortal(modal, document.body)}
     </>
   );
 }
