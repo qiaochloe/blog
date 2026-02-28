@@ -1,8 +1,15 @@
 import "./global.css";
 import type { Metadata } from "next";
+import { Figtree } from "next/font/google";
 import { Navbar } from "./components/nav";
 import Footer from "./components/footer";
 import { baseUrl } from "./sitemap";
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -40,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cx("text-black bg-white")}>
+    <html lang="en" className={cx(figtree.variable, "text-black bg-white")}>
       <body className="antialiased max-w-xl mt-8 mx-auto px-2 overflow-visible">
         <main className="flex-auto min-w-0 mt-6 flex flex-col px-2">
           <Navbar />
