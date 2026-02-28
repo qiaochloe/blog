@@ -52,7 +52,11 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   };
 }
 
-export default async function Page({ params }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const md = new MarkdownIt();
 
   const { slug } = await params;
@@ -99,9 +103,9 @@ export default async function Page({ params }) {
               }}
             />
           </h1>
-          <div className="flex justify-between items-center mt-2 mb-8 text-sm text-neutral-600">
+          <div className="mt-2 mb-8 text-sm text-neutral-600">
             {post.data.publishedAt && (
-              <p className="">{formatDate(post.data.publishedAt)}</p>
+              <p>Published {formatDate(post.data.publishedAt)}</p>
             )}
             {post.data.updatedAt && (
               <p>Updated {formatDate(post.data.updatedAt)}</p>
