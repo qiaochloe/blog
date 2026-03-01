@@ -1,8 +1,9 @@
 import { getPosts } from "app/posts";
 import { Post, PostsList } from "app/writings/PostsList";
+import { Metadata } from "next";
 import { Suspense } from "react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Writings",
   description: "Writings from Chloe Qiao.",
 };
@@ -25,7 +26,7 @@ export default function Page() {
   const allPosts = [...getPosts(), ...externalLinks];
 
   return (
-    <section>
+    <section className="pl-4">
       <h1 className="font-semibold text-2xl mb-4 tracking-tighter">Writings</h1>
       <Suspense>
         <PostsList allPosts={allPosts} />
