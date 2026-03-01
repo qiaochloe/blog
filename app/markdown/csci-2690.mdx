@@ -8,39 +8,6 @@ tags:
 todo: virtualization background for os structure, prism notes 
 ---
 
-## Topics
-
-1. [Multicore](#multicore)  
-    - Background: [Processors and Cores](#processors-and-cores), [Cache Coherence](#cache-coherence)  
-    - Papers: [Multikernels](#multikernels), [COST](#cost) 
-2. [OS Structure and Abstractions](#os-structure-and-abstractions)
-    - Papers: [Exokernels](#exokernels), [Dune](#dune)
-3. [High-Performance I/O](#high-performance-io)
-    - Background: [Linux Network Stack](#linux-network-stack), [User-Level Network Stack](#user-level-network-stack)
-    - Papers: [IX](#ix), [Arrakis](#arrakis)
-4. [High-Performance I/O (cont.)](#high-performance-io-cont)
-    - Background: [eBPF](#ebpf), [Polling vs. Interrupts](#polling-vs-interrupts)
-    - Papers: [XDP](#xdp), [XRP](#xrp)
-5. [Remote Direct Memory Access](#remote-direct-memory-access)
-    - Background: [RDMA Protocol](#rdma-protocol)
-    - Papers: [FaRM](#farm), [PRISM](#prism)
-4. [Kernel Bypass and OS Abstractions](#kernel-bypass-and-os-abstractions)
-    - Background: [IOMMU](#iommu), [Zero-copy memory allocation](#zero-copy-memory-allocation)
-    - Papers: [Demikernel](#demikernel)
-6. [NIC Interfaces](#nic-interfaces)
-    - Background: [Packetized Interface](#packetized-interface)
-    - Papers: [Enso](#enso)
-7. [CPU Scheduling](#cpu-scheduling)
-    - Background
-    - Papers: [Shenango](#shenango), [Attack of the Killer Microseconds](#attack-of-the-killer-microseconds)
-8. [CPU Scheduling (cont.)](#cpu-scheduling-cont)
-    - Background:
-    - Papers: [Syrup](#syrup), [Ghost](#ghost), [Caladan](#caladan)
-9. [Signals vs. Interrupts](#signals-vs-interrupts)
-    - Background:
-    - Papers: [Aspen](#aspen)
-10. [Warehouse-Scale Memory Management](#warehouse-scale-memory-management)
-
 ## Multicore
 
 ### Processors and Cores
@@ -413,3 +380,159 @@ LLC interference
 In Aspen-KB, a timer core needs to be allocated to periodically preempt runtime cores. The network RX queue is frequently polled for incoming packets, or requests. Requests are added to a new queue. The thread on the new queue runs for some quanta, and then gets added to the preempted queue. We assume that the priority of new requests is greater than preempted ones.
 
 In Aspen-Go, a dedicated thread called sysmon reempts goroutines periodically. Each core has a queue of runnable goroutines, and there is also a global queue of preempted goroutines. Tasks on per-core queues are prioritized over global queues. One problem is that sysmon does not have direct access to the network RX queue.
+
+## Microkernels 
+
+Microkernels
+- Small kernel code base with "components" in userspace
+- Verifiable with safety guarantees
+- Used in cars
+
+### Full virtualization
+
+Virtualizing x86 faithfully is difficult.
+1. Traps don't exist for all privileged instructions. VMware solved this by dynamically adding traps to the host machine code.
+
+
+Ideally with a tagged TLB that can store translation entries for multiple processes simultaneously
+
+### Are Virtual Machine Monitors Microkernels Done Right?
+
+Differences between microkernels and VMMs:
+
+- Becaues the kernel depends on userspace, there is "liability inversion" where bugs in userspace can crash the kernel. 
+
+The broad argument is that research in microkernels can be applied to VMMs.
+
+Virtual machine monitors (VMMs):
+- Goal is to run multiple operating systems on the same machine
+- Research focused around resource isolation and multiplexing, and achieving low performance overhead
+
+Microkernels
+3. Need fast IPC
+5. Applications need different API to interact with microkernel
+
+Virtual machine monitors (VMMs)
+1. 
+2. Strict isolation between guest OSes
+3. If a guests fails, it doesn't affect the rest of the system
+4. Generally no modifications to guest OSes
+4. Guests don't need to talk to each other, so don't need IPC
+
+### Paravirtualization
+
+A *guest OS* is one of the operating systems that can be run in the system. A *domain* is a running instance of this guest OS. Domains are managed by virtual machine monitors (VMMs). 
+
+Domains can make synchronous calls to the VMM called *hypercalls*. Notifications are delivered from the VMM to domains through asynchronous events.
+
+### Xen
+
+Xen separates policy from mechanism. The VMM only provides basic control operations, but the initial domain, *Domain0*, is in charge of implementing policy decisions.
+
+control interface to implement policy decisions. It
+
+Domain0
+
+Need entire page to receive packets.
+Wasteful. If no pages available, packets are dropped.
+
+- Sacrifice fidelity for performance
+- I/O interfaces are standarized through 
+  - Easier to port guest OSes
+  - I/O devices are abstracted as queues
+  - I/O descriptor ring buffer buffers are allocated by guest
+
+  - Without ring buffer, all data would be copied through the VMM
+  - Can batch requests instead of using interrupts
+
+- Guest Oses can read directly from page tables, but writing to the page table is through hypercalls
+  - Writing to create or delete new processes
+
+- Memory is statically partitioned
+
+Goals:
+- Run multiple (~100) guest operating systems (such as for ec2)
+- Don't necessarily need fidelity, to run modified guest OSes
+- The app interface is unchanged so applications can run unmodified
+
+## Warehouse-Scale Memory Management
+
+CPUS
+IRAM (caches)
+DRAM (main memory)
+NVM, Remote memory, SW-defined
+Disks
+
+DRAM consists of transistors and capacitors ordered in grids. When the grids are packed closer togeher, there is a coupling effect that can cause random bit flips. Thus, frequency and voltage needs to be kept low, and so access is slower.
+
+### NVM 
+
+Non-volatile memory (NVM) is a type of persistent memory. Compared to DRAM, it has a higher density than and higher latency.
+
+NVM can be connected to the memory bus or the PCIe bus
+1. The memory bus variant needs support from the CPU 
+2. The PCIe bus variant needs to copy memory to DRAM before accessing it
+
+Pros
+- Larger density than DRAM
+- Fault-tolerant (persistent)
+
+Cons
+- Fixed capacity
+- Specialized hardware
+- Writes are slower than reads
+
+### Remote Memory
+
+Remote memory involves using remote machines' memory as a swap device. 
+
+There are two styles:
+1. Remote machines share their unused memory
+2. Remote machines are only a memory pool shared by many machines
+
+### Software-Defined Far Mmemory
+
+|   | Pros | Cons |
+| - | ---- | ---- |
+| NVM | Larger storage capcity<br/> Persistent | Fixed capacity<br/> Specialized hardware | 
+| Remote memory | Fast & reliable "in DS"<br/>Scalable & flexible | Security<br/>Throughput depends on network |
+
+## Data Processing Systems
+
+### RPC
+
+The original RPC proposal has two major limitations: 
+1. RPC calls always *copy* return values back to the caller
+2. RPC calls are synchronous and *blocking*
+
+Much research has focused on extending RPC handle pass by *reference* (distributed memory) and parallelism (futures). Distributed futures combine both ideas. 
+
+The primary challenge is that distributed futures introduce shared state; an object may be shared by its reference holders, the RPC executor that created it, and its physical locations. Previous systems have tried to address this problem using a centralized master who records and replicates system state. However, this adds significant overhead, and limits the application to coarse-grained tasks.
+
+### Actor Model
+
+The actor model is a distributed programming model where actors are the fundamental units of computation. Actors can send messages to each other, create new actors, and change their own state. Actors do not share state; instead, they communicate through message-passing.
+
+### Ownership: A Distributed Futures System for Fine-Grained Tasks
+
+The goal of this paper is to provide fault tolerance for fine-grained tasks without sacrificing performance. There are two main observations:
+
+1. Most distributed futures are shared within the scope of the caller
+
+If we make the caller of the task the *owner* of the returned future, then we can avoid the need for a centralized master to track the state of the future.
+
+2. The references to a distributed future are usually held by tasks that are a descendant of the owner of the future
+
+Thus, we can fate-share any tasks that have a reference to a distributed future with the future’s owner, as ostensibly the owner is the ancestor of the task and will recreate the task once the owner is back.
+
+## Serverless Programming Models
+
+### Cloud Applications
+
+Generally, there are 2 types of workloads: 
+1. Long-running stateful services that communicate (microservices)
+2. Short-lived stateless parallel computation (serverless functions)
+
+To support multitenancy, it is also necessary to provide isolation and restrict communication between processes on different tenants.
+
+Container orchestration is well-suited for microservice workloads because of its flexibility; each instance provides a full, isolated operating system. However, it is not suitable for serverless workloads because instances start slowly; instances may need to install a file system, configure an IP address, or connect to an isolated overlay network

@@ -7,48 +7,6 @@ tags:
 - notes
 ---
 
-## Contents
-
-1. [Basic Concepts](#basic-concepts) 
-    - [ELF](#elf)
-    - [C Language](#c-language)
-    - [Memory](#memory)
-    - [Processes Address Space](#process-address-space)
-    - [Process Execution](#process-execution)
-    - [Registers](#registers)
-    - [x86 Instructions](#x86-instructions)
-    - [Exploitation Tools](#exploitation-tools)
-2. [Control-Flow Hijacking](#control-flow-hijacking)
-3. [Code Injection](#code-injection)
-    - [NOP Sled](#nop-sled)
-    - [jmp %esp](#jmp-esp)
-    - [Register Spring](#register-spring)
-4. [Shellcode Development](#shellcode-development)
-    - [Shellcode](#shellcode)
-    - [Writing Shellcode](#writing-shellcode)
-    - [Reverse Shell](#reverse-shell)
-5. [Non-Executable Memory | Code Reuse](#non-executable-memory-code-reuse)
-    - [Non-Executable Memory](#non-executable-memory)
-    - [mprotect](#mprotect)
-    - [system](#system)
-    - [ret2libc Chain](#ret2libc-chain)
-6. [Partial ASLR | Return-Oriented Programming](#partial-aslr-return-oriented-programming)
-    - [Address Space Layout Randomization](#address-space-layout-randomization)
-    - [Dynamic Linking](#dynamic-linking)
-    - [Return-Oriented Programming](#return-oriented-programming)
-7. [Full ASLR | Just-In-Time Code Reuse](#full-aslr-just-in-time-code-reuse)
-    - [Full ASLR](#full-aslr)
-    - [Memory Disclosure](#memory-disclosure)
-    - [Just-In-Time Code Reuse](#just-in-time-code-reuse)
-8. [Advanced Code Reuse](#advanced-code-reuse)
-    - [Stack Pivoting](#stack-pivoting)
-9. [Toolchain-Based Hardening](#toolchain-based-hardening)
-    - [Stack Canaries](#stack-canaries)
-    - [x86 Segmentation](#x86-segmentation)
-    - [Memory Disclosure (Cont.)](#memory-disclosure-cont)
-    - [RELRO and Bindnow](#relro-and-bindnow)
-    - [FORTIFY_SOURCE](#fortify_source)
-
 ## Basic Concepts 
 
 ### ELF
@@ -350,7 +308,7 @@ connect(sfd, &sin, sizeof(sin));
 execve("/bin/sh", NULL, NULL);
 ```
 
-## Non-Executable Memory | Code Reuse
+## Non-Executable Memory and Code Reuse
 
 ### Non-Executable Memory
 
@@ -388,7 +346,7 @@ If the function argument is a pointer, make sure that you don't put it in the st
 
 ![ret2libc chain](/csci-1650/ret2libc-chain.png)
 
-## Partial ASLR | Return-Oriented Programming
+## Partial ASLR and ROP
 
 ### Address Space Layout Randomization
 
@@ -440,7 +398,7 @@ For partial ASLR, we can use ROP to set up arguments, particularly if they are m
 
 ![Return-oriented programming](/csci-1650/rop.png)
 
-## Full ASLR | Just-In-Time Code Reuse
+## Full ASLR and JIT Code Reuse
 
 ### Full ASLR
 

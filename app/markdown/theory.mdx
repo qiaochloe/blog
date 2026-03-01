@@ -7,6 +7,8 @@ tags:
 - notes
 ---
 
+## Halting Problem
+
 **The halting problem** is the problem of determining whether a given program `f` will eventually halt or continue to run indefinitely. It is **undecidable**, which means that there is no general algorithm `halts` that can take in any program `f` and solve the halting problem.
 
 Proof. Suppose that the algorithm `halts` exists. Then define the following program `f`:
@@ -20,6 +22,8 @@ def f():
 ```
 
 Program `f` both halts and does not halt, which is a contradiction. Therefore, the algorithm `halts` cannot exist.
+
+## Gödel's Incompleteness Theorems
 
 **Gödel's first incompleteness theorem** states that there does not exist an algorithm that can determine whether any statement about the arithmetic of natural numbers $(\mathbb{N}, +, \times)$ is true or not. In other words, there exists **undecidable** statements.
 

@@ -7,48 +7,6 @@ tags:
 - notes
 ---
 
-## Contents
-
-1. [Introduction](#introduction) (9/4)
-2. [Numbering Systems](#numbering-systems) (9/9, 9/11)
-    1. [Binary and Hexadecimal Numbers](#binary-and-hexadecimal-numbers)
-    2. [Signed Numbers](#signed-numbers)
-    3. [Signed Arithmetic](#signed-arithmetic)
-3. [Digital Logic Gates](#digital-logic-gates) (9/11, 9/16, 9/18)
-    1. [Multiple-Input Logic Gates](#multiple-input-logic-gates)
-    2. [Adders](#adders)
-    3. [Ring Oscillators](#ring-oscillators)
-    4. [Transistors](#transistors)
-    5. [Noise Margins](#noise-margins)
-4. [Combinational Circuits](#combinational-circuits) (9/23, 9/25, 9/30, 10/2, 10/7, 10/9)
-    1. [Boolean Algebra](#boolean-algebra)
-    2. [Decoders](#decoders)
-5. [Sequential Circuits](#sequential-circuits) (10/9, 10/14, 10/16, 10/23, 10/25)
-    1. [Bistable Circuit](#bistable-circuit)
-    2. [Set-Reset Latch](#set-reset-latch)
-    3. [Data Latch](#data-latch)
-    4. [Data Flip-Flop](#data-flip-flop)
-    5. [Registers](#registers)
-    6. [Enabled Flip-Flops](#enabled-flip-flops)
-    7. [Resettable Flip-Flops](#resettable-flip-flops)
-    8. [Settable Flip-Flops](#settable-flip-flops)
-    9. [Summary](#summary)
-    10. [Synchronous sequential circuits](#synchronous-sequential-circuits)
-    11. [Finite State Machines](#finite-state-machines)
-6. [Verilog](#verilog)
-    1. [Built-In Gates](#built-in-gates)
-    2. [Buses](#buses)
-    3. [Assign Statements](#assign-statements)
-    4. [Always Blocks](#always-blocks)
-7. [Timing](#timing)
-    1. [Physical Reasons for Delay](#physical-reasons-for-delay)
-    2. [Propagation and Contamination Delay](#propagation-and-contamination-delay)
-    3. [Flip-Flop Delays](#flip-flop-delays)
-    4. [Combinational Delays](#combinational-delays)
-    5. [Static Timing Analysis](#static-timing-analysis)
-
-[Appendix](#appendix)
-
 ## Introduction
 
 ![Layers of abstraction](/engn-1630/layers-of-abstraction.png)
@@ -568,6 +526,14 @@ t_{hold} + t_{skew} < t_{ccq} + t_{cd}
 Asynchronous inputs can create timing violations.
 
 Synchronizers are used to safely transfer signals between different clock domains. A common synchronizer is a chain of two flip-flops.
+
+## Digital Components
+
+### Memory Arrays
+
+Memory arrays are used to store large amounts of data.
+
+![Memory hierarchy](/engn-1630/memory-hierarchy.webp)
 
 ## Appendix
 

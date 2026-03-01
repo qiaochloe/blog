@@ -12,30 +12,6 @@ This is a review of C syntax, file structure, and debugging—mainly for folks w
 
 I originally put these notes together while sitting in on Brown's [Computer Systems](https://csci0300.github.io/) lectures. These notes pull a lot from the excellent materials on the course website, especially the TAs' C Primer ([1](https://csci0300.github.io/assets/c-primer1.html), [2](https://csci0300.github.io/assets/c-primer2.html), [3](https://csci0300.github.io/assets/c-primer3.html)) and [Lab 1](https://csci0300.github.io/assign/labs/lab1.html).
 
-## Contents
-
-1. [Syntax](#syntax)
-
-   - [Basic Syntax](#basic-syntax) covers common programming language features like comments, variables, primitive types, functions, and structs.
-   - [Pointers](#pointers) covers pointers, arrays, and strings.
-   - [Heap](#heap) covers `malloc` and `free`.
-   - [Keywords](#keywords) covers `const`, `static`, and `#define`.
-
-2. [File Structure](#file-structure)
-
-   - [C Files](#c-files) covers how to compile and execute the most basic C file.
-   - [C Projects](#c-projects) covers source files, header files, the standard library, and global variables.
-   - [C Standard Library](#c-standard-library) covers standard libraries like `stdio.h`, `stdlib.h`, and `string.h`.
-   - [Compilation](#compilation) covers compiling C programs with warnings, sanitizers, and optimizations.
-
-3. [Debugging](#debugging)
-
-   - [`printf` debugging](#object-object-debugging) covers how to use `printf` to debug your code.
-   - [GDB](#gdb) covers how to use the GNU debugger.
-   - [Inspecting file contents](#inspecting-file-contents) covers `xxd` and `diff`.
-
-4. [Algorithms](#algorithms)
-
 ## Syntax
 
 ### Basic Syntax

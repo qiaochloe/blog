@@ -1,5 +1,5 @@
 ---
-title: "System Design Interview Notes"
+title: "System Design Notes"
 summary: "Web Architecture • Rate Limiter • Key Value Store • Unique ID Generator • URL Shortener"
 publishedAt: "2025-12-20"
 updatedAt: "2025-12-22"
@@ -7,35 +7,6 @@ tags:
   - "technical"
   - "notes"
 ---
-
-## Contents
-
-1. [Web Architecture](#web-architecture)
-
-    Summary: Client. DNS. CDN. Load balancer. API endpoints. Message queue.
-
-1. [Rate Limiter](#rate-limiter)
-    1. [Rate Limiting Algorithms](#rate-limiting-algorithms)
-    2. [Rate Limiting Architecture](#rate-limiting-architecture)
-    3. [Distributed Rate Limiting](#distributed-rate-limiting)
-
-1. [Key Value Store](#-key-value-store)
-    1. [Single Server](#single-server)
-    2. [Distributed Server](#distributed-server)
-    3. [Data Partitioning and Replication](#data-partitioning-and-replication)
-    4. [Consistency Models](#consistency-models)
-    5. [Conflict Resolution](#conflict-resolution)
-    6. [Failure Detection and Recovery](#failure-detection-and-recovery)
-
-    Summary: CAP theorem. Data partitioning and replication. Consistent hashing. Strong consistency. Quorum-based model. Eventual consistency. Conflict resolution. Last write wins (LWW). Vector clocks. Failure detection. Gossip protocol. Failure recovery. Sloppy quorum. Hinted handoff. Anti-entropy protocol. Merkle trees.
-
-2. [Unique ID Generator](#unique-id-generator)
-
-    Summary: Disjoint ID ranges. UUID or hashing. Centralized ticket server. Twitter Snowflake.
-
-3. [URL Shortener](#url-shortener)
-
-    Summary: URL shortening. URL redirecting. Hashing with collision handling. Bloom filter. Unique ID generation. Base-62 encoding.
 
 ## Web Architecture
 

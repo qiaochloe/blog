@@ -1,28 +1,11 @@
 ---
-title: "Topics in Programming Languages Notes"
-summary: "Compiler Architecture • Program Semantics • Type Inference"
+title: "Program Analysis Notes"
+summary: "Compiler Architecture • Program Semantics • Dataflow Analysis • Pointer Analysis • Information Flow"
 publishedAt: 2025-09-05
 updatedAt: 2025-10-14
 tags:
 - notes
 ---
-
-## Contents
-
-1. [Introduction](#introduction)
-2. [Compiler Architecture](#compiler-architecture)
-    - [Abstract Syntax Tree (AST)](#abstract-syntax-tree-ast)
-    - [Intermediate Representation (IR)](#intermediate-representation-ir)
-3. [Program Semantics](#high-level-program-semantics)
-    - [Syntax](#syntax)
-    - [Semantics](#semantics)
-    - [Type Safety](#type-safety)
-4. [Type Inference](#type-inference)
-5. [Intraprocedural Dataflow Analysis](#intraprocedural-dataflow-analysis)
-    - [Dataflow Analysis](#dataflow-analysis)
-    - [Monotonic Frameworks](#monotonic-frameworks)
-6. [Pointer Analysis](#pointer-analysis)
-7. [Information Flow](#information-flow)
 
 ## Introduction 
 
@@ -110,8 +93,6 @@ Type safety is guaranteed with two properties:
 
 ## Intraprocedural Dataflow Analysis
 
-### Dataflow Analysis
-
 A **dataflow analysis** is used to get information about the the program at different nodes of the CFG. For example, we can figure out if there is:
 1. Division by 0
 2. Assignment to unused variables 
@@ -128,22 +109,24 @@ $
   \msf{Program}~P &::= I^* \\
   \msf{Instr}~I &::= p = rv \mid \msf{goto}~i \mid \eif{p}{i_1}{i_2} \\
   \msf{Place}~p &::= x \\
-  \msf{MemLoc}~l &::= x \\
   \msf{Rvalue}~rv &::= c \mid p \mid p_1 \oplus p_2 \\
 \end{aligned}
 $
 
-**Rvalues** are expressions that produce a value. Assignments generally have the form `<MemLoc> = <Rvalue>`.
+**Rvalues** are expressions that produce a value. Bytecode instructions have the form `<Place> = <Rvalue>`.
 
-### Monotonic Frameworks
+### Lattices
 
-**Abstract values** $v$ represent the information we have about a variable at a particular point in execution. $\bot$ means that we have no information and $\top$ means that we have too much information. 
-
-Abstract values can be represented with a **lattice** structure. Lattices have a **join** function $\sqcup$ which produces the least upper bound for any two elements. A set $\mathcal{L}$ is a join-semilattice if
+A lattice is a set of abstract values with a partial order $\sqsubseteq$. Lattices have a join function $\sqcup$ which produces the least upper bound for any two elements. A set $\mathcal{L}$ is a join-semilattice if
 1. $\forall x, y \in \mathcal{L}, x \sqcup y$ exists
 2. $\mathcal{L}$ contains a greatest element $\top$
 
-The **domain** $\sigma$ is a map between program variables $x$ and abstract values $v$. The **transfer function** $f$ describes how $\sigma$ changes after executing an instruction. 
+### Monotonic Frameworks
+
+There are 3 components $(\mathcal{L}, \sigma, f)$ to a dataflow analysis:
+1. $\mathcal{L}$ is a lattice containing abstract values and a join function
+1. $\sigma : \mathsf{Var} \mapsto \mathcal{L}$ is a map from program values to abstract values 
+3. $f : I \to \sigma \to \sigma $ is a transfer function that describes how the $\sigma$ changes after executing an instruction
 
 The goal of the analysis is to compute, for each node $n$, the domain $\sigma_n^{\text{in}}$ before executing the instruction and $\sigma_n^{\text{out}}$ after executing the instruction. 
 
@@ -171,7 +154,44 @@ while let Some(i) = worklist.dequeue() {
 }
 ```
 
+### Constant Analysis
+
+The lattice is $\mathcal{L} = \{\top, \bot\} \cup \mathsf{Const}$. The domain is $\sigma : \mathsf{Place} \mapsto \mathcal{L}$ .
+
+The transfer function is defined as:
+   - $f(x = c, \sigma) = \sigma[x \mapsto c]$
+   - $f(x = y, \sigma) = \sigma[x \mapsto \sigma[y]]$
+   - $f(x = y \oplus z, \sigma) = \sigma[x \mapsto \text{eval}(\sigma(y) \oplus \sigma(z))]$
+   - $f(\mathsf{goto}~i, \sigma) = \sigma$
+   - $f(\mathsf{if}~{p}~\mathsf{goto}~{i_1}~\mathsf{else}~{i_2}) = \sigma$
+
+Constant analysis is used for constant propagation.
+
+### Live-Variable Analysis
+
+The lattice is the powerset of all variables. The domain is $\sigma : \mathsf{Place} \mapsto \mathcal{L}$.
+
+The transfer function removes the left-hand side variable from the set and adds any variables used on the right-hand side.
+   - $f(x = rv, \sigma) = (\sigma \setminus \{x\}) \cup \mathsf{uses}(rv)$
+   - $f(\mathsf{goto}~i, \sigma) = \sigma$
+   - $f(\mathsf{if}~{p}~\mathsf{goto}~{i_1}~\mathsf{else}~{i_2}) = \sigma \cup \mathsf{uses}(p)$
+
+Live-variable analysis is used for dead-code elimination.
+
 ## Pointer Analysis
+
+Consider the following code:
+
+```
+...
+*x = 42
+*y = 23
+z = *x
+```
+
+It is not possible to determine the value of `z` unless we know whether `x` and `y` point toward the same allocation. This is where pointer analysis comes in. 
+
+The goal of pointer analysis is to map variables to sets of possible allocations they can point to. 
 
 To handle pointers, we need to extend our IR.
 
@@ -180,11 +200,17 @@ $
 \newcommand{\s}{\hspace{2em}}
 \newcommand{\eif}[3]{\msf{if}~{#1}~\msf{goto}~{#2}~\msf{else}~{#3}}
 \begin{aligned}
-  \msf{MemLoc}~l &::= x \mid \mathcal{A}.i \mid \mathcal{A}[\_] \\
+  \msf{Instr}~I &::= ... \mid \msf{alloc(p_1, ..., p_n)} \\
+  \msf{Place}~p &::= x(.i)^* \\
+  \msf{Allocation}~A \\
+  \msf{Pointer}~ptr &::= x \mid A.i \\
+  \msf{PointsTo}~\theta &= { ptr \to { A }} \\
   \msf{Rvalue}~rv &::= ... \mid \msf{alloc}^A(p^*) \\
-  \msf{Place}
+  \msf{MemLoc}~l &::= x \mid \mathcal{A}.i \mid \mathcal{A}[\_] \\
 \end{aligned}
 $
+
+### Escape Analysis
 
 ## Information Flow
 
@@ -202,4 +228,28 @@ for all edges y -> x:
     for each node z immediately pdom by x:
         for each node y such that z cdep y:
             if x does not pdom y, then x cdep y
+```
+
+### Taint Analysis
+
+The goal of taint analysis is to identify information flows from secure sources to insecure sinks. 
+
+Information can flow in 2 different ways: 
+1. An explicit flow occurs when a variable is directly assigned a value from a tainted source
+2. An implicit flow occurs when the control flow of the program depends on a tainted source
+
+```
+#[secure] fn secure() -> string { "Secret" }
+
+fn explicit_flow() {
+  let s = secure() in 
+  println(s)
+}
+
+fn implicit_flow() {
+  let p = secure() in
+  if p == "Secret" {
+    println!("Done!")
+  }
+}
 ```
