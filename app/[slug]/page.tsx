@@ -144,10 +144,14 @@ export default async function Page({
             )}
           </div>
         </>
-      ) : isNotes ? (
-        <div className="prose-notes">{articleContent}</div>
       ) : (
-        <div>{articleContent}</div>
+        <div className="min-w-0 max-w-xl overflow-x-hidden pl-4">
+          {isNotes ? (
+            <div className="prose-notes">{articleContent}</div>
+          ) : (
+            <div>{articleContent}</div>
+          )}
+        </div>
       )}
     </section>
   );
