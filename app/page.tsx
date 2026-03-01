@@ -23,7 +23,7 @@ export default function Page() {
   const notes = all.filter((post) => post.data.tags?.includes("notes"));
 
   return (
-    <section>
+    <section className="pl-4">
       <h1 className="mb-8 text-2xl font-semibold tracking-tight">Chloe Qiao</h1>
       <p className="mb-4">
         I am an undergraduate student at Brown University studying computer

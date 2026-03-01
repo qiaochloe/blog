@@ -1,10 +1,12 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
+import { TocPortal } from "app/components/TocPortal";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { preprocessGfmTables } from "app/utils/gfm-tables";
 import { preprocessFootnotes } from "app/utils/footnotes";
+import { extractHeadings } from "app/utils/headings";
 import { baseUrl } from "app/sitemap";
 import MarkdownIt from "markdown-it";
 
@@ -67,9 +69,46 @@ export default async function Page({
   }
 
   const title = post.data.title ?? post.slug ?? "Untitled";
+  const headings = extractHeadings(post.content);
+  const showToc = headings.length >= 1;
+  const processedContent = preprocessFootnotes(preprocessGfmTables(post.content));
+  const isNotes = post.data.tags?.includes("notes");
+
+  const articleContent = (
+    <>
+      <h1 className="title font-semibold text-2xl tracking-tighter">
+        <div
+          dangerouslySetInnerHTML={{
+            __html: md.renderInline(title),
+          }}
+        />
+      </h1>
+      {!isNotes && (
+        <div className="mt-2 mb-8 text-sm text-neutral-600">
+          {post.data.publishedAt && (
+            <p>Published {formatDate(post.data.publishedAt)}</p>
+          )}
+          {post.data.updatedAt && (
+            <p>Updated {formatDate(post.data.updatedAt)}</p>
+          )}
+        </div>
+      )}
+      <article className={isNotes ? undefined : "prose"}>
+        <CustomMDX source={processedContent} />
+      </article>
+    </>
+  );
 
   return (
     <section>
+      {showToc && (
+        <div
+          id="toc-headings"
+          data-headings={JSON.stringify(headings)}
+          className="hidden"
+          aria-hidden
+        />
+      )}
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -94,40 +133,21 @@ export default async function Page({
           }),
         }}
       />
-      {!post.data.tags?.includes("notes") ? (
-        <div>
-          <h1 className="title font-semibold text-2xl tracking-tighter">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: md.renderInline(title),
-              }}
-            />
-          </h1>
-          <div className="mt-2 mb-8 text-sm text-neutral-600">
-            {post.data.publishedAt && (
-              <p>Published {formatDate(post.data.publishedAt)}</p>
-            )}
-            {post.data.updatedAt && (
-              <p>Updated {formatDate(post.data.updatedAt)}</p>
+      {showToc ? (
+        <>
+          <TocPortal headings={headings} />
+          <div className="min-w-0 max-w-xl overflow-x-hidden pl-4">
+            {isNotes ? (
+              <div className="prose-notes">{articleContent}</div>
+            ) : (
+              <div>{articleContent}</div>
             )}
           </div>
-          <article className="prose">
-            <CustomMDX source={preprocessFootnotes(preprocessGfmTables(post.content))} />
-          </article>
-        </div>
+        </>
+      ) : isNotes ? (
+        <div className="prose-notes">{articleContent}</div>
       ) : (
-        <div className="prose-notes">
-          <h1 className="title font-semibold text-2xl tracking-tighter">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: md.renderInline(title),
-              }}
-            />
-          </h1>
-          <article>
-            <CustomMDX source={preprocessFootnotes(preprocessGfmTables(post.content))} />
-          </article>
-        </div>
+        <div>{articleContent}</div>
       )}
     </section>
   );

@@ -58,6 +58,17 @@ html {
   @apply visible;
 }
 
+/* Table of contents (floating sidebar) */
+.toc-link {
+  @apply no-underline;
+}
+.toc-link:hover {
+  @apply underline decoration-neutral-400 underline-offset-2;
+}
+.toc-link-active {
+  @apply decoration-neutral-900;
+}
+
 /* Inline code (inside text) */
 .prose :not(pre) > code {
   @apply px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-xs;

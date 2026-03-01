@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import { Navbar } from "./components/nav";
 import Footer from "./components/footer";
+import { MaxWidthWrapper } from "./components/MaxWidthWrapper";
+import { PostPageLayout } from "./components/PostPageLayout";
 import { baseUrl } from "./sitemap";
 
 const figtree = Figtree({
@@ -48,11 +50,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={cx(figtree.variable, "text-black bg-white")}>
-      <body className="antialiased max-w-xl mt-8 mx-auto px-2 overflow-visible">
-        <main className="flex-auto min-w-0 mt-6 flex flex-col px-2">
-          <Navbar />
-          {children}
-          <Footer />
+      <body className="antialiased">
+        <main className="flex-auto min-w-0 flex flex-col">
+          <MaxWidthWrapper>
+            <PostPageLayout>
+              <Navbar />
+              <div className="mt-6">{children}</div>
+              <Footer />
+            </PostPageLayout>
+          </MaxWidthWrapper>
         </main>
       </body>
     </html>

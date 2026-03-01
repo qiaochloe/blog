@@ -4,6 +4,15 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, X } from "lucide-react";
+import { TocMobileButton } from "app/components/TocMobileButton";
+import type { TocHeading } from "app/utils/headings";
+
+const NARROW_PATHS = new Set(["writings", "about", "now", "rss"]);
+
+function isPostPage(pathname: string): boolean {
+  const segments = pathname.replace(/^\//, "").split("/").filter(Boolean);
+  return segments.length === 1 && !NARROW_PATHS.has(segments[0]);
+}
 
 const navItems = {
   "/": {
@@ -63,6 +72,28 @@ export function Navbar() {
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [tocHeadings, setTocHeadings] = useState<TocHeading[]>([]);
+
+  useEffect(() => {
+    if (!isPostPage(pathname)) {
+      setTocHeadings([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      const el = document.getElementById("toc-headings");
+      const raw = el?.getAttribute("data-headings");
+      if (raw) {
+        try {
+          setTocHeadings(JSON.parse(raw));
+        } catch {
+          setTocHeadings([]);
+        }
+      } else {
+        setTocHeadings([]);
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, [pathname]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -207,14 +238,14 @@ export function Navbar() {
     );
 
   return (
-    <aside className="-ml-[8px] mb-8 tracking-tight">
+    <aside className="-ml-[8px] mb-8 tracking-tight pl-4">
       <div className="lg:sticky lg:top-20">
         <nav
           className="flex flex-row items-start relative px-0 pb-0 scroll-pr-6 md:relative"
           id="nav"
         >
           <div className="flex flex-row flex-wrap items-center gap-x-0 gap-y-2 w-full">
-            <div className="flex flex-row space-x-0 pr-4">
+            <div className="flex flex-row space-x-0 pr-4 min-w-0 shrink">
               {Object.entries(navItems).map(([path, { name }]) => {
                 return (
                   <Link
@@ -229,18 +260,23 @@ export function Navbar() {
                 );
               })}
             </div>
-            <div className="relative ml-auto flex items-center">
+            <div className="relative ml-auto flex items-center gap-0 shrink-0">
+              {tocHeadings.length > 0 && (
+                <div className="lg:hidden">
+                  <TocMobileButton headings={tocHeadings} />
+                </div>
+              )}
               {/* Mobile: magnifying glass opens search modal */}
               <button
                 type="button"
                 onClick={openMobileSearch}
-                className="sm:hidden flex items-center justify-center py-1 px-2 text-neutral-500 hover:text-neutral-700 touch-manipulation"
+                className="lg:hidden flex items-center justify-center py-1 px-2 text-neutral-500 hover:text-neutral-700 touch-manipulation"
                 aria-label="Open search"
               >
                 <Search className="size-5" />
               </button>
               {/* Desktop: inline search bar and dropdown */}
-              <div className="hidden sm:block relative w-44">
+              <div className="hidden lg:block relative w-44">
                 <div className="relative flex items-center w-44 rounded-full border border-neutral-200 bg-neutral-50 focus-within:border-neutral-300 focus-within:bg-white">
                   <Search className="size-3 text-neutral-400 shrink-0 absolute left-2.5 pointer-events-none" />
                   <input
