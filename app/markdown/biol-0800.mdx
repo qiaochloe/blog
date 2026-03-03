@@ -2,9 +2,10 @@
 title: "Physiology Notes"
 summary: "Cell Transport • Osmosis and Tonicity • Cell Signaling • Endocrine System • Neurons • Nervous System • Motor System • Cardiac System"
 publishedAt: 2026-01-30
-updatedAt: 2026-02-28
+updatedAt: 2026-03-03
 tags:
 - notes
+todo: cardiac ap
 ---
 
 ## Introduction
@@ -392,6 +393,10 @@ Muscles are made of muscle fibers, which contain myofibrils composed of repeatin
 
 ![Muscles](/biol-0800/muscles.png)
 
+Sarcomeres have an optimal length at which they can generate the most force. If they are stretched too much, then there will be less overlap between actin and myosin, so fewer cross-bridges can form. If they are stretched too little, then actin filaments from one side interfere with crossbridge formation on the other side. This is called the length-tension relationship.
+
+![Length-tension](/biol-0800/length-tension.jpeg)
+
 The **neuromuscular junction** is the synapse between a motor neuron and a skeletal muscle fiber. The motor neuron releases ACh, which binds to nicotinic ACh receptors on the muscle fiber, causing depolarization of the sarcolemma and propagation of an action potential. 
 
 **T-tubules** conduct the action potentials, allowing them to reach the interior of the cell. In the T-tubules, depolarization activates dihydropyridine (**DHP**) receptors. They are mechanically coupled to **ryanodine** receptors on the **sarcoplasmic reticulum**, so their conformational change causes Ca++ to release from the sarcoplasmic reticulum.
@@ -405,6 +410,8 @@ Muscular force is correlated with (1) the concentration of intracellular calcium
 The heart is a dual pump:
 1. The **pulmonary** side pumps blood through the **pulmonary artery** to the lungs
 2. The **systemic** side pumps blood through the **aorta** to the rest of the body
+
+![Cardiac system](/biol-0800/cardiac-system.jpeg)
 
 The **atrium** receives blood moving into the heart. The **ventricle** receives blood from the atrium. 
 
@@ -420,16 +427,25 @@ Usually, the first sound of the heartbeat is caused by the closing of the AV val
 
 ### Cardiac Excitation
 
-**Pacemaker** cells (autorhythmic) repeatedly polarize and depolarize 60-72 times each minute. Pacemaker cells are electrically coupled to muscle cells (contractile) through gap junctions, allowing them to trigger action potentials in the contractile cells. The action potentials in the contractile cells cause them to contract, pumping blood through the heart.
+**Pacemaker** cells (autorhythmic) repeatedly polarize and depolarize 60-72 times each minute. Pacemaker cells are electrically coupled to muscle cells (contractile) through gap junctions, allowing them to trigger action potentials in the contractile cells. Funny sodium channels in the pacemaker cells open when the membrane potential is hyperpolarized, allowing Na+ to enter the cell and depolarize it. This gradual depolarization eventually reaches the threshold for voltage-gated calcium channels to open, leading to a rapid influx of Ca2+ and the generation of an action potential. The action potentials in the contractile cells cause them to contract, pumping blood through the heart.
 
-The atrium excites first. Then it travels to the AV node and down the septum. Lastly, it reaches the  ventricles.
+Generally, the sinoatrial (SA) node is the primary pacemaker of the heart, generating action potentials at a rate of 60-100 beats per minute. The atrioventricular (AV) node can also act as a pacemaker, but it generates action potentials at a slower rate of 40-60 beats per minute. If both the SA and AV nodes fail, the His bundle can generate action potentials at an even slower rate of 20-40 beats per minute.
+
+From the SA node, the action potential travels from the atria to the AV nodes to the His bundle to to the ventricles.
+
+Ventricular action potential:
+1. Rapid depolarization: voltage-gated sodium channels open, allowing Na+ to enter the cell and depolarize the membrane.
+2. Brief repolarization: voltage-gated sodium channels inactivate, and some potassium channels open, allowing K+ to exit the cell and causing a brief repolarization.
+3. Plateau: voltage-gated calcium channels open, allowing Ca2+ to enter the cell and balance the outward K+ current, creating a plateau in the membrane potential.
+4. Repolarization: voltage-gated calcium channels inactivate, and more potassium channels open, allowing K+ to exit the cell and repolarize the membrane back to its resting potential.
 
 ### EKG
 
-A EKG consists of three waves:
+A EKG consists of a few phases:
 1. P wave: depolarization of the atria
+2. PR interval: conduction delay in the AV node
 2. QRS complex: depolarization of the ventricles
-3. T Wave: repolarization of the ventricles
+3. T wave: repolarization of the ventricles
 
 ### Wiggers Diagram
 
@@ -441,6 +457,8 @@ Terminology:
 - **End systolic volume** is the volume of blood in the ventricles at the end of systole. This should be the minimum volume of blood in the ventricles. (Around 50 mL.)
 - **Stroke volume** is the amount of blood ejected from the ventricles during systole, or EDV minus ESV. 
 - **Ejection fraction** is the percentage of blood ejected from the ventricles during systole, or stroke volume divided by EDV.
+
+![Wiggers diagram](/biol-0800/wiggers-diagram.png)
 
 Notes:
 1. Whenever the pressure curves cross, a valve changes state. 
@@ -461,3 +479,19 @@ The problem is that the length-tension effect only accounts for a small increase
 2. Stretch-sensitive troponin binds more strongly to calcium, allowing more cross-bridges to form.
 
 Increased sympathetic stimulation can also cause increased calcium concentration and increased force. 
+
+### Pressure-Volume Loops
+
+The PV loop represents the changes in pressure and volume in the ventricles during a single cardiac cycle.
+
+There are four phases of the PV loop:
+1. Isovolumetric relaxation
+2. Diastolic filling
+3. Isovolumetric contraction
+4. Systolic ejection
+
+![PV loop](/biol-0800/pv-loop1.jpeg)
+
+The diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. The diastolic pressure curve represents the passive filling of the ventricle, while the systolic pressure represents the contractile properties of the ventricles from the Frank-Starling effect. Changing preload, afterload, and sympathetic tone will affect the stroke volume.
+
+![PV loop](/biol-0800/pv-loop2.jpeg)
