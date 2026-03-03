@@ -1,8 +1,8 @@
 ---
 title: "Networks and the Internet Notes"
-summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control"
+summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters"
 publishedAt: 2026-02-22
-updatedAt: 2026-02-24
+updatedAt: 2026-03-03
 tags: 
 - notes
 ---
@@ -118,3 +118,32 @@ There are multiple problems with TCPF:
 3. In practice, non-TCPF CCAs like CCA BBR is deployed widely
 
 The authors' proposal is to have the network actively enable all reasonable CCAs to achieve the same bandwidth in the same static circumstances, or CCA independence (CCAI). They describe a Recursive Congestion Shares (RCS) framework which uses existing commercial agreements to determine packets' relative rights in a link. 
+
+## Datacenters
+
+ECMP leads to collisions but is easy to implement to hardware. 
+
+### Fat-Tree
+
+[A scalable, commodity data center network architecture](https://dl.acm.org/doi/10.1145/1402946.1402967)
+
+Let $k$ be the number of ports on a switch. A fat-tree topology has:
+- $k$ pods with two layers of $k/2$ switches
+- $(k/2)^2$ core switches, each connected to one switch in each pod
+- $k^3/4$ hosts
+
+Benefits
+- Don't need to buy more powerful switches for aggregation and core layers
+- Fault-tolerance
+- 1:1 oversubscription ratio
+
+Issues
+1. No great solution for TOR redundancy
+2. Difficult to load-balance between the core and the aggregate switches
+3. Not amenable to incremental expansion. $k$ is limited by number of ports. Hosts scale with $k^3$ and switches scale with $k^2$.
+
+### Jupiter Rising
+
+[Jupiter Rising: A Decade of Clos Topologies and Centralized Control in Google's Datacenter Network](https://dl.acm.org/doi/10.1145/2829988.2787508)
+
+Datacenter bandwidth demands have doubled every year for the past decade, and are expected to continue to do so. Jupiter Rising describes the evolution of Google's datacenter network over the past decade to support this growth.
