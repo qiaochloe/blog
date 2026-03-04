@@ -272,8 +272,8 @@ If there are multiple permeable ions, then the membrane potential is given by th
 V_m = \frac{RT}{F} \ln{\frac{P_{K^+}[K^+]_{\text{out}} + P_{Na^+}[Na^+]_{\text{out}} + P_{Cl^-}[Cl^-]_{\text{in}}}{P_{K^+}[K^+]_{\text{in}} + P_{Na^+}[Na^+]_{\text{in}} + P_{Cl^-}[Cl^-]_{\text{out}}}}
 ```
 Where:
-- $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
-- $[\text{ion}]$ is the concentration of the ion
+1. $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
+2. $[\text{ion}]$ is the concentration of the ion
 
 ### Equilibrium potential
 
@@ -495,3 +495,65 @@ There are four phases of the PV loop:
 The diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. The diastolic pressure curve represents the passive filling of the ventricle, while the systolic pressure represents the contractile properties of the ventricles from the Frank-Starling effect. Changing preload, afterload, and sympathetic tone will affect the stroke volume.
 
 ![PV loop](/biol-0800/pv-loop2.jpeg)
+
+Cardiac output (mL/min) is equal to the heart rate (beats/min) multiplied by the stroke volume (mL/beat). Heart rate in the SA node is determined by the degree of sympathetic and parasympathetic stimulation. Stroke volume is determined by contractility and the Frank-Starling mechanism, which is influenced by preload afterload, and sympathetic tone.
+
+## Blood Flow 
+
+### RC Circuit
+
+Blood flow is similar to an RC circuit. 
+- The small blood vessels have high resistance
+- The arteries have low resistance and act as a capacitor for pressure
+
+The arteries do this by stretching during systole and recoiling during diastole, maintaining a more constant pressure in the arteries. As you age, your arteries become stiffer, so they are less able to stretch and recoil. This causes a higher systolic pressure and a lower diastolic pressure, leading to a higher pulse pressure.
+
+Note that:
+1. Capacitance of arteries decreases pulse pressure 
+2. Capacitance of veins affects stroke volume but does not affect resistance to flow
+
+### Blood Pressure
+
+Blood pressure ($p_a - p_v$) is equal to cardiac output multiplied by total peripheral resistance (TPR). Note that $p_v$ is almost zero, so blood pressure is mostly determined by $p_a$. The brain maintains $p_a$ carefully in order to ensure that it always receives enough blood flow.
+
+Resistance of the blood vessels is determined by Pouseille's Law, which states
+
+```math
+R = \frac{8nL}{\pi r^4}
+```
+
+Where:
+1. $R$ is resistance
+2. $n$ is the viscosity of the fluid
+3. $r$ is the radius of the vessel
+
+### Pressure Gradient
+
+Blood pressure is highest in the aorta and decreases as it moves through the arteries, arterioles, capillaries, venules, veins, and back to the heart. The largest drop in pressure occurs in the arterioles, which are the main site of resistance in the circulatory system.
+
+![Cardiovascular pressure gradient](/biol-0800/cardiovascular-pressure-gradient.png)
+
+Average aortic pressure is diastolic pressure plus one-third of the pulse pressure, or around 100 mmHg.
+
+### Blood Vessels
+
+Smooth muscle and precapillary sphincter muscles are found in the walls of blood vessels. They can contract or relax to change the radius of the vessel, which changes resistance and blood flow.
+
+The strength of the precapillary sphincter muscles is determined by the number of crossbridges formed, which is affected by the concentration of calcium and the ATP. 
+
+Precapillary sphincter muscles regulate their own oxygen supply. When they constrict, less blood flows to local capillaries and oxygen levels drop. When oxygen levels drop, they can no longer manufacture ATP at the same rate, causing them to become weak and relaxed.
+
+Other causes of dilation include:
+1. Decreased oxygen levels
+2. Increased temperature
+3. Increased carbon dioxide levels
+4. Decreased pH
+5. Increased adenosine levels
+
+What controls blood flow?
+
+1. Local control through precapillary sphincter muscles
+2. Upstream artery effect through nitric oxide
+3. Hormones in the blood such as histamine, epinephrine, antidiuretic hormone (ADH) and angiotensin 
+
+Vasodilation in local tissue can cause vasodilation in upstream arteries. When the tissue resistance decreases, flow through the tissue increases, causing the velocity of blood in the upstream arteries to increase. The increase in shear forces also causes an increase in nitric oxide production, which causes vasodilation in the upstream arteries.
