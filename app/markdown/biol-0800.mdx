@@ -2,7 +2,7 @@
 title: "Physiology Notes"
 summary: "Cell Transport • Osmosis and Tonicity • Cell Signaling • Endocrine System • Neurons • Nervous System • Motor System • Cardiac System"
 publishedAt: 2026-01-30
-updatedAt: 2026-03-03
+updatedAt: 2026-03-05
 tags:
 - notes
 todo: cardiac ap
@@ -492,19 +492,27 @@ There are four phases of the PV loop:
 
 ![PV loop](/biol-0800/pv-loop1.jpeg)
 
-The diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. The diastolic pressure curve represents the passive filling of the ventricle, while the systolic pressure represents the contractile properties of the ventricles from the Frank-Starling effect. Changing preload, afterload, and sympathetic tone will affect the stroke volume.
+The diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. 
+- The diastolic pressure curve represents the passive filling of the ventricle
+- The systolic pressure represents the contractile properties of the ventricles from the Frank-Starling effect. 
+
+**Preload** is the end-diastolic volume. **Afterload** is the resistance the ventricles must overcome to eject blood. Changing preload, afterload, and sympathetic tone will affect the stroke volume.
 
 ![PV loop](/biol-0800/pv-loop2.jpeg)
 
-Cardiac output (mL/min) is equal to the heart rate (beats/min) multiplied by the stroke volume (mL/beat). Heart rate in the SA node is determined by the degree of sympathetic and parasympathetic stimulation. Stroke volume is determined by contractility and the Frank-Starling mechanism, which is influenced by preload afterload, and sympathetic tone.
-
 ## Blood Flow 
+
+### Blood Cells
+
+Blood cells don't have a nucleus, so they can't make new proteins. They have a lifespan of around 120 days, after which they are removed by the spleen and replaced by new blood cells made in the bone marrow.
 
 ### RC Circuit
 
 Blood flow is similar to an RC circuit. 
 - The small blood vessels have high resistance
 - The arteries have low resistance and act as a capacitor for pressure
+
+![Cardiac system circuit](/biol-0800/cardiac-system-circuit.png)
 
 The arteries do this by stretching during systole and recoiling during diastole, maintaining a more constant pressure in the arteries. As you age, your arteries become stiffer, so they are less able to stretch and recoil. This causes a higher systolic pressure and a lower diastolic pressure, leading to a higher pulse pressure.
 
@@ -514,9 +522,25 @@ Note that:
 
 ### Blood Pressure
 
-Blood pressure ($p_a - p_v$) is equal to cardiac output multiplied by total peripheral resistance (TPR). Note that $p_v$ is almost zero, so blood pressure is mostly determined by $p_a$. The brain maintains $p_a$ carefully in order to ensure that it always receives enough blood flow.
+The equation for blood pressure is 
 
-Resistance of the blood vessels is determined by Pouseille's Law, which states
+```math
+p_a - p_v = \text{CO} \times \text{TPR}
+```
+
+where:
+- $p_a$ is arterial pressure
+- $p_v$ is venous pressure, which is almost $0$
+- CO is cardiac output
+- TPR is total peripheral resistance
+
+Cardiac output (mL/min) is equal to the heart rate (beats/min) multiplied by the stroke volume (mL/beat). 
+- Heart rate in the SA node is determined by the degree of sympathetic and parasympathetic stimulation
+- Stroke volume is determined by contractility and the Frank-Starling mechanism, which is influenced by preload afterload, and sympathetic tone
+
+One tricky part is that $p_a$ affects the afterload, which then affects stroke volume. When $p_a$ increases, the afterload increases, which decreases stroke volume. 
+
+TPR is the overall resistances in the blood vessels. Resistance of the blood vessels is determined by Pouseille's Law, which states
 
 ```math
 R = \frac{8nL}{\pi r^4}
@@ -527,17 +551,34 @@ Where:
 2. $n$ is the viscosity of the fluid
 3. $r$ is the radius of the vessel
 
+TPR is only affected by vasodilation and vasoconstriction, which is impacted by sympathetic and parasympathetic tone.
+
 ### Pressure Gradient
 
 Blood pressure is highest in the aorta and decreases as it moves through the arteries, arterioles, capillaries, venules, veins, and back to the heart. The largest drop in pressure occurs in the arterioles, which are the main site of resistance in the circulatory system.
 
-![Cardiovascular pressure gradient](/biol-0800/cardiovascular-pressure-gradient.png)
-
 Average aortic pressure is diastolic pressure plus one-third of the pulse pressure, or around 100 mmHg.
 
-### Blood Vessels
+![Cardiovascular pressure gradient](/biol-0800/cardiovascular-pressure-gradient.png)
 
-Smooth muscle and precapillary sphincter muscles are found in the walls of blood vessels. They can contract or relax to change the radius of the vessel, which changes resistance and blood flow.
+
+**Question**: Blood flows out of the heart because there is a standing pressure gradient. But there is no pressure gradient to drive blood flow in the veins. How does blood flow back to the heart?
+
+There is a lot of blood contained in chambers separated by valves. When joints and muscles push on the walls of these chambers, pressure increases, forcing blood to flow through the one-way valves back to the heart.
+
+Actually, if you stand still for a very long time, there may not be enough blood flowing back to the heart, causing you to faint.
+
+**Question**: How does the brain monitor and maintain blood pressure?
+
+The brain monitors blood pressure in the body through baroreceptors in the carotid sinus and aortic arch. If blood pressure drops, the brain increases sympathetic tone and decreases parasympathetic tone, causing an increase in heart rate and vasoconstriction, which increases blood pressure.
+
+**Question**: How does increasing sympathetic tone increase venous return?
+
+Sympathetic tone causes the wall of the veins to stiffen, decreasing its capacitance. This causes a greater increase in pressure when the muscles compress the veins, resulting in a greater venous return.
+
+### Vasodilation and Vasoconstriction
+
+Smooth muscle and **precapillary sphincter muscles** are found in the walls of blood vessels. They can contract or relax to change the radius of the vessel, which changes resistance and blood flow.
 
 The strength of the precapillary sphincter muscles is determined by the number of crossbridges formed, which is affected by the concentration of calcium and the ATP. 
 
@@ -550,10 +591,26 @@ Other causes of dilation include:
 4. Decreased pH
 5. Increased adenosine levels
 
-What controls blood flow?
+**Question:** What controls blood flow?
 
 1. Local control through precapillary sphincter muscles
 2. Upstream artery effect through nitric oxide
 3. Hormones in the blood such as histamine, epinephrine, antidiuretic hormone (ADH) and angiotensin 
 
 Vasodilation in local tissue can cause vasodilation in upstream arteries. When the tissue resistance decreases, flow through the tissue increases, causing the velocity of blood in the upstream arteries to increase. The increase in shear forces also causes an increase in nitric oxide production, which causes vasodilation in the upstream arteries.
+
+### Cardiovascular Function Curves
+
+The **cardiac function curve** shows that right atrial pressure is positively correlated with cardiac output. When there is a high venous return, right atrial pressure is high. Assuming that the right heart pushes blood effectively through the pulmonary system to the left heart, this causes high preload in the left ventricles as well. Finally, this results in increased stroke volume and thus increased cardiac output.
+
+There are two things that can affect the cardiac function curve: heart rate and contractility. Both of these are affected by sympathetic tone. Increasing sympathetic tone increases heart rate and contractility, which shifts the cardiac function curve up and to the left.
+
+![Cardiac function curve](/biol-0800/cardiac-function-curve.png)
+
+The **vascular function curve** shows that venous return is negatively correlated with right atrial pressure. 
+
+There are three things that can affect the vascular function curve: blood volume, capacitance of veins, and total peripheral resistance. 
+
+Blood volume and capacitance of veins affect the x-intercept of the curve (also known as the mean circulatory filling pressure, or MCFP), while total peripheral resistance affects the slope of the curve.
+
+![Vascular function curve](/biol-0800/vascular-function-curve.png)
