@@ -1,10 +1,11 @@
 ---
 title: "Networks and the Internet Notes"
-summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters"
+summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters • Management"
 publishedAt: 2026-02-22
-updatedAt: 2026-03-03
+updatedAt: 2026-03-12
 tags: 
 - notes
+todo: isis, bgp, rsvp
 ---
 
 ## Internet Architecture
@@ -147,3 +148,51 @@ Issues
 [Jupiter Rising: A Decade of Clos Topologies and Centralized Control in Google's Datacenter Network](https://dl.acm.org/doi/10.1145/2829988.2787508)
 
 Datacenter bandwidth demands have doubled every year for the past decade, and are expected to continue to do so. Jupiter Rising describes the evolution of Google's datacenter network over the past decade to support this growth.
+
+### Jellyfish
+
+[Jellyfish: Networking Data Centers Randomly](https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/singla)
+
+The idea behind Jellyfish is to use random graphs instead of structured topologies like hypercubes and fat-trees. Randomly connecting nodes allows for *incremental expansion*, shorter average path lengths, and better bandwidth. However, it also leads to more complex routing and load balancing.
+
+Bundling and patch panels are two techniques for reducing the number of cables in a datacenter network.
+
+## Management
+
+### SDN Talk
+
+[The Future of Networking, and the Past of Protocols](https://www.youtube.com/watch?v=YHeyuD89n1Y)
+
+### Road to SDN
+
+[The road to SDN: an intellectual history of programmable networks](https://dl.acm.org/doi/10.1145/2602204.2602219)
+
+**Software-defined networking** (SDN) separates the **control plane** (which decides how to handle traffic) from the **data plane** (which forwards traffic according to the control plane's instructions). It also consolidates the control plane so that a single piece of software can control multiple dataplane elements.
+
+**OpenFlow** is an API that allows the control plane to configure packet-handling rules on the data plane.
+
+Motivations for SDN
+1. Computer networks have many different components, including routers, switches, and middleboxes (firewalls, load balancers, NATs, intrusion detection systems). Network administrators have to use different closed and proprietary interfaces to configure each of these components.
+2. SDNs lower the barrier to innovation and experimentation.
+
+History leading to SDN
+1. Active networks (mid-1990s to early 2000s)
+2. Control and data plane separation (early 2000s to mid-2000s)
+3. OpenFlow API and network operating systems (2007-2010)
+
+The idea behind **active networks** was to allow users to inject code into the network to customize how packets are handled. There are two models:
+- The capsule model, where the code is carried in the packet itself
+- The programmable switch model, where the code is stored on the switch and packets can trigger the execution of the code
+
+The separation of the control and data plane was motivated by demands for technology to manage routing within an ISP. Compared to active networking, this research focused more on
+- Network administrators (rather than end-users)
+- Programmability in the control plane (rather than the data plane)
+- Control over the network (rather than individual devices)
+
+Notably, control functionality was moved off of network equipment and into separate servers, who can store all of the routing state and compute all of the routing decisions.
+
+### dSDN
+
+[A Decentralized SDN Architecture for the WAN](https://dl.acm.org/doi/10.1145/3651890.3672257)
+
+In a typical SDN, the control plane is a centralized controller who runs a traffic engineering algorithm to compute paths (while accounting for capacity). However, to run an SDN in a global WAN, we need a lot more "SDN control infrastructure".
