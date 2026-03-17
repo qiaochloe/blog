@@ -5,7 +5,7 @@ publishedAt: 2026-01-30
 updatedAt: 2026-03-17
 tags:
 - notes
-todo: cardiac ap, respiratory terms from lab 3
+todo: respiratory terms from lab 3
 ---
 
 ## Introduction
@@ -455,28 +455,25 @@ A EKG consists of a few phases:
 2. QRS complex: depolarization of the ventricles
 3. T wave: repolarization of the ventricles
 
-### Wiggers Diagram
+### Cardiac Cycle
 
-Terminology:
-- **Isovolumetric contraction** is the period where both valves are closed as pressure rises.
-- **Diastole** means muscle relaxation in the ventricles. First, there is isovolumetric contraction. Then the AV valves open, the semilunar valves close, and blood fills the ventricles.
-- **Systole** means muscle contraction in the ventricles. First, there is isovolumetric contraction. Then the AV valves close, the semilunar valves open, and blood is ejected.
-- **End diastolic volume** is the volume of blood in the ventricles at the end of diastole. This should be the maximum volume of blood in the ventricles. (Around 120 mL.)
-- **End systolic volume** is the volume of blood in the ventricles at the end of systole. This should be the minimum volume of blood in the ventricles. (Around 50 mL.)
-- **Stroke volume** is the amount of blood ejected from the ventricles during systole, or EDV minus ESV. 
-- **Ejection fraction** is the percentage of blood ejected from the ventricles during systole, or stroke volume divided by EDV.
+In a cardiac cycle, there is first isovolumetric relaxation, where both valves are closed as pressure rises. Then the AV valves open, the semilunar valves close, and blood fills the ventricles (diastole). Then there is isovolumetric contraction again, where both valves are closed as pressure rises. Then the AV valves close, the semilunar valves open, and blood is ejected (systole).
 
-![Wiggers diagram](/biol-0800/wiggers-diagram.png)
-
-Notes:
-1. Whenever the pressure curves cross, a valve changes state. 
-2. Most filling of the ventricles is passive.
-3. Most filling ocurrs in the first third of diastole 
-4. Most emptying occurs in the first third of systole.
+| Term | Definition |
+| ---- | ---------- |
+| Diastole | Muscle relaxation in ventricles |
+| Systole | Muscle contraction in ventricles |
+| Isovolumetric contraction | Period where both valves are closed as pressure rises |
+| End diastolic volume | Volume of blood in ventricles at the end of diastole (~120 mL)|
+| End systolic volume | Volume of blood in ventricles at the end of systole (~50 mL) |
+| Stroke volume | Amount of blood ejected from ventricles (EDV - ESV) |
+| Ejection fraction | Percentage of blood ejected from ventricles (SV/ EDV) |
+| Preload | End-diastolic volume |
+| Afterload | Resistance ventricles must overcome to eject blood |
 
 ### Frank-Starling Mechanism
 
-The **Frank-Starling mechanism** is that the more the ventricles are filled during diastole, the more they will contract during systole.
+The **Frank-Starling mechanism** states that the more the ventricles are filled during diastole, the more they will contract during systole.
 
 **Question**: There is no change in sympathetic and parasympathetic tones, so it must be an intrinsic property of the heart. How does it work?
 
@@ -500,17 +497,26 @@ There are four phases of the PV loop:
 
 ![PV loop](/biol-0800/pv-loop1.jpeg)
 
-The diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. 
-- The diastolic pressure curve represents the passive filling of the ventricle
-- The systolic pressure represents the contractile properties of the ventricles from the Frank-Starling effect. 
+The **diastolic pressure curve** represents the passive filling of the ventricle and 
+is impacted by how easily the ventricle stretches (compliance). 
 
-**Preload** is the end-diastolic volume. It is impacted by the venous return.
+The **systolic pressure curve** represents the resistance the ventricle must overcome to eject blood and is impacted by how strongly the ventricle contracts (contractility). Contractility is influenced by the Frank-Starling mechanism, which is affected by preload, afterload, and sympathetic tone.
 
-**Afterload** is the resistance the ventricles must overcome to eject blood. It is impacted by arterial pressure and total peripheral resistance.
+Notice that the diastolic filling and systolic ejection phases are bounded by the diastolic and systolic pressure curves. The actual preload is determined by the venous return, and the actual afterload is determined by the arterial pressure and TPR.
 
-Stroke volume is affected by preload, afterload, and sympathetic tone.
+Stroke volume is a combination of preload, afterload, and sympathetic tone.
 
 ![PV loop](/biol-0800/pv-loop2.jpeg)
+
+### Wiggers Diagram
+
+![Wiggers diagram](/biol-0800/wiggers-diagram.png)
+
+Notes:
+1. Whenever the pressure curves cross, a valve changes state
+2. Most filling of the ventricles is passive
+3. Most filling ocurrs in the first third of diastole 
+4. Most emptying occurs in the first third of systole
 
 ## Blood Flow 
 
@@ -520,39 +526,46 @@ Blood cells don't have a nucleus, so they can't make new proteins. They have a l
 
 ### RC Circuit
 
-Blood flow is similar to an RC circuit. 
-- The small blood vessels have high resistance
-- The arteries have low resistance and act as a capacitor for pressure
+Blood flow is similar to an RC circuit. The small blood vessels have high resistance. The arteries have low resistance and act as a capacitor for pressure.
+
+As you age, your arteries become stiffer, so they are less able to stretch and recoil. This causes a higher systolic pressure and a lower diastolic pressure, leading to a higher pulse pressure.
 
 ![Cardiac system circuit](/biol-0800/cardiac-system-circuit.png)
 
-The arteries do this by stretching during systole and recoiling during diastole, maintaining a more constant pressure in the arteries. As you age, your arteries become stiffer, so they are less able to stretch and recoil. This causes a higher systolic pressure and a lower diastolic pressure, leading to a higher pulse pressure.
+**Pulse pressure** is how much pressure rises when the heart ejects blood. Increase capacitance of arteries decreases pulse pressure because it allows the arteries to stretch more and accommodate the ejected blood without a large increase in pressure.
 
-Note that:
-1. Capacitance of arteries decreases pulse pressure 
-2. Capacitance of veins affects stroke volume but does not affect resistance to flow
+Increased capacitance of the veins also decreases venous return, decreasing preload and thus stroke volume. 
+
+Capacitance of the veins and arteries does not affect total peripheral resistance, which is determined by the arterioles.
 
 ### Blood Pressure
 
-The equation for blood pressure is 
+The equation for **blood pressure** is 
 
 ```math
 p_a - p_v = \text{CO} \times \text{TPR}
 ```
 
-where:
+Where:
 - $p_a$ is arterial pressure
 - $p_v$ is venous pressure, which is almost $0$
 - CO is cardiac output
 - TPR is total peripheral resistance
 
-Cardiac output (mL/min) is equal to the heart rate (beats/min) multiplied by the stroke volume (mL/beat). 
-- Heart rate in the SA node is determined by the degree of sympathetic and parasympathetic stimulation
-- Stroke volume is determined by contractility and the Frank-Starling mechanism, which is influenced by preload afterload, and sympathetic tone
+The equation for **cardiac output** is 
 
-One tricky part is that $p_a$ affects the afterload, which then affects stroke volume. When $p_a$ increases, the afterload increases, which decreases stroke volume. 
+```math
+\text{CO} = \text{HR} \times {SV}
+```
 
-TPR is the overall resistances in the blood vessels. Resistance of the blood vessels is determined by Pouseille's Law, which states
+Where:
+- CO is cardiac output (mL/min)
+- HR is heart rate (beats/min)
+- SV is stroke volume  (mL/beat)
+
+Heart rate in the SA node is determined by the degree of sympathetic and parasympathetic stimulation. Stroke volume is determined by contractility and the Frank-Starling mechanism, which is influenced by preload afterload, and sympathetic tone. One tricky part is that $p_a$ affects the afterload, which then affects stroke volume. When $p_a$ increases, the afterload increases, which decreases stroke volume. 
+
+**Total peripheral resistance** is the overall resistances in the blood vessels. Resistance of the blood vessels is determined by Pouseille's Law, which states
 
 ```math
 R = \frac{8nL}{\pi r^4}
@@ -564,23 +577,6 @@ Where:
 3. $r$ is the radius of the vessel
 
 TPR is only affected by vasodilation and vasoconstriction, which is impacted by sympathetic and parasympathetic tone.
-
-### Sympathetic and Parasympathetic Tone
-
-**Question**: How does the brain monitor and maintain blood pressure?
-
-The brain monitors and maintains blood pressure through baroreceptors in the carotid sinus and aortic arch. When their action potential firing decreases, the brain increases sympathetic and decreases parasympathetic activity to raise blood pressure. 
-
-For example, during a valsalva maneuver, you exhale forcefully against a closed airway, which increases pressure in the chest and decreases venous return. This causes a decrease in stroke volume and cardiac output, which causes a drop in blood pressure. The baroreceptors detect this drop in blood pressure and increase sympathetic tone to compensate.
-
-Effects of sympathetic tone:
-1. Contractility increases, causing the heart to beat faster and stronger. This increases stroke volume and cardiac output. 
-2. Vasoconstriction increases, causing total peripheral resistance to increase. This helps maintain blood pressure even when cardiac output increases.
-3. Veins stiffen, decreasing their capacitance. This causes a greater increase in pressure when the muscles compress the veins, resulting in a greater venous return. As a result, preload increases, which increases stroke volume and cardiac output.
-
-Specifically, the sympathetic system uses norepinephrine to bind to alpha-1 adrenergic receptors on the blood vessels, causing vasoconstriction and increasing TPR. It also uses norepinephrine to bind to beta-1 adrenergic receptors on the heart, increasing heart rate and contractility, which increases cardiac output. 
-
-The parasympathetic system uses ACh to bind to muscarinic receptors on the heart, decreasing heart rate and contractility, which decreases cardiac output.
 
 ### Pressure Gradient
 
@@ -595,6 +591,21 @@ Average aortic pressure is diastolic pressure plus one-third of the pulse pressu
 There is a lot of blood contained in chambers separated by valves. When joints and muscles push on the walls of these chambers, pressure increases, forcing blood to flow through the one-way valves back to the heart.
 
 Actually, if you stand still for a very long time, there may not be enough blood flowing back to the heart, causing you to faint.
+
+### Sympathetic and Parasympathetic Tone
+
+The brain monitors and maintains blood pressure through baroreceptors in the carotid sinus and aortic arch. When their action potential firing decreases, the brain increases sympathetic and decreases parasympathetic activity to raise blood pressure. 
+
+For example, during a valsalva maneuver, you exhale forcefully against a closed airway, which increases pressure in the chest and decreases venous return. This causes a decrease in stroke volume and cardiac output, which causes a drop in blood pressure. The baroreceptors detect this drop in blood pressure and increase sympathetic tone to compensate.
+
+Effects of sympathetic tone:
+1. Contractility increases, causing the heart to beat faster and stronger. This increases stroke volume and cardiac output. 
+2. Vasoconstriction increases, causing total peripheral resistance to increase. This helps maintain blood pressure even when cardiac output increases.
+3. Veins stiffen, decreasing their capacitance. This causes a greater increase in pressure when the muscles compress the veins, resulting in a greater venous return. As a result, preload increases, which increases stroke volume and cardiac output.
+
+Specifically, the sympathetic system uses norepinephrine to bind to alpha-1 adrenergic receptors on the blood vessels, causing vasoconstriction and increasing TPR. It also uses norepinephrine to bind to beta-1 adrenergic receptors on the heart, increasing heart rate and contractility, which increases cardiac output. 
+
+The parasympathetic system uses ACh to bind to muscarinic receptors on the heart, decreasing heart rate and contractility, which decreases cardiac output.
 
 ### Vasodilation and Vasoconstriction
 
@@ -619,19 +630,34 @@ Other causes of dilation include:
 
 Vasodilation in local tissue can cause vasodilation in upstream arteries. When the tissue resistance decreases, flow through the tissue increases, causing the velocity of blood in the upstream arteries to increase. The increase in shear forces also causes an increase in nitric oxide production, which causes vasodilation in the upstream arteries.
 
-### Cardiovascular Function Curves
+### Cardiac Function Curve
 
-The **cardiac function curve** shows that right atrial pressure is positively correlated with cardiac output. When there is a high venous return, right atrial pressure is high. Assuming that the right heart pushes blood effectively through the pulmonary system to the left heart, this causes high preload in the left ventricles as well. Finally, this results in increased stroke volume and thus increased cardiac output.
+The **cardiac function curve** shows that as right atrial pressure increases, cardiac output increases.
 
-There are two things that can affect the cardiac function curve: heart rate and contractility. Both of these are affected by sympathetic tone. Increasing sympathetic tone increases heart rate and contractility, which shifts the cardiac function curve up and to the left.
+High right atrial pressure implies that there is a high venous return. Assuming that the right heart pushes blood effectively through the pulmonary system to the left heart, this means that there is high preload in the left ventricles as well. High preload causes increased stroke volume and thus increased cardiac output.
+
+There are two things that can affect the cardiac function curve: 
+1. Heart rate 
+2. Contractility
+
+Increasing sympathetic tone increases both heart rate and contractility, so it will shift the cardiac function curve to the left.
 
 ![Cardiac function curve](/biol-0800/cardiac-function-curve.png)
 
-The **vascular function curve** shows that venous return is negatively correlated with right atrial pressure. 
+### Vascular Function Curve
 
-There are three things that can affect the vascular function curve: blood volume, capacitance of veins, and total peripheral resistance. 
+The **vascular function curve** shows that as right atrial pressure increases, venous return decreases. 
 
-Blood volume and capacitance of veins affect the x-intercept of the curve (also known as the mean circulatory filling pressure, or MCFP), while total peripheral resistance affects the slope of the curve.
+Blood flow between the veins and the right atrium depends on the pressure gradient between them. When right atrial pressure is high, there is a smaller pressure gradient, so blood flows back to the heart slowly, decreasing venous return.
+
+There are three things that can affect the vascular function curve: 
+1. Blood volume
+2. Capacitance of veins
+3. Total peripheral resistance. 
+
+If blood volume or capacitance of veins increases, then the venous return will increase at a given right atrial pressure, shifting the vascular function curve to the right. This moves the x-intercept to the right, which means that the mean circulatory filling pressure (MCFP) increases.
+
+If total peripheral resistance increases, then the venous return will decrease multiplicatively at every right atrial pressure. The slope of the vascular function curve will decrease.
 
 ![Vascular function curve](/biol-0800/vascular-function-curve.png)
 
@@ -642,13 +668,11 @@ Exercise, heart failure, increased blood pressure, and hemorrhage (blood loss) c
 
 ## Respiratory System
 
+### Mechanics of Breathing
+
 Lungs tend to collapse inward due to their elastic properties, while the chest wall tends to expand outward. The pleural cavity between them has a negative pressure, which keeps the lungs inflated.
 
-**Question**: How does air exit and enter the lungs?
-
-The lungs are surrounded by the pleural cavity, which has a negative pressure. When the **diaphragm** and **intercostal muscles** contract, they expand the **thoracic cavity**, which decreases the pressure in the pleural cavity. This causes air to flow into the lungs. 
-
-When the diaphragm and intercostal muscles relax, the thoracic cavity contracts, which increases the pressure in the pleural cavity. This causes air to flow out of the lungs.
+When the **diaphragm** and **intercostal muscles** contract, they expand the **thoracic cavity**, which decreases the pressure in the pleural cavity. This causes air to flow into the lungs. When the diaphragm and intercostal muscles relax, the thoracic cavity contracts, which increases the pressure in the pleural cavity. This causes air to flow out of the lungs.
 
 **Pneumothorax** occurs when air enters the pleural space, removing the negative pressure. The lung collapses inwards and cannot expand.
 
@@ -662,20 +686,34 @@ The 1:1 ratio of O2 to CO2 applies only to glucose metabolism. In reality, the b
 
 This is captured by the **respiratory exchange ratio**, or the ratio of carbon dioxide produced to oxygen consumed. The average respiratory exchange ratio for a mixed diet is around 0.8.
 
-Lung conditions:
-1. **Normal lung.** PO2 in the alveoli and blood are around 100 mmHg.
-2. **Emphysema**. Elastic fibers holding the small airways open are damaged, leading to difficulty breathing out. Additionally, the alveoli are damaged, so there is less surface area for gas exchange. This causes a decrease in PO2 in the blood.
-3. **Fibrotic lung disease.** The alveoli are thickened, so there is a longer diffusion distance for gas exchange. This also causes a decrease in PO2 in the blood.
-4. **Pulmonary edema**. There is fluid in the alveoli, which increases the diffusion distance for gas exchange. This also causes a decrease in PO2 in the blood.
-5. **Asthma.** Increased resistance in the airways causes a decrease in airflow, which can lead to a decrease in PO2 in the alveoli and blood.
+### Lung Conditions
 
-### Terms
+**Normal lung.** PO2 in the alveoli and blood are around 100 mmHg.
 
-**Alveolar ventilation** is the amount of air that reaches the alveoli per minute.
+**Emphysema**. Elastic fibers holding the small airways open are damaged, leading to difficulty breathing out. Additionally, the alveoli are damaged, so there is less surface area for gas exchange. This causes a decrease in PO2 in the blood.
 
-**Tidal volume** (TV) is the volume of air inhaled or exhaled during normal breathing. It is around 500 mL in adults.
+**Fibrotic lung disease.** The alveoli are thickened, so there is a longer diffusion distance for gas exchange. This also causes a decrease in PO2 in the blood.
 
-**Dead space** is the volume of air that does not participate in gas exchange. It is around 150 mL in adults.
+**Pulmonary edema**. There is fluid in the alveoli, which increases the diffusion distance for gas exchange. This also causes a decrease in PO2 in the blood.
+
+**Asthma.** Increased resistance in the airways causes a decrease in airflow, which can lead to a decrease in PO2 in the alveoli and blood.
+
+### Spirometer
+
+A spirometer is a device used to measure lung volumes and capacities. 
+
+| Term | Definition |
+| ---- | ---------- |
+| Alveolar ventilation (VA) | Volume of air that reaches the alveoli per minute |
+| Tidal volume (TV) | Volume of air inhaled or exhaled during normal breathing (500 mL)|
+| Dead space | Volume of air that does not participate in gas exchange (150 mL) |
+| Breathing frequency | Number of breaths per minute (12-20) |
+| Vital capacity (VC) | Maximum amount of air that can be exhaled (3-5 L) |
+| Total lung capacity (TLC) | Maximum amount of air the lungs can hold (6-7 L) |
+| Residual volume (RV) | Volume of air remaining in the lungs after maximum exhalation (1-1.5 L) |
+| Functional residual capacity (FRC) | Volume of air remaining in the lungs after normal exhalation (2.5-3 L) |
+
+To calculate alveolar ventilation, we can use the following equation:
 
 ```math
 V_A = (V_T - V_D) \times f
@@ -687,23 +725,11 @@ Where;
 - $V_D$ is dead space volume
 - $f$ is breathing frequency
 
-**Vital capacity** (VC) is the maximum amount of air that can be exhaled after a maximum inhalation. It is around 3-5 L in adults. 
-
-**Total lung capacity** (TLC) is the maximum amount of air that the lungs can hold. It is around 6-7 L in adults.
-
-**Residual volume** (RV) is the volume of air remaining in the lungs after a maximum exhalation. It is around 1-1.5 L in adults.
-
-Functional residual capacity (FRC) is the volume of air remaining in the lungs after a normal exhalation. It is around 2.5-3 L in adults.
-
 ### Ventilation-Perfusion Ratio
 
-**Ventilation** (V) is the amount of air that reaches the alveoli per minute. **Perfusion** (Q) is the amount of blood that reaches the alveoli per minute.
+**Ventilation** (V) is the amount of air that reaches the alveoli per minute. **Perfusion** (Q) is the amount of blood that reaches the alveoli per minute. The ventilation-perfusion ratio (V/Q) is the ratio of alveolar ventilation to pulmonary blood flow. It is around 0.8 in healthy individuals.
 
-The ventilation-perfusion ratio (V/Q) is the ratio of alveolar ventilation to pulmonary blood flow. It is around 0.8 in healthy individuals.
-
-The body tries to send blood to well-ventilated areas and send air to well-perfused areas to keep V/Q balanced. 
-
-For example, the bottom of the lung receives more blood flow due to gravity, so it has a higher perfusion. The airway smooth muscles there are relaxed, increasing ventilation. 
+The body tries to send blood to well-ventilated areas and send air to well-perfused areas to keep V/Q balanced. For example, the bottom of the lung receives more blood flow due to gravity, so it has a higher perfusion. The airway smooth muscles there are relaxed, increasing ventilation. 
 
 ### Alveolar Gas Equations
 
