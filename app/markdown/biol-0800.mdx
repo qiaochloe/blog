@@ -5,7 +5,6 @@ publishedAt: 2026-01-30
 updatedAt: 2026-03-17
 tags:
 - notes
-todo: respiratory terms from lab 3
 ---
 
 ## Introduction
@@ -147,10 +146,9 @@ The equation for osmotic pressure is given by:
 ```
 
 Where:
-
-1. $C$ is the concentration of solute particles in mOsm/L
-3. $T$ is the temperature in K
-2. $R$ is the gas constant in atm/mol · K
+- $C$ is the concentration of solute particles in mOsm/L
+- $T$ is the temperature in K
+- $R$ is the gas constant in atm/mol · K
 
 Note that mOsm is the number of particles a substance dissolves into in the solution. For example, NaCl dissolves into Na+ and Cl-, so 1 mole of NaCl produces 2 Osm.
 
@@ -272,8 +270,8 @@ If there are multiple permeable ions, then the membrane potential is given by th
 V_m = \frac{RT}{F} \ln{\frac{P_{K^+}[K^+]_{\text{out}} + P_{Na^+}[Na^+]_{\text{out}} + P_{Cl^-}[Cl^-]_{\text{in}}}{P_{K^+}[K^+]_{\text{in}} + P_{Na^+}[Na^+]_{\text{in}} + P_{Cl^-}[Cl^-]_{\text{out}}}}
 ```
 Where:
-1. $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
-2. $[\text{ion}]$ is the concentration of the ion
+- $P_{\text{ion}}$ is the permeability of the ion, which is impacted by number of ion channels
+- $[\text{ion}]$ is the concentration of the ion
 
 ### Equilibrium potential
 
@@ -282,10 +280,10 @@ To reach electrochemical equilibrium, the chemical gradient must be balanced by 
 E_{\text{ion}} = \frac{RT}{zF} \ln{\frac{[\text{ion}]}{[\text{ion}]}}
 ```
 Where:
-1. $R$ is the gas constant
-2. $T$ is the temperature
-3. $z$ is the ion charge
-4. $F$ is Faraday's constant
+- $R$ is the gas constant
+- $T$ is the temperature
+- $z$ is the ion charge
+- $F$ is Faraday's constant
 
 ### Current
 
@@ -294,10 +292,10 @@ From Ohm's Law, we can derive this equation for current:
 I = g(V_m - E_{\text{ion}})
 ```
 Where:
-1. $I$ is current
-2. $g$ is the membrane conductance
-3. $V_m$ is the membrane potential
-4. $E_{\text{ion}}$ is the equilibrium potential
+- $I$ is current
+- $g$ is the membrane conductance
+- $V_m$ is the membrane potential
+- $E_{\text{ion}}$ is the equilibrium potential
 
 Note that:
 - When $I$ is positive, there is an outward current (positive charge exiting the cell or negative charge entering the cell).
@@ -572,9 +570,9 @@ R = \frac{8nL}{\pi r^4}
 ```
 
 Where:
-1. $R$ is resistance
-2. $n$ is the viscosity of the fluid
-3. $r$ is the radius of the vessel
+- $R$ is resistance
+- $n$ is the viscosity of the fluid
+- $r$ is the radius of the vessel
 
 TPR is only affected by vasodilation and vasoconstriction, which is impacted by sympathetic and parasympathetic tone.
 
@@ -726,7 +724,7 @@ Where:
 - $V_D$ is dead space (mL)
 - $V_T$ is tidal volume (mL)
 - $P_{aCO2}$ is arterial partial pressure of CO2 
-- $P_{eCO2}$ is expired partial prssure of CO2
+- $P_{eCO2}$ is expired partial pressure of CO2
 
 In other words, dead space is tidal volume multiplied by some fraction.
 
@@ -758,19 +756,11 @@ When the **diaphragm** and **intercostal muscles** contract, they expand the **t
 
 **Pneumothorax** occurs when air enters the pleural space, removing the negative pressure. The lung collapses inwards and cannot expand.
 
-**Question**: In room air, oxygen and carbon dioxide act exactly the same. However, oxygen dissolves very poorly in water, and it exerts 20x more partial pressure dissolved in water than CO2. How does blood carry enough oxygen?
-
-Hemoglobin binds to the oxygen, decreasing its partial pressure in water and allowing more oxygen to dissolve in the blood. 
-
 **Question**: The cellular respiration equation has a 1:1 ratio of oxygen to carbon dioxide. Why do we breathe in more oxygen but breathe out less carbon dioxide? 
 
 The 1:1 ratio of O2 to CO2 applies only to glucose metabolism. In reality, the body also metabolizes fats and proteins, which contain less oxygen than carbohydrates. As a result, their oxidation requires more O2 per CO2 produced, so we consume more oxygen than the carbon dioxide we exhale.
 
 This is captured by the **respiratory exchange ratio**, or the ratio of carbon dioxide produced to oxygen consumed. The average respiratory exchange ratio for a mixed diet is around 0.8.
-
-### Control of Breathing
-
-The brain monitors PO2, PCO2, and pH through chemoreceptors in the carotid bodies and aortic bodies. When PO2 decreases, PCO2 increases, or pH decreases, the brain increases ventilation to restore normal levels.
 
 ### Lung Conditions
 
@@ -827,6 +817,57 @@ We expect $P_{CO_2}$ to be around 40 mm Hg and $P_{O_2}$ to be around 100 mm Hg.
 
 ### Oxygen Transport in Blood
 
-### Bohr Shift
+In room air, oxygen and carbon dioxide act exactly the same. However, oxygen dissolves very poorly—it exerts 20x more partial pressure dissolved in water than CO2. This makes it difficult for blood to dissolve enough oxygen. Thus, most oxygen is actually bounded to hemoglobin. 
 
-The Bohr shift is the phenomenon where a decrease in pH (increase in H+ concentration) or an increase in CO2 concentration causes a rightward shift in the oxygen-hemoglobin dissociation curve. This means that hemoglobin has a lower affinity for oxygen, allowing more oxygen to be released to the tissues.
+The breakdown is:
+- 1.5% dissolved in plasma
+- 98.5% bound to hemoglobin
+
+The **oxygen-hemoglobin dissociation curve** describes how the partial pressure of oxygen is related to the percent O2 saturation of hemoglobin. The curve is sigmoidal due to change in binding affinity and saturation. When one oxygen binds to hemoglobin, it increases the affinity of the remaining sites for oxygen.
+
+When the blood leaves the lungs, the PO2 is around 100 mmHg and the hemoglobin is almost completely saturated. When the blood reaches the tissues, the PO2 level drops to around 40 mmHg, and the hemoglobin is around 75% saturated. This means that around 25% of the oxygen bound to hemoglobin is released to the tissues.
+
+![Oxygen hemoglobin dissociation curve](/biol-0800/oxygen-hemoglobin-disssociation-curve.png)
+
+The **Bohr effect** states that the affinity of hemoglobin for oxygen decreases with
+1. Increased temperature
+2. Increased $P_{CO_2}$
+3. Increased [H+] (or decreased pH)
+
+The **Fick principle** states that the rate of oxygen consumption by the tissues is equal to the product of cardiac output and the difference in oxygen content between arterial and venous blood:
+
+```math
+[O_2]_c  = \text{CO} \times ([O_2]_a - [O_2]_v)
+```
+
+Where:
+- $[O_2]_c$ is the rate of oxygen consumption by the tissues (mL/min)
+- $CO$ is the cardiac output (mL blood/min)
+- $[O_2]_a$ is the concentration of oxygen in arterial blood (mL O2/mL blood)
+- $[O_2]_v$ is the concentration of oxygen in venous blood (mL O2/mL blood)
+
+
+If the tissue is very metabolically active, then it will consume more PO2, leading to a lower point on the oxygen-hemoglobin dissociation curve. In addition, it will have a higher temperature and higher $P_{CO_2}$, leading to a Bohr shift to the right. Both of these effects will cause more oxygen to be released from hemoglobin, resulting in a lower concentration of $[O_2]_v$. Thus, more oxygen will be delivered to the tissue. Note that changing $[O_2]_a$ is very difficult, but changing $[O_2]_v$ is much easier.
+
+### Carbon Dioxide Transport in Blood
+
+Carbon dioxide is transported in the blood in three forms:
+- 5% dissolved in plasma
+- 10% bound to hemoglobin
+- 85% as bicarbonate (HCO3-)
+
+CO2 is converted to bicarbonate by the enzyme **carbonic anhydrase** in red blood cells. The reaction is:
+
+```math
+\text{CO}_2 + \text{H}_2\text{O} \leftrightarrow \text{H}_2\text{CO}_3 \leftrightarrow \text{H}^+ + \text{HCO}_3^-
+```
+
+By Le Chatelier's principle, when more CO2 is produced by the tissues, the reaction shifts to the right, producing more H+ and HCO3-. The H+ binds to hemoglobin, buffering the acidity. This also decreases hemoglobin's affinity for oxygen, causing more oxygen to be released to the tissues. 
+
+![Carbon dioxide transport](/biol-0800/carbon-dioxide-transport.png)
+
+### Control of Breathing
+
+The brain monitors PO2, PCO2, and pH through chemoreceptors in the carotid bodies and aortic bodies. When PO2 decreases, PCO2 increases, or pH decreases, the brain increases ventilation to restore normal levels.
+
+Rising CO2/falling pH is the first to regulate the 'urge to breathe'.
