@@ -672,6 +672,84 @@ Exercise, heart failure, increased blood pressure, and hemorrhage (blood loss) c
 
 ## Respiratory System
 
+### Structure of the Respiratory System
+
+The respiratory system can be divided into two zones:
+1. The conducting zone brings in air
+2. The respiratory zone facilitates gas exchange
+
+The conducting zone walls are lined with smooth muscles, which react to sympathetic and parasympathetic stimulation to eitehr dilate or constrict the airways. 
+
+The respiratory zone walls are lined with alveoli, where gas exchange occurs: O2 enters the pulmonary blood and CO2 leaves it.
+
+![Respiratory system structure](/biol-0800/respiratory-system-structure.png)
+
+### Lung Volume and Capacity
+
+Lung volumes are measured with a spirometer.
+
+First, the subject is asked to breathe normally, in order to measure the **tidal volume** (TV), which should be around 500 mL. Next, the subject is asked to take a maximal inspiration followed by a maximal expiration. The additional volume that can be inspired above the TV is called the **inspiratory reserve volume** (IRV), which should be around 3000 mL. The additional volume that can be expired below the TV is called the **expiratory reserve volume** (ERV), which should be around 1200 mL.
+
+The volume of gas remaining in the lungs after a maximal forced expiration is the **residual volume** (RV), which is approximately 1200 mL and cannot be measured by the spirometer.
+
+| Term | Definition |
+| ---- | ---------- |
+| Tidal volume (TV) | Volume of air inhaled or exhaled during normal breathing |
+| Inspiratory reserve volume (IRV) | Additional volume of air that can be inhaled |
+| Expiratory reserve volume (ERV) | Additional volume of air that can be exhaled |
+| Residual volume (RV) | Volume of air remaining in the lungs after maximum exhalation |
+
+Lung capacities are combinations of lung volumes. For example, the **inspiratory capacity** (IC) is the maximum volume of air that can be inhaled after a normal exhalation, which is the sum of TV and IRV. The **functional residual capacity** (FRC) is the volume of air remaining in the lungs after a normal exhalation, which is the sum of ERV and RV. The **vital capacity** (VC) is the maximum amount of air that can be exhaled, and is composed of the IC plus the ERV. Finally, the **total lung capacity** (TLC) includes all of the lung volumes.
+
+Because RV cannot be measured by spirometry, FRC and TLC also cannot be measured by spirometry.
+
+| Term | Definition | 
+| ---- | ---------- |
+| Inspiratory capacity (IC) | Maximum volume of air that can be inhaled |
+| Vital capacity (VC) | Maximum amount of air that can be exhaled |
+| Functional residual capacity (FRC) | Volume of air remaining in the lung normal exhalation |
+| Total lung capacity (TLC) | Maximum amount of air the lungs can hold |
+
+![Lung volume and capacity](/biol-0800/lung-volume-capacity.png)
+
+### Dead Space
+
+Dead space is the volume of air that does not participate in gas exchange. For example, with a TV of 500 mL, around 150 mL fills the anatomic dead space, and 350 mL fills the alveoli. Dead space air is also the first air expired. 
+
+Physiologic dead space can differ from anatomic dead space when there is a defect in the ventilation-perfusion ratio. In that case, it can be calculated this equation:
+
+```math
+V_D = V_T \times \frac{P_{aCO2} - P_{ECO2}}{P_{aCO2}}
+```
+
+Where:
+- $V_D$ is dead space (mL)
+- $V_T$ is tidal volume (mL)
+- $P_{aCO2}$ is arterial partial pressure of CO2 
+- $P_{eCO2}$ is expired partial prssure of CO2
+
+In other words, dead space is tidal volume multiplied by some fraction.
+
+### Ventilation Rates
+
+Ventilation rate is the rate of air movement in the respiratory system. It can be expressed either as the *minute* ventilation, which is the rate of air movement into and out of the lungs.
+
+```math
+\dot V_M = V_T \times f
+```
+
+It can also be expressed as *alveolar* ventilation, which is the rate of air movement into and out of the alveoli. Alveolar ventilation corrects for physiologic dead space.
+
+```math
+\dot V_A = (V_T - V_D) \times f
+```
+
+Where;
+- $\dot V_A$ is alveolar ventilation (mL/min)
+- $V_T$ is tidal volume (mL)
+- $V_D$ is dead space volume (mL)
+- $f$ is breathing frequency (breaths/min)
+
 ### Mechanics of Breathing
 
 Lungs tend to collapse inward due to their elastic properties, while the chest wall tends to expand outward. The pleural cavity between them has a negative pressure, which keeps the lungs inflated.
@@ -705,33 +783,6 @@ The brain monitors PO2, PCO2, and pH through chemoreceptors in the carotid bodie
 **Pulmonary edema**. There is fluid in the alveoli, which increases the diffusion distance for gas exchange. This also causes a decrease in PO2 in the blood.
 
 **Asthma.** Increased resistance in the airways causes a decrease in airflow, which can lead to a decrease in PO2 in the alveoli and blood.
-
-### Spirometer
-
-A spirometer is a device used to measure lung volumes and capacities. 
-
-| Term | Definition |
-| ---- | ---------- |
-| Alveolar ventilation (VA) | Volume of air that reaches the alveoli per minute |
-| Tidal volume (TV) | Volume of air inhaled or exhaled during normal breathing (500 mL)|
-| Dead space | Volume of air that does not participate in gas exchange (150 mL) |
-| Breathing frequency | Number of breaths per minute (12-20) |
-| Vital capacity (VC) | Maximum amount of air that can be exhaled (3-5 L) |
-| Total lung capacity (TLC) | Maximum amount of air the lungs can hold (6-7 L) |
-| Residual volume (RV) | Volume of air remaining in the lungs after maximum exhalation (1-1.5 L) |
-| Functional residual capacity (FRC) | Volume of air remaining in the lungs after normal exhalation (2.5-3 L) |
-
-To calculate alveolar ventilation, we can use the following equation:
-
-```math
-V_A = (V_T - V_D) \times f
-```
-
-Where;
-- $V_A$ is alveolar ventilation
-- $V_T$ is tidal volume
-- $V_D$ is dead space volume
-- $f$ is breathing frequency
 
 ### Ventilation-Perfusion Ratio
 
@@ -773,6 +824,8 @@ Where:
 - $\dot V_A$ is alveolar ventilation (mL/min)
 
 We expect $P_{CO_2}$ to be around 40 mm Hg and $P_{O_2}$ to be around 100 mm Hg.
+
+### Oxygen Transport in Blood
 
 ### Bohr Shift
 
