@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { formatDate } from "app/utils";
 import Link from "next/link";
 import MarkdownIt from "markdown-it";
-import { ExternalLink, Calendar, ArrowDownAZ, LayoutList } from "lucide-react";
+import { ExternalLink, Calendar, ArrowDownAZ } from "lucide-react";
 
 // Props passed to PostLists
 export type Post = {
@@ -19,29 +19,26 @@ type PostsListProps = {
 };
 
 // Tags
-type Tag = "general" | "advice" | "technical" | "reflection" | "notes";
-const defaultTags = ["general", "advice", "technical", "reflection", "notes"];
+type Tag = "hobby" | "advice" | "reflection" | "notes";
+const defaultTags = ["hobby", "advice", "reflection", "notes"];
 
 const tagTextColor: Record<Tag, string> = {
-  general: "text-amber-800",
+  hobby: "text-amber-800",
   advice: "text-sky-800",
-  technical: "text-rose-800",
   reflection: "text-emerald-800",
   notes: "text-violet-800",
 };
 
 const tagBGColor: Record<Tag, string> = {
-  general: "bg-amber-100",
+  hobby: "bg-amber-100",
   advice: "bg-sky-100",
-  technical: "bg-rose-100",
   reflection: "bg-emerald-100",
   notes: "bg-violet-100",
 };
 
 const tagDotColor: Record<Tag, string> = {
-  general: "bg-amber-300",
+  hobby: "bg-amber-300",
   advice: "bg-sky-300",
-  technical: "bg-rose-300",
   reflection: "bg-emerald-300",
   notes: "bg-violet-300",
 };
@@ -159,7 +156,9 @@ export function PostsList({ allPosts }: PostsListProps) {
               {formatDate(post.data.updatedAt ?? post.data.publishedAt)}
             </p>
             <div></div>
-            <p className="text-neutral-600 text-sm my-1">{post.data.summary ?? ""}</p>
+            <p className="text-neutral-600 text-sm my-1">
+              {post.data.summary ?? ""}
+            </p>
             <div></div>
           </div>
         ))}

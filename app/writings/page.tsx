@@ -14,7 +14,7 @@ const externalLinks: Post[] = [
       title: "2025 Brown Puzzle Hunt wrapup",
       summary: "Tech wrapup of 2025 BPH",
       publishedAt: new Date("2025-04-30"),
-      tags: ["technical"],
+      tags: ["hobby"],
       isExternalLink: true,
     },
     slug: "https://2025.brownpuzzlehunt.com/wrapup",

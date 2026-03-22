@@ -3,7 +3,6 @@ title: A Tour Through C
 summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
 tags:
-  - "technical"
   - "notes"
 todo: "union, enums, arrow syntax for pointers, ternaries, goto"
 ---
