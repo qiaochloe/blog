@@ -94,7 +94,7 @@ export function PostsList({ allPosts }: PostsListProps) {
   const md = new MarkdownIt();
 
   return (
-    <div>
+    <div className="w-full min-w-xl">
       <div className="flex justify-between pt-2 pb-4 align-bottom">
         <div>
           {Object.keys(selectedTags).map((tag: Tag) => (
