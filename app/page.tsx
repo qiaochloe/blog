@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import MarkdownIt from "markdown-it";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
@@ -74,11 +75,24 @@ export default function Page() {
 
   return (
     <section className="px-2">
-      <h1 className="mb-4 text-2xl font-semibold tracking-tight text-center">Chloe Qiao</h1>
-      <div className="mb-8 flex flex-col gap-y-4">
-        <p>
-          I am a student at Brown University studying computer science. I am particularly interested in networks, operating systems, compilers, and solvers.
-        </p>
+      <div className="mb-4 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+        <Image
+          src="/about/zyqiao.jpg"
+          alt="Chloe Qiao"
+          width={256}
+          height={256}
+          className="rounded-full w-48 h-48 sm:w-32 sm:h-32 object-cover shrink-0"
+          priority
+        />
+        <div className="flex flex-col gap-y-4">
+          <h1 className="text-2xl font-semibold tracking-tight text-center sm:text-left">Chloe Qiao</h1>
+          <p>
+            I am a student at Brown University studying computer science. I am particularly interested in networks, operating systems, compilers, and solvers.
+          </p>
+            </div>
+            </div>
+
+            <div className="flex flex-col gap-y-4 mb-8">
         <p>
           In the Brown CS department, I have worked as a <Link href="https://cs.brown.edu/people/staff/spoc/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">systems programmer</Link>, a <Link href="https://cs.brown.edu/degrees/undergrad/jobs/consult/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">lab consultant</Link>, and a teaching assistant for <Link href="https://browncs1715.github.io/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Formal Proof and Verification</Link> (TA Fall 2024, HTA Fall 2025), <Link href="https://csci0300.github.io/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Computer Systems</Link> (TA Spring 2025), <Link href="https://cs.brown.edu/courses/csci1515/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Applied Cryptography</Link> (HTA Spring 2026), and Operating Systems (HTA Fall 2026). I have also been the president of <Link href="https://browncsdug.com/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Brown CS DUG</Link>. Outside of the CS department, I help run the tech for <Link href="https://brownpuzzlehunt.com/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Brown Puzzlehunt</Link>.
         </p>
@@ -88,7 +102,7 @@ export default function Page() {
         <p>
           Brown students might find some of my <Link href="/courses" className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500">courses reviews</Link> useful.
         </p>
-      </div>
+        </div>
 
       <h2 className="mb-4 text-xl font-semibold tracking-tight text-center">Projects</h2>
       {projects.map((project) => {
