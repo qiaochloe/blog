@@ -58,7 +58,6 @@ const projects: Project[] = [
 
 export default function Page() {
   // For titles
-  const md = new MarkdownIt();
   const now = new Date();
   type Post = ReturnType<typeof getPosts>[number];
   const recentDate = (post: Post) =>
@@ -101,18 +100,20 @@ export default function Page() {
                   <a href={`#${slug}`} className="anchor absolute -ml-[1em] pr-[0.5em] invisible group-hover:visible no-underline text-neutral-300 after:content-['#']" />
                   {project.title}
                 </h2>
-                {project.report && (
-                  <Link href={project.report} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Report]</Link>
-                )}
-                {project.link && (
-                  <Link href={project.link} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Link]</Link>
-                )}
-                {project.slides && (
-                  <Link href={project.slides} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Slides]</Link>
-                )}
-                {project.repo && (
-                  <Link href={project.repo} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[GitHub]</Link>
-                )}
+                <div className="flex gap-x-1">
+                  {project.report && (
+                    <Link href={project.report} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Report]</Link>
+                  )}
+                  {project.link && (
+                    <Link href={project.link} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Link]</Link>
+                  )}
+                  {project.slides && (
+                    <Link href={project.slides} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[Slides]</Link>
+                  )}
+                  {project.repo && (
+                    <Link href={project.repo} className="text-blue-500 text-sm hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">[GitHub]</Link>
+                  )}
+              </div>
               </div>
               <div className="flex gap-x-2 shrink-0">
                 {project.tags?.map((tag) => (
