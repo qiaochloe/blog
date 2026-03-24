@@ -42,11 +42,7 @@ html {
 }
 
 .prose a {
-  @apply hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
-}
-
-.prose p a {
-  @apply underline decoration-neutral-400 underline-offset-2 decoration-[0.1em] hover:underline;
+  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700 ;
 }
 
 .prose .anchor:after {
@@ -184,15 +180,7 @@ html {
 }
 
 .prose-notes a {
-  @apply text-sm hover:underline transition-all decoration-neutral-400 hover:underline-offset-2 decoration-[0.1em];
-}
-
-.prose-notes p a {
-  @apply underline decoration-neutral-400 underline-offset-2 decoration-[0.1em] hover:underline;
-}
-
-.prose-notes p a:hover {
-  @apply text-inherit;
+  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700;
 }
 
 .prose-notes h1 {
