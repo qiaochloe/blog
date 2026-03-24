@@ -73,36 +73,22 @@ export default function Page() {
     .sort((a, b) => b.recentDate.getTime() - a.recentDate.getTime());
 
   return (
-    <section className="pl-4">
+    <section className="px-2">
       <h1 className="mb-4 text-2xl font-semibold tracking-tight text-center">Chloe Qiao</h1>
-      <p className="mb-4">
-        I am an undergraduate student at Brown University studying computer
-        science. I am particularly interested in systems.
-      </p>
-      <p className="mb-8">
-        In my free time, I like to{" "}
-        <Link
-          href="/fiction"
-          className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500"
-        >
-          read fiction
-        </Link>
-        ,{" "}
-        <Link
-          href="/writings"
-          className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500"
-        >
-          write about work
-        </Link>
-        , and {" "}
-        <Link
-          href="/climbing"
-          className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500"
-        >
-          go bouldering
-        </Link>
-        .
-      </p>
+      <div className="mb-8 flex flex-col gap-y-4">
+        <p>
+          I am a student at Brown University studying computer science. I am particularly interested in networks, operating systems, compilers, and solvers.
+        </p>
+        <p>
+          In the Brown CS department, I have worked as a <Link href="https://cs.brown.edu/people/staff/spoc/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">systems programmer</Link>, a <Link href="https://cs.brown.edu/degrees/undergrad/jobs/consult/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">lab consultant</Link>, and a teaching assistant for <Link href="https://browncs1715.github.io/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Formal Proof and Verification</Link> (TA Fall 2024, HTA Fall 2025), <Link href="https://csci0300.github.io/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Computer Systems</Link> (TA Spring 2025), <Link href="https://cs.brown.edu/courses/csci1515/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Applied Cryptography</Link> (HTA Spring 2026), and Operating Systems (HTA Fall 2026). I have also been the president of <Link href="https://browncsdug.com/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Brown CS DUG</Link>. Outside of the CS department, I help run the tech for <Link href="https://brownpuzzlehunt.com/" className="hover:underline text-blue-500 hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em]">Brown Puzzlehunt</Link>.
+        </p>
+        <p>
+          In my free time, I like to <Link href="/fiction" className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500"> read fiction</Link>, <Link href="/writings" className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500">write about work</Link>, and <Link href="/climbing" className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500">go climbing</Link>.
+        </p>
+        <p>
+          Brown students might find some of my <Link href="/courses" className="transition-all hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em] text-blue-500">courses reviews</Link> useful.
+        </p>
+      </div>
 
       <h2 className="mb-4 text-xl font-semibold tracking-tight text-center">Projects</h2>
       {projects.map((project) => {
