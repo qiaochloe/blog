@@ -135,7 +135,7 @@ html {
   @apply no-underline;
 }
 .prose .footnote-ref a {
-  @apply text-neutral-500 hover:text-neutral-700 font-normal;
+  @apply text-neutral-500 hover:text-neutral-700 font-normal no-underline;
 }
 .prose .footnotes {
   @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
@@ -207,7 +207,7 @@ html {
 }
 
 .prose-notes .footnote-ref a {
-  @apply text-neutral-500 hover:text-neutral-700 font-normal;
+  @apply text-neutral-500 hover:text-neutral-700 font-normal no-underline;
 }
 .prose-notes .footnotes {
   @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
