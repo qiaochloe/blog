@@ -26,7 +26,7 @@ export default function Page() {
   const allPosts = [...getPosts(), ...externalLinks];
 
   return (
-    <section className="pl-4">
+    <section className="px-2">
       <h1 className="font-semibold text-2xl mb-4 tracking-tighter">Writings</h1>
       <Suspense>
         <PostsList allPosts={allPosts} />

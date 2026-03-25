@@ -235,7 +235,7 @@ export function Navbar() {
     );
 
   return (
-    <aside className="-ml-[8px] mb-8 tracking-tight pl-4">
+    <aside className="-ml-[8px] mb-8 tracking-tight px-2">
       <div className="lg:sticky lg:top-20">
         <nav
           className="flex flex-row items-start relative px-0 pb-0 scroll-pr-6 md:relative"

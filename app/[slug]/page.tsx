@@ -136,7 +136,7 @@ export default async function Page({
       {showToc ? (
         <>
           <TocPortal headings={headings} />
-          <div className="min-w-0 max-w-xl overflow-x-hidden pl-4">
+          <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
             {isNotes ? (
               <div className="prose-notes">{articleContent}</div>
             ) : (
@@ -145,7 +145,7 @@ export default async function Page({
           </div>
         </>
       ) : (
-        <div className="min-w-0 max-w-xl overflow-x-hidden pl-4">
+        <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
           {isNotes ? (
             <div className="prose-notes">{articleContent}</div>
           ) : (
