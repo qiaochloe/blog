@@ -25,6 +25,12 @@ html {
   background: transparent !important;
 }
 
+/* CONTENT for pages like home and projects */
+
+.content a:not(.anchor) {
+  @apply text-blue-500 hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em];
+}
+
 /* PROSE */
 
 .prose .anchor {

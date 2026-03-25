@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-const NARROW_PATHS = new Set(["writings", "about", "now", "rss"]);
+const NARROW_PATHS = new Set(["writings", "now", "rss", "projects"]);
 const TOC_PORTAL_ID = "toc-portal";
 
 export function PostPageLayout({
