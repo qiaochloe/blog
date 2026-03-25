@@ -94,9 +94,9 @@ export function PostsList({ allPosts }: PostsListProps) {
   const md = new MarkdownIt();
 
   return (
-    <div className="w-full min-w-xl">
-      <div className="flex justify-between pt-2 pb-4 align-bottom">
-        <div>
+    <div className="w-full">
+      <div className="flex justify-between pt-2 pb-4 align-bottom gap-x-2">
+        <div className="flex flex-wrap">
           {Object.keys(selectedTags).map((tag: Tag) => (
             <button
               key={tag}
@@ -127,7 +127,7 @@ export function PostsList({ allPosts }: PostsListProps) {
         {currPosts.map((post) => (
           <div
             key={post.slug}
-            className="grid grid-cols-[25px_1fr_3em] py-2 gap-x-3"
+            className="grid grid-cols-[25px_1fr] sm:grid-cols-[25px_1fr_4em] py-2 gap-x-3"
           >
             <div className="flex space-x-1 items-center justify-end">
               {post.data.tags.map((tag: Tag) => (
@@ -152,7 +152,7 @@ export function PostsList({ allPosts }: PostsListProps) {
                 )}
               </Link>
             </h2>
-            <p className="text-neutral-600 tracking-tight text-sm">
+            <p className="text-neutral-600 tracking-tight text-sm hidden sm:block">
               {formatDate(post.data.updatedAt ?? post.data.publishedAt)}
             </p>
             <div></div>
