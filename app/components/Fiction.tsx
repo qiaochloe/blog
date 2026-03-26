@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { ModalImage } from "./ModalImage";
 import MarkdownIt from "markdown-it";
@@ -90,22 +90,21 @@ const finishedDates = [
   "Fall 2023",
   "Summer 2024",
   "Fall 2024",
-  "Ongoing",
 ] as const;
 
 type FinishedDate = (typeof finishedDates)[number] | null;
 
-type Fiction = {
+type Book = {
   title: string;
   author?: string;
   finishedDate: FinishedDate | Date | null;
   href: string;
   img: string;
   tags: Tag[];
-  comments?: string;
+  comments?: string | ReactNode;
 };
 
-const fiction: Fiction[] = [
+const fiction: Book[] = [
   {
     title: "Project Hail Mary",
     author: "Andy Weir",
@@ -421,8 +420,11 @@ export default function Fiction() {
 
               {/* Content */}
               <div className="flex-1 py-2 min-w-0">
-                {" "}
-                <div key={item.title} className="flex justify-between py-1">
+                {/* Title and date */}
+                <div
+                  key={item.title}
+                  className="flex justify-between py-1 gap-x-2 items-end"
+                >
                   <Link href={item.href} className="font-medium underline">
                     {item.title}
                   </Link>
@@ -430,6 +432,7 @@ export default function Fiction() {
                     {formatDate(item.finishedDate)}
                   </div>
                 </div>
+
                 {/* Tag section */}
                 <div className="flex flex-wrap gap-1 py-1">
                   {item.tags
@@ -459,15 +462,20 @@ export default function Fiction() {
                     ))}
                 </div>
                 {/* Comments */}
-                {item.comments && (
-                  <div
-                    key={i}
-                    className="text-gray-600 text-sm mb-0.5"
-                    dangerouslySetInnerHTML={{
-                      __html: md.render(item.comments),
-                    }}
-                  />
-                )}
+                {item.comments &&
+                  (typeof item.comments === "string" ? (
+                    <div
+                      key={i}
+                      className="text-gray-600 text-sm mb-0.5"
+                      dangerouslySetInnerHTML={{
+                        __html: md.render(item.comments),
+                      }}
+                    />
+                  ) : (
+                    <div key={i} className="text-gray-600 text-sm mb-0.5">
+                      {item.comments}
+                    </div>
+                  ))}
               </div>
             </div>
           ))}
