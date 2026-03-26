@@ -51,6 +51,12 @@ The end-to-end argument is that only endpoints can provide certain functions cor
 
 For example, consider the problem of reliable data transfer. Data transfer may involve the host and client application, the operating system, the disk, and the communication subsystem, all of which could be a point of failure. Thus, reliable data transfer can only be fully implemented at the application layer with end-to-end check and retry, and it may be inefficient to implement reliability in the network as well.
 
+### Routing Schemes
+
+Multicast is a routing scheme that sends data from one source to multiple destinations simultaneously. It only replicates packets when necessary in the network path, which optimizes bandwidth.
+
+Multihoming connects a host to multiple networks in order to increase reliability and performance.
+
 ## Internet Infrastructure
 
 ### B4 And After
@@ -196,3 +202,46 @@ Notably, control functionality was moved off of network equipment and into separ
 [A Decentralized SDN Architecture for the WAN](https://dl.acm.org/doi/10.1145/3651890.3672257)
 
 In a typical SDN, the control plane is a centralized controller who runs a traffic engineering algorithm to compute paths (while accounting for capacity). However, to run an SDN in a global WAN, we need a lot more "SDN control infrastructure".
+
+## Network Functions
+
+### APLOMB
+
+[Making middleboxes someone else's problem: network processing as a cloud service](https://dl.acm.org/doi/10.1145/2377677.2377680)
+
+Middleboxes sit at the edge of the network and intercept and modify traffic. Examples include firewalls, intrusion detection systems, proxies, load balancers, and WAN optimizers.
+
+There are two main ideas in APLOMB:
+
+1. Move from hardware appliances to software appliances
+2. Take software appliances like middleboxes and run them in the cloud
+
+The former was a very influential idea; the latter less so.
+
+### Click
+
+[The click modular router](https://dl.acm.org/doi/abs/10.1145/354871.354874)
+
+Before Click, it was assumed that routers must be fixed-function devices.
+
+### VFP
+
+[VFP: A Virtual Switch Platform for Host SDN in the Public Cloud](https://www.usenix.org/conference/nsdi17/technical-sessions/presentation/firestone)
+
+VFP is Microsoft's virtual switch platform used to implement network functions in software. Its features include:
+
+- Multiple independent network controllers can program network applications
+- Rules apply to stateful connections, not just packets
+- Flow policy offloaded to programmable NICs (FPGAs)
+
+Note: Google's philosophy in the 2010s was to run everything on the CPU (e.g. Andromeda).
+
+### RMT
+
+[Forwarding metamorphosis: fast programmable match-action processing in hardware for SDN](https://dl.acm.org/doi/10.1145/2534169.2486011)
+
+Switching chips are 100x faster at switching than CPUS and 10x faster than network processors. They take advantage of pipelining and parallism.
+
+**Pipelining** involves dividing the execution of an instruction into several steps, each of which could run in parallel with other steps. This allows for much higher throughput than a CPU, which typically executes instructions sequentially.
+
+Note: RMT was developed into a commercial product by Barefoot Networks, which was acquired by Intel in 2019. Their commercial product is the [Tofino switches](https://www.intel.com/content/www/us/en/products/network-io/programmable-ethernet-switch.html).
