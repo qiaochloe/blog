@@ -4,15 +4,15 @@ import Images from "./Images";
 export function PuzzlethonMap() {
   const images = [
     {
-      src: "/2024-puzzlethon/puzzlethon-empty-map.png",
+      src: "/puzzlethon-2024/puzzlethon-empty-map.png",
       alt: "The empty Puzzlethon map",
     },
     {
-      src: "/2024-puzzlethon/puzzlethon-half-map.png",
+      src: "/puzzlethon-2024/puzzlethon-half-map.png",
       alt: "Half of the Puzzlethon map",
     },
     {
-      src: "/2024-puzzlethon/puzzlethon-complete-map.png",
+      src: "/puzzlethon-2024/puzzlethon-complete-map.png",
       alt: "The complete Puzzlethon map",
     },
   ];
@@ -23,12 +23,12 @@ export function PuzzlethonMap() {
 export function PuzzlethonHinting() {
   const images = [
     {
-      src: "/2024-puzzlethon/puzzlethon-hinting-mobile.png",
+      src: "/puzzlethon-2024/puzzlethon-hinting-mobile.png",
       alt: "The hinting page on mobile",
       width: 200,
     },
     {
-      src: "/2024-puzzlethon/puzzlethon-hinting-desktop.png",
+      src: "/puzzlethon-2024/puzzlethon-hinting-desktop.png",
       alt: "The hinting page on desktop",
       width: 400,
     },
@@ -40,11 +40,11 @@ export function PuzzlethonHinting() {
 export function PuzzlethonCarberry() {
   const images = [
     {
-      src: "/2024-puzzlethon/puzzlethon-carberry-not-completed.png",
+      src: "/puzzlethon-2024/puzzlethon-carberry-not-completed.png",
       alt: "The Carberry puzzle, not completed",
     },
     {
-      src: "/2024-puzzlethon/puzzlethon-carberry-completed.png",
+      src: "/puzzlethon-2024/puzzlethon-carberry-completed.png",
       alt: "The Carberry puzzle, completed",
     },
   ];

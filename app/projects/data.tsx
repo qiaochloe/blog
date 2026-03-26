@@ -99,7 +99,7 @@ export const projects: Project[] = [
     </>,
     link: "https://2024.puzzlethon.brownpuzzleclub.com",
     repo: "https://github.com/brown-puzzle-hq/2024-puzzlethon-site",
-    report: "/2024-puzzlethon",
+    report: "/puzzlethon-2024",
     tags: ["TypeScript"]
   },
   {
