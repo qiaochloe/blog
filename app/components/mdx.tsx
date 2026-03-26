@@ -10,7 +10,8 @@ import "katex/dist/katex.min.css";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { ModalImage } from "./ModalImage";
 import Fiction from "./Fiction";
-import Textbooks from "./Textbooks";
+import Nonfiction from "./Nonfiction";
+
 import {
   PuzzlethonHinting,
   PuzzlethonMap,
@@ -107,7 +108,7 @@ let components = {
   a: CustomLink,
   Table,
   Fiction,
-  Textbooks,
+  Nonfiction,
   // Puzzlethon
   PuzzlethonHinting,
   PuzzlethonMap,

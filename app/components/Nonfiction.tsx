@@ -37,7 +37,7 @@ type Book = {
   comments?: string;
 };
 
-const textbooks: Book[] = [
+const nonfiction: Book[] = [
   {
     title: "Learn Rust in a Month of Lunches",
     author: "Dave Macleod",
@@ -108,7 +108,7 @@ const textbooks: Book[] = [
   },
 ];
 
-export default function Textbooks() {
+export default function Nonfiction() {
   // Tag filter system
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   function toggleTag(tag: Tag) {
@@ -123,7 +123,14 @@ export default function Textbooks() {
 
   return (
     <div>
-      <p>The tag system below takes the intersection, not the union.</p>
+      <p>
+        These are some of my favorite pieces of nonfiction. They are somewhat
+        biased toward computer science and sports science.
+      </p>
+      <p>
+        Check out my <Link href="/nonfiction">fiction shelf</Link> for my other
+        recommendations.
+      </p>
       <div className="pb-4">
         <div className="flex pb-2 space-x-1"></div>
         {Object.entries(categoryToTags).map(([category, tags]) => {
@@ -143,7 +150,7 @@ export default function Textbooks() {
         })}
       </div>
       <div>
-        {textbooks
+        {nonfiction
           .sort((a, b) => {
             return a.title.localeCompare(b.title);
           })
@@ -158,7 +165,7 @@ export default function Textbooks() {
               {/* Image */}
               <div className="flex-shrink-0 py-4">
                 <ModalImage
-                  src={`/textbooks/${item.img}`}
+                  src={`/nonfiction/${item.img}`}
                   alt={item.title}
                   width={100}
                   height={100}
