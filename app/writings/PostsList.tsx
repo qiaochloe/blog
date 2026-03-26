@@ -78,8 +78,8 @@ export function PostsList({ allPosts }: PostsListProps) {
       return aNormalized.localeCompare(bNormalized);
     };
     const chronoSort = (a: Post, b: Post) => {
-      const aDate = a.data.publishedAt ?? a.data.updatedAt;
-      const bDate = b.data.publishedAt ?? b.data.updatedAt;
+      const aDate = a.data.updatedAt ?? a.data.publishedAt;
+      const bDate = b.data.updatedAt ?? b.data.publishedAt;
       return (bDate?.getTime() ?? 0) - (aDate?.getTime() ?? 0);
     };
 
