@@ -26,7 +26,7 @@ const tags = [
   "Imperial China",
   "Western Royalty",
   "Modern",
-  "Interstellar",
+  "Sci-Fi",
   "ABO",
   "Role Reversal",
   "Infinite Flow",
@@ -52,7 +52,7 @@ const categoryToTags: Record<TagCategory, Tag[]> = {
     "Xianxia",
     "Imperial China",
     "Modern",
-    "Interstellar",
+    "Sci-Fi",
     "Western Royalty",
   ],
   other: ["ABO", "Infinite Flow", "Transmigration"],
@@ -78,7 +78,7 @@ const tagStyles: Record<Tag, string> = {
   "Imperial China": "bg-sky-100 text-sky-900",
   "Western Royalty": "bg-sky-100 text-sky-900",
   Modern: "bg-sky-100 text-sky-900",
-  Interstellar: "bg-sky-100 text-sky-900",
+  "Sci-Fi": "bg-sky-100 text-sky-900",
   ABO: "bg-pink-100 text-pink-900",
   "Infinite Flow": "bg-green-100 text-green-900",
   Transmigration: "bg-orange-100 text-orange-900",
@@ -86,12 +86,11 @@ const tagStyles: Record<Tag, string> = {
 };
 
 const finishedDates = [
-  "Very very long ago",
-  "Very long ago",
   "Long ago",
   "Fall 2023",
   "Summer 2024",
   "Fall 2024",
+  "Ongoing",
 ] as const;
 
 type FinishedDate = (typeof finishedDates)[number] | null;
@@ -107,6 +106,16 @@ type Fiction = {
 };
 
 const fiction: Fiction[] = [
+  {
+    title: "Project Hail Mary",
+    author: "Andy Weir",
+    finishedDate: new Date("2025-10-21"),
+    href: "https://www.goodreads.com/book/show/54493401-project-hail-mary",
+    img: "phm.jpg",
+    tags: ["Novel", "English", "Sci-Fi"],
+    comments:
+      "Project Hail Mary is by the same author as The Martian. One of the best science fiction books I've ever read. You can really appreciate how the author conveys their love for science through the main character. The opening scene—where he figured out that he was on a spacecraft by taking simple measurements—was just brilliant. I also loved the depiction of the alien race. It really makes you think: what kind of knowledge is intrinsic, and what kind of knowledge is cultural? Anyway, highly recommend, I stayed up until 5 AM the day before my engineering exam reading this.",
+  },
   {
     title: "Kaguya-sama Wants To Be Confessed To",
     author: "Aka Akasaka",
@@ -133,7 +142,7 @@ const fiction: Fiction[] = [
     finishedDate: "Fall 2024",
     href: "https://www.novelupdates.com/series/after-i-turned-from-o-to-a-i-became-the-national-male-god/",
     img: "aitfotaibtnmg.jpeg",
-    tags: ["Webnovel", "Chinese", "BL", "Interstellar", "ABO", "Role Reversal"],
+    tags: ["Webnovel", "Chinese", "BL", "Sci-Fi", "ABO", "Role Reversal"],
     comments:
       "The MC gong is very good. He's gentle, considerate, and attracts a lot of people to his side but always puts the ML first. He handles most problems very reasonably, but he can be unexpectedly willful about what he wants (like eventually openly being in a relationship with the ML!). \n\nThe ML shou is where this novel really shines for me. He's very unruly and fierce (really like a delinquent) when we first meet him, but he is a little bit shy when it comes to his relationship with the MC. He is a very fleshed-out characters, with his own cast of friends, values, good traits and bad traits. I love that the author doesn't shy away from giving him insecurities, jealousies, and fears, but the MC always reaffirms that he loves him regardless of his \"advantages and disadvantages.\" Even though it is implied that the ML is the shou, I would say that it's more about their circumstances pheromone incompatibility & the ML never acts like an O torward the MC. \n\nI actually think that the writing, plot, and characterization is not very polished, but this is why the characters could continue to surprise me. The MC can be at times gentle or willful, and the ML can be at times grumpy or flustered or jealous.",
   },
@@ -213,21 +222,14 @@ const fiction: Fiction[] = [
     finishedDate: "Fall 2024",
     href: "https://www.novelupdates.com/series/this-alpha-is-determined-despite-physical-disability-interstellar/",
     img: "taiddpd.jpeg",
-    tags: [
-      "Webnovel",
-      "Chinese",
-      "BL",
-      "Interstellar",
-      "ABO",
-      "Transmigration",
-    ],
+    tags: ["Webnovel", "Chinese", "BL", "Sci-Fi", "ABO", "Transmigration"],
     comments:
       "This an ABO interstellar setting. The MC has a sharp mouth, appears a bit frivolous, but is actually quite gentle and soft-hearted on the inside. The ML is every bit the kind of person that you would expect to rise to the level of major general in such a setting despite being an O. Before meeting our MC, he's restrained, disciplined, and only has mechas and fighting in his heart. They are equals in every way, helping and accommodating each other. \n\nThe plot, I think, is actually quite mild. One of the major themes of the novel is that... you are just one person. When you see a problem, you can only try your best to change things a little bit, and hope that with enough people pushing, something will change. The novel acknowledges how longstanding problems like omega rights, domestic abuse, journalistic privacy violations, and corruption can't just be resolved by one person. Although the translation is ongoing, the MTL is actually quite passable.",
   },
   {
     title:
       "Transmigrating Into The Heartthrob’s Cannon Fodder Childhood Friend",
-    finishedDate: "Very long ago",
+    finishedDate: "Long ago",
     href: "https://www.novelupdates.com/series/transmigrating-into-the-heartthrobs-cannon-fodder-childhood-friend/",
     img: "titcfcf.jpeg",
     tags: ["Webnovel", "Chinese", "BL", "Modern", "Transmigration"],
@@ -314,7 +316,7 @@ const fiction: Fiction[] = [
       "It's a pretty good role-reversal story. The FL is hilarious; the ML is a sweetheart. I'm satisfied with the art, humor, and the character archetypes. The ending was a bit abrupt.",
   },
   {
-    finishedDate: null,
+    finishedDate: new Date("2025-09-01"),
     title: "My White Moonlight Took Off His Women’s Clothes",
     href: "https://www.novelupdates.com/series/my-white-moonlight-took-off-his-womens-clothes/",
     img: "mwmtohwc.jpeg",
@@ -339,7 +341,14 @@ export default function Fiction() {
 
   return (
     <div>
-      <p>The tag system below takes the intersection, not the union.</p>
+      <p>
+        These are some of my favorite pieces of fiction. Beware of spoilers in
+        the reviews.
+      </p>
+      <p>
+        Check out my <Link href="/nonfiction">nonfiction shelf</Link> for my
+        other recommendations.
+      </p>
       <div className="pb-4">
         <div className="flex pb-2 space-x-1"></div>
         {Object.entries(categoryToTags).map(([category, tags]) => {
