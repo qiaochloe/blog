@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Righteous&display=swap");
 
 :root {
   --sh-class: #2d5e9d;
@@ -48,7 +46,7 @@ html {
 }
 
 .prose a {
-  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700 ;
+  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700;
 }
 
 .prose .anchor:after {
@@ -91,19 +89,24 @@ html {
 }
 
 .prose h1 {
-  @apply text-4xl font-medium tracking-tight mt-6 mb-2;
+  @apply text-4xl font-medium tracking-tight mt-6 mb-2 scroll-mt-24;
 }
 
 .prose h2 {
-  @apply text-xl font-medium tracking-tight mt-6 mb-2;
+  @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
+  color: #1f3c93;
+  border-bottom: 1px solid #b3bed8;
+  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .prose h3 {
-  @apply text-lg font-normal tracking-tight mt-6 mb-2;
+  @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
+  color: #009688;
+  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .prose h4 {
-  @apply text-lg font-medium tracking-tight mt-6 mb-2;
+  @apply text-lg font-medium tracking-tight mt-6 mb-2 scroll-mt-24;
 }
 
 .prose strong {
@@ -162,15 +165,14 @@ html {
   @apply ml-0.5 text-neutral-400 no-underline hover:underline;
 }
 
-/*.prose > :first-child {*/
-/*  margin-top: 1.25em !important;*/
-/*  margin-bottom: 1.25em !important;*/
-/*}*/
-
 /* Prose notes */
 
+.prose-notes {
+  counter-reset: note-h2;
+}
+
 .prose-notes p {
-  @apply text-sm py-2;
+  @apply text-sm my-3;
 }
 
 .prose-notes ol {
@@ -182,7 +184,7 @@ html {
 }
 
 .prose-notes li {
-  @apply text-sm;
+  @apply text-sm my-0.5;
 }
 
 .prose-notes a {
@@ -190,26 +192,77 @@ html {
 }
 
 .prose-notes h1 {
-  @apply mb-4;
+  @apply mb-4 font-semibold text-2xl scroll-mt-24;
   font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 }
 
 .prose-notes h2 {
-  @apply text-lg font-semibold mt-6 text-[#D73A4A] leading-5 tracking-tight mb-2;
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
+  color: #1f3c93;
+  border-bottom: 1px solid #b3bed8;
+  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  counter-increment: note-h2;
+  counter-reset: note-h3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  align-items: baseline;
+  text-align: left;
 }
 
 .prose-notes h3 {
-  @apply text-base font-semibold mt-4 mb-2 text-[#E97000] tracking-tight;
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
+  color: #009688;
+  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  counter-increment: note-h3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  align-items: baseline;
+  text-align: left;
+}
+
+.prose-notes h2 .anchor,
+.prose-notes h3 .anchor {
+  @apply absolute invisible no-underline;
+  margin-left: -1em;
+  padding-right: 0.5em;
+  width: 80%;
+  max-width: 700px;
+  cursor: pointer;
+}
+
+.prose-notes h2:hover > .anchor,
+.prose-notes h3:hover > .anchor {
+  @apply visible;
+}
+
+.prose-notes h2 .anchor:after,
+.prose-notes h3 .anchor:after {
+  @apply text-neutral-300;
+  content: "#";
+}
+
+.prose-notes h2::after {
+  @apply text-base font-medium;
+  color: #8f9fc4;
+  content: counter(note-h2);
+  justify-self: end;
+}
+
+.prose-notes h3::after {
+  @apply text-base font-medium;
+  color: #7eb8b1;
+  content: counter(note-h2) "." counter(note-h3);
+  justify-self: end;
 }
 
 .prose-notes h2 + h3 {
-  @apply mt-2;
+  @apply mt-4;
 }
 
 .prose-notes strong {
-  @apply font-bold;
+  @apply font-semibold;
 }
 
 .prose-notes .footnote-ref a {
@@ -217,9 +270,6 @@ html {
 }
 .prose-notes .footnotes {
   @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
-}
-.prose-notes .footnote-item p {
-  display: inline;
 }
 .prose-notes .footnotes .footnote-item p {
   @apply my-0 inline;
@@ -244,7 +294,7 @@ html {
 
 /* Code block <pre><code> */
 .prose-notes pre {
-  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
+  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono;
   border: initial;
 }
 

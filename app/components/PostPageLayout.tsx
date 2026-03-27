@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { BackToTopButton } from "app/components/BackToTopButton";
 
 const NARROW_PATHS = new Set(["writings", "now", "rss", "projects"]);
 const TOC_PORTAL_ID = "toc-portal";
@@ -20,14 +21,17 @@ export function PostPageLayout({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_36rem_1fr] gap-x-16 gap-y-8 items-stretch">
-      <div
-        id={TOC_PORTAL_ID}
-        className="hidden lg:block min-w-0"
-        aria-hidden
-      />
-      <div className="min-w-0">{children}</div>
-      <div className="hidden lg:block min-w-0" aria-hidden />
-    </div>
+    <>
+      <BackToTopButton />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_36rem_1fr] gap-x-16 gap-y-8 items-stretch">
+        <div
+          id={TOC_PORTAL_ID}
+          className="hidden lg:block min-w-0"
+          aria-hidden
+        />
+        <div className="min-w-0">{children}</div>
+        <div className="hidden lg:block min-w-0" aria-hidden />
+      </div>
+    </>
   );
 }

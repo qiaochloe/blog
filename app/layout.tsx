@@ -41,15 +41,13 @@ export const metadata: Metadata = {
   },
 };
 
-const cx = (...classes) => classes.filter(Boolean).join(" ");
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cx(figtree.variable, "text-black bg-white")}>
+    <html lang="en" className={`${figtree.variable} text-black bg-white`}>
       <body className="antialiased">
         <main className="flex-auto min-w-0 flex flex-col">
           <MaxWidthWrapper>
