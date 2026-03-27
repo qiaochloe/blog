@@ -15,6 +15,20 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon/icon0.svg", type: "image/svg+xml" },
+      { url: "/favicon/icon1.png", type: "image/png" },
+    ],
+    shortcut: [{ url: "/favicon.ico" }],
+    apple: [{ url: "/favicon/apple-icon.png" }],
+  },
+  manifest: "/favicon/manifest.json",
+  appleWebApp: {
+    title: "Chloe Qiao",
+  },
   title: {
     default: "Chloe Qiao",
     template: "%s | Chloe Qiao",
