@@ -1,0 +1,148 @@
+---
+title: "Automated Reasoning"
+summary: "SAT • CP • LP • IP"
+publishedAt: 2026-01-26
+updatedAt: 2026-04-08
+tags:
+- notes
+---
+
+## Boolean Satisfiability (SAT)
+
+**Problem**. How can we assign each $x_i \in D_i$ so every constraint holds?
+
+As it turns out, SAT is NP-complete, so there is no polynomial-time solution to the problem. Nevertheless, SAT solvers have become fairly fast and sophisticated, solving SAT problems with thousands of variables. 
+
+Most approaches to solving SAT involve: 
+1. Preprocessing to conjunctive normal form (CNF)
+2. Simplifying via inference rules
+3. Search
+
+
+### Preprocessing
+
+Conjunctive Normal Form (CNF)
+- A literal is a variable $x$ or its negation $\neg x$
+- A clause is a disjunction (OR) of literals
+- A formula is in CNF if it is an AND of clauses
+
+Any boolean formula can be brought to CNF.
+
+### Inference
+
+A **SAT-preserving transformation** rewrites the instance without changing the set of satisfying assignments.
+
+1. **Unit propagation.** If a clause becomes a single literal (unit clause), that literal must be true. Assign it, delete falsified literals from other clauses, remove satisfied clauses; repeat. An empty clause means unsatisfiable.
+2. **Pure literal elimination.** If a variable appears only positively or only negatively in all remaining clauses, assign it to satisfy those occurrences; it cannot create new falsified clauses.
+
+These are cheap, deterministic rules used before and during search.
+
+### Search
+
+**DPLL** alternates between deterministic propagation with branching on an unset variable. 
+
+**CDCL** (conflict-driven clause learning) extends the DPLL algorithm. On contradiction, it analyze the conflict, adds a learned clause that rules out a class of bad partial assignments, and backtracks in a structured way. 
+
+Modern SAT solvers are essentially a combination of CDCL and heuristics.
+
+### Heuristics
+
+Branching heuristics
+1. **DLCS** (Dynamic Largest Combined Sum): use counts $C_p(x)$, $C_n(x)$ of appearances in unresolved clauses; maximize $C_p(x) + C_n(x)$, then set the literal with the larger count
+2. **DLIS** (Dynamic Largest Individual Sum): maximize $\max(C_p(x), C_n(x))$ (compare variables by their stronger side)
+3. **Randomized DLCS / DLIS:** break ties or near-ties randomly to avoid brittle greediness
+4. **Böhm's heuristic:** for each variable, form a vector $(H_1(x), H_2(x), \ldots)$ of counts by clause length $i$; compare vectors lexicographically
+5. **MOMS** (Maximum Occurrences in Clauses of Minimum Size): bias toward variables that appear often in the shortest (most constrained) clauses
+6. **Jeroslow–Wang:** weight each clause by something like $2^{-k}$ for length $k$; score literals by the sum of weights of clauses containing them
+7. **VSIDS** (Variable State Independent Decaying Sum): maintain activity scores; when learning clauses, bump literals involved; decay all scores periodically; branch on high activity
+
+Random restarts periodically abandon the current path and retry from a fresh seed. This reduces heavy-tailed runtimes where deep paths dominate mean behavior.
+
+## Constraint Programming (CP)
+
+> Constraint programming represents one of the closest approaches computer science has yet made to the Holy Grail of programming: the user states the problem, the computer solves it. — E. Freuder
+
+A constraint satisfaction problem (CSP) has 
+1. Variables $X_i$
+2. Domains $D_i$
+3. Constraints on tuples of variables
+
+As we have seen before, each CSP with a finite domain can be reduced down to a boolean satisfiability problem (SAT). But sometimes there is a global structure to the problem that can be exploited.
+
+**Constraint programming (CP)** extends CSP with global constraints, which allow the solver to run specialized algorithms internally.
+
+### Global constraints
+
+**Idea:** one predicate ties **many** variables together; the solver runs a dedicated propagator (often graph / flow / DP / scheduling) instead of many weak pairwise constraints.
+
+Examples (names vary slightly by solver: CP-SAT, Choco, MiniZinc, etc.):
+
+1. **AllDifferent** on $(x_1,\ldots,x_n)$ checks that all assigned values are distinct. Propagation often uses **matchings** on the variable–value bipartite graph.
+2. **Global cardinality (GCC)** checks that for each value $v$, the number of variables assigned $v$ lies in a given range
+3. **Lexicographic order** enforces $x_{1:n} \leq_{\text{lex}} y_{1:n}$ and is commonly used for **symmetry breaking**
+
+### Consistency
+
+In CP, the solver stores a domain for each variable. During propagation, it prunes unsupported values from the domain. A value $v$ for variable $x$ is *supported* if you can pick values for the other variables such that the whole constraint is satisfied. 
+
+Different consistency levels differ only in how local that check is and how many values they inspect.
+
+1. **Forward checking** only reacts right after a variable is assigned. It drops neighbor values that directly clash with that one assignment. 
+2. **Bounds consistency** treats the domain as if it were the whole interval $[\min,\max]$. It is fast but can miss holes.
+3. Arc consistency states that for  a directed arc $X\to Y$, every $a\in D_X$ must have some $b\in D_Y$ with $(a,b)$ allowed; otherwise delete $a$. **AC-3** maintains a queue of arcs to revise; when $D_X$ shrinks, revisit arcs into $X$.
+4. Domain consistency states that for each remaining value of each variable in that constraint, check support using all other variables in the constraint at once.
+
+References: [Roman Barták — constraint programming lectures](https://kti.mff.cuni.cz/~bartak/constraints/index.html).
+
+### Search Heuristics
+
+Variable selection
+
+1. **Fail-first** prefers variables where a wrong guess fails fast
+2. **Minimum remaining values** (MRV) prefers variables with the smallest domain
+3. **Degree heuristic** prefers variables that are highly connected to still-unassigned neighbors whenever there is a MRV tie
+4. **dom/deg** takes the domain size divided by degree
+
+**Value selection**
+
+1. **Preserve future options:** prefer values that shrink neighboring domains as little as possible.
+2. **Tie-breaks:** min, max, median, random—can dominate performance.
+
+Impact-based search (IBS) measures how much the "size" of the search space drops after an assignment and propagation. Impact is $1 - A/B$ for sizes $B \to A$.
+
+Activity-based search (ABS) increases scores when propagation touches a variable or value, similar to VSIDS.
+
+## Linear Programming (LP)
+
+Linear programming involves optimizing some value given a linearn constraint and continuous variables.
+
+The **feasible region** will be a convex polyhedron. If an optimum exists, it will occur at a **vertex**. But there are two situations where a single solution won't be found:
+
+- If **infeasible**, the polyhedron will be empty.
+- If **unbounded**, the objective will improve forever along a feasible ray.
+
+### Algorithms
+
+Ellipsoid and **interior-point** methods have polynomial worst-case time in bit complexity. 
+
+**Simplex** walks vertex-to-vertex along improving edges; it is exponential in the worst case but often very fast in practice.
+
+## Integer Programming (IP)
+
+Integer programming is NP-hard. Its runtime is hard to predict and highly dependent on its formulation.
+
+LP is a strict bound on IP.
+
+### Branch and Bound Algorithm
+
+1. Split the feasible region into two branches. If the domain is integral, pick a variable with fractional LP value $\hat{x}$ and create children $x \leq \lfloor \hat{x} \rfloor$ and $x \geq \lceil \hat{x} \rceil$. If the domain is binary, branch on $x=0$ and $x=1$.
+2. Compute an estimated best solution for the children using LP
+3. Evaluate and prune based on the LP results. 
+   - If the relaxation returns a feasible solution for our original problem, then it is optimal
+   - If the relaxation is infeasible, then the problem is infeasible
+   - If the relaxation returns a solution worse than the best-known solution, then all solutions with the current prefix are suboptimal.
+
+### Search Strategies
+
+- Depth-first search (DFS) finds feasible solutions quickly, is memory-efficient, but can easily get stuck to suboptimal parts of the search space
+- Best-first Search looks at the node with the best relaxation value next, and is optimal in the sense that it never visits a node that could be pruned otherwise. But it might jump a lot and use a lot of memory.
