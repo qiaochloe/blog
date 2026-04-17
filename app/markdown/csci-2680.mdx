@@ -2,7 +2,7 @@
 title: "Networks and the Internet Notes"
 summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters • Management"
 publishedAt: 2026-02-22
-updatedAt: 2026-03-12
+updatedAt: 2026-04-16
 tags: 
 - notes
 todo: isis, bgp, rsvp
@@ -245,3 +245,41 @@ Switching chips are 100x faster at switching than CPUS and 10x faster than netwo
 **Pipelining** involves dividing the execution of an instruction into several steps, each of which could run in parallel with other steps. This allows for much higher throughput than a CPU, which typically executes instructions sequentially.
 
 Note: RMT was developed into a commercial product by Barefoot Networks, which was acquired by Intel in 2019. Their commercial product is the [Tofino switches](https://www.intel.com/content/www/us/en/products/network-io/programmable-ethernet-switch.html).
+
+## Hypergiants
+
+### Microservices
+
+Microservices are an alternative to monolithic applications. It divides the application into multiple services which communicate through the network through **remote procedure calls** (RPCs). 
+
+Advantages of microservices:
+1. Independent development
+2. Independent deployment and scaling
+3. Fault isolation
+
+Advantages of monoliths:
+1. Lower network and serialization overhead
+2. Tight coupling 
+
+In addition to application logic, microservices also need to do:
+1. Authentication
+2. Tracing
+3. Service discovery
+4. Making connection
+
+Because this code tends to be duplicated in microservices, sometimes this is instead handled automatically by the **service mesh**.
+
+There are two main styles of service mesh: (1) sidecar and (2) remote proxy.
+
+Advantages and disadvantages of sidecars:
+1. Low communication overhead (only between proxies)
+2. Don't need to change code 
+
+Advantages and disadvantages of remote proxies
+1. Cross-region
+2. Need to change code
+3. High communication overhead (between service and proxy)
+
+Advantages and disadvantages of library
+1. Low communication overhead (only between services)
+2. Need to change code
