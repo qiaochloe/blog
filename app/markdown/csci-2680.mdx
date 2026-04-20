@@ -2,7 +2,7 @@
 title: "Networks and the Internet Notes"
 summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters • Management"
 publishedAt: 2026-02-22
-updatedAt: 2026-04-16
+updatedAt: 2026-04-20
 tags: 
 - notes
 todo: isis, bgp, rsvp
@@ -283,3 +283,33 @@ Advantages and disadvantages of remote proxies
 Advantages and disadvantages of library
 1. Low communication overhead (only between services)
 2. Need to change code
+
+## Wireless
+
+### RFocus
+
+[RFocus: Beamforming Using Thousands of Passive Antennas](https://www.usenix.org/conference/nsdi20/presentation/arun)
+
+Problem: A transmitter can direct a more powerful signal beam to a receiver by beamformming with antenna arrays. However, there are physical limits on the number of antennas we can fit on a device.
+
+The idea of RFocus is to increase antenna capacity by putting antennas in the environment. RFocus surface consts of 3200 antennas, all of which are either reflective or transparent. The receiver sends measurements of the received signal strength to the RFocus controller, which then configures the surface.
+
+### Cellular Networks
+
+Cellular networks today are divided into:
+1. Radio Access Network (RAN), which consists of radio towers that connect to user equipment (UE)
+2. Mobile core, which connects the RAN to the rest of the Internet
+
+When a UE wants to connect to a mobile network, it performs a *cell selection* procedure. It first tunes to the appropriate frequency. Then it chooses a tower to connect based on its home operators' Public Land Mobile Network (PLMN) identifier specified in its Subscriber Identity Module (SIM) card, as well as signal strength.
+
+Once it chooses a tower, it synchronizes with the broadcast control channel and attaches to the network. The cell handles  user authentication and sets up connections. Later, when a UE moves around in the physical world, it may need to be handed over to an adjacent tower. 
+
+When a UE enters an area where its home operator does not have infrastructure, it attempts to **roam** by attaching onto an available tower. However, this attachment only succeeds if the visited operator has a roaming agreement with the UE's home operator.
+
+There are multiple generations of mobile Internet, notably 4G (LTE) and 5G.
+
+### RinP
+
+Problem: Cellular bandwidth demand continues to grow exponentially. Cellular operators have traditionally met this demand by deploying more base stations in an area (*densification*). Users have typically enjoyed data rates that double every two years, a scaling trend called Cooper's law. However, denser deployments will lead to increased interference, eventually leading to the end of Cooper's law. The problem remains: how can we continue scaling bandwidth in high-demand areas?
+
+The authors of this paper propose to have users connect to operators in overlapping coverage areas in order to dynamically share capacity across operators, known as roaming-in-place (RinP). 
