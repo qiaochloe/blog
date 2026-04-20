@@ -16,6 +16,7 @@ export function ModalImage(props) {
     src,
     width = 500, // default width
     height = 500, // default height
+    style,
     ...rest
   } = props;
 
@@ -48,6 +49,7 @@ export function ModalImage(props) {
         width={width}
         height={height}
         className="rounded-sm relative cursor-pointer"
+        style={{ width: "auto", height: "auto", ...style }}
         {...rest}
       />
       {mounted && modal && createPortal(modal, document.body)}
