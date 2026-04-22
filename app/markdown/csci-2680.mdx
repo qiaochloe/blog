@@ -2,7 +2,7 @@
 title: "Networks and the Internet Notes"
 summary: "Architecture • Infrastructure • Congestion control • Access • Traffic Control • Datacenters • Management"
 publishedAt: 2026-02-22
-updatedAt: 2026-04-20
+updatedAt: 2026-04-21
 tags: 
 - notes
 todo: isis, bgp, rsvp
@@ -285,6 +285,18 @@ Advantages and disadvantages of library
 2. Need to change code
 
 ## Wireless
+
+| Wires | Radio |
+| ----- | ----- |
+| Static | Dynamic |
+| Robust | Experiences interference |
+| High throughput | Lower throughput |
+
+The hidden node problem occurs when a node can communicate with a receiver, but cannot directly communicate with other nodes that are communicating with the receiver. As a result, multiple nodes can send data packets to the AP simultaneously, causing interference.
+
+The exposed node problem occurs when a node cannot send packets to other nodes because of interference with a neighboring transmitter. A common way to approach this problem is using RTS (Request-to-Send) and CTS (Clear-to-Send).
+
+One goal of wireless is to reduce the signal-noise ratio (SNR). This can be achieved with a stronger signal. This usually increases the throughput of the system, since there is such a high drop rate.
 
 ### RFocus
 
