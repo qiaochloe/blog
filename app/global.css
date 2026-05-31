@@ -316,9 +316,7 @@ input[type="email"] {
 
 table {
   display: block;
-  max-width: fit-content;
-  white-space: nowrap;
-  word-break: keep-all;
+  max-width: 100%;
   overflow-x: auto;
   margin: 1rem 0;
   border-collapse: collapse;
@@ -327,7 +325,8 @@ table {
 th,
 td {
   padding: 0.25rem 1rem;
-  white-space: nowrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
   vertical-align: top;
   font-size: 0.875rem;
 }

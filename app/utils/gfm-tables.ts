@@ -133,14 +133,32 @@ export function preprocessGfmTables(content: string): string {
   return result.join("\n");
 }
 
-const BR_PLACEHOLDER = "\u0000BR\u0000";
-
-/** Escape only characters that could break out of the tag; allow <br/> for line breaks */
+/** Escape cell content for JSX output.
+ * - Backtick code spans → <code>...</code> JSX elements with HTML-escaped content.
+ *   HTML entities like &lt; in JSX text nodes are decoded by the JSX compiler,
+ *   unlike inside markdown code spans where content is treated as raw literal text.
+ * - <br/> in source → <br /> JSX element.
+ * - Other < and > → &lt; / &gt; (decoded by JSX in regular text nodes).
+ */
 function escapeCell(text: string): string {
-  const withPlaceholder = text.replace(/<br\s*\/?>/gi, BR_PLACEHOLDER);
-  const escaped = withPlaceholder
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return escaped.split(BR_PLACEHOLDER).join("<br />");
+  const parts = text.split(/(`[^`]+`|<br\s*\/?>)/gi);
+  return parts
+    .map((part) => {
+      if (/^<br\s*\/?>$/i.test(part)) {
+        return "<br />";
+      }
+      if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+        const inner = part.slice(1, -1);
+        const htmlEscaped = inner
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<code>${htmlEscaped}</code>`;
+      }
+      return part
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    })
+    .join("");
 }
