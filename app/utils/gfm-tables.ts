@@ -110,7 +110,7 @@ export function preprocessGfmTables(content: string): string {
       right: "text-right",
     };
     let html =
-      '\n<table className="w-full border-collapse border border-neutral-300 my-4">\n<thead>\n<tr>\n';
+      '\n<table className="border-collapse border border-neutral-300 my-4">\n<thead>\n<tr>\n';
     headers.forEach((h, idx) => {
       const a = alignClass[alignments[idx]] ?? "text-left";
       html += `  <th className="border border-neutral-300 px-3 py-2 ${a}">${escapeCell(h)}</th>\n`;
