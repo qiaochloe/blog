@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
-import { tagColor, projects, Tag } from "./projects/data";
+import { projects } from "./projects/data";
 import ProjectList from "./projects/ProjectList";
 
 export default function Page() {
@@ -25,13 +25,13 @@ export default function Page() {
       <h1 className="mb-4 text-2xl font-semibold tracking-tight text-center">Chloe Qiao</h1>
       <div className="content mb-8 flex flex-col gap-y-4 text-justify">
         <p>
-          I am a student at Brown University studying computer science. I am particularly interested in networks, operating systems, compilers, and solvers.
+          Hi! I am a student at Brown University studying computer science. I am particularly interested in computer networks, operating systems, and compilers.
         </p>
         <p>
-          In the Brown CS department, I have worked as a <a href="https://cs.brown.edu/people/staff/spoc/">systems programmer</a>, a <a href="https://cs.brown.edu/degrees/undergrad/jobs/consult/">lab consultant</a>, and a teaching assistant for <a href="https://browncs1715.github.io/">Formal Proof and Verification</a> (TA Fall 2024, HTA Fall 2025), <a href="https://csci0300.github.io/">Computer Systems</a> (TA Spring 2025), <a href="https://cs.brown.edu/courses/csci1515/">Applied Cryptography</a> (HTA Spring 2026), and Operating Systems (HTA Fall 2026). I have also been the president of <a href="https://browncsdug.com/">Brown CS DUG</a>. Outside of the CS department, I help run the tech for <a href="https://brownpuzzlehunt.com/">Brown Puzzlehunt</a>.
+          In the Brown CS department, I have worked as a <a href="https://cs.brown.edu/people/staff/spoc/">systems programmer</a>, a <a href="https://cs.brown.edu/degrees/undergrad/jobs/consult/">lab consultant</a>, and a teaching assistant for <a href="https://browncs1715.github.io/">Formal Proof and Verification</a> (TA Fall 2024, HTA Fall 2025), <a href="https://csci0300.github.io/">Computer Systems</a> (TA Spring 2025), <a href="https://cs.brown.edu/courses/csci1515/">Applied Cryptography</a> (HTA Spring 2026), and <a href="https://csci1670.github.io/">Operating Systems</a> (HTA Fall 2026). I also run tech for <a href="https://brownpuzzlehunt.com/">Brown Puzzlehunt</a>.
         </p>
         <p>
-          In my free time, I like to <Link href="/fiction">read fiction</Link>, <Link href="/writings">write about work</Link>, and <Link href="/climbing">go climbing</Link>.
+          In my free time, I like to <Link href="/fiction">read</Link>, <Link href="/writings">write</Link>, and <Link href="/climbing">go climbing</Link>.
         </p>
         <p>
           Brown students might find some of my <Link href="/courses">courses reviews</Link> useful.
