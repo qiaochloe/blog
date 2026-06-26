@@ -6,6 +6,7 @@ import Footer from "./components/footer";
 import { MaxWidthWrapper } from "./components/MaxWidthWrapper";
 import { PostPageLayout } from "./components/PostPageLayout";
 import { baseUrl } from "./sitemap";
+import { Analytics } from "@vercel/analytics/next"
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -63,6 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${figtree.variable} text-black bg-white`}>
       <body className="antialiased">
+        <Analytics />
         <main className="flex-auto min-w-0 flex flex-col">
           <MaxWidthWrapper>
             <PostPageLayout>
