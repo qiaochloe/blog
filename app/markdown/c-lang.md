@@ -597,12 +597,14 @@ n << 1; // multiply by 2
 n >> 1; // divide by 2
 ```
 
-Use bitmasks if you only want certain bits of a number. For example, we can calculate mod 16 by getting the 4 bits of the integer, or bit-masking every bit before it.
+Use **bitmasks** if you only want certain bits of a number. For example, we can calculate mod 16 by getting the 4 bits of the integer, or bit-masking every bit before it.
 
 ```c
 n & 0b0000'0000'0000'0000'0000'0000'0000'1111
 n & 0xf
 ```
+
+## Miscellaneous Problems
 
 Single number:
 

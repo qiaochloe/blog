@@ -5,7 +5,7 @@ publishedAt: 2025-09-06
 updatedAt: 2025-09-23
 tags:
 - notes
-todo: virtualization background for os structure, prism notes 
+todo: virtualization background for os structure, prism notes, junction, demikernel
 ---
 
 ## Multicore
@@ -26,7 +26,7 @@ In massively parallel processing (MPP), there are many processors, each with the
 
 ![Diagram of a multiprocessor system](/csci-2690/multiprocessor-system.jpeg)
 
-### Cache Coherence
+### Cache Coherency
 
 One big problem with multiprocessors and multicores is **cache incoherence**. When a memory location is modified, the cached copies of that memory location are no longer valid. It is necessary to have a cache coherence protocol to make sure that all copies are the same. The policy needs to guarantee:
 1. **Write propagation**: writes to a memory location must be seen by everyone
@@ -61,8 +61,9 @@ Fidelity, performance, and security
 
 [Exokernel: An Operating System Architecture for Application-Level Resource Management](https://dl.acm.org/doi/pdf/10.1145/224057.224076). SIGOPS '95.
 
-1. The Exokernel paper addresses the problem of only providing general, fixed, high-level abstractions such as virtual memory and interprocess communication for applications to use. This makes it difficult for databases, garbage collectors, sandboxes, and web severs to optimize their performance.
-2. The Exokernel paper proposes a new operating system architecture which only handles the protection and multiplexing of resources. The authors envisioned that general applications would use specialized, user-level library operating systems built on primitives (secure bindings) provided by the operating system (Aegis) to optimize their work.
+The Exokernel paper addresses the problem of only providing general, fixed, high-level abstractions such as virtual memory and interprocess communication for applications to use. This makes it difficult for databases, garbage collectors, sandboxes, and web severs to optimize their performance.
+
+It proposes a new operating system architecture which only handles the protection and multiplexing of resources. The authors envisioned that general applications would use specialized, user-level library operating systems built on primitives (secure bindings) provided by the operating system (Aegis) to optimize their work.
 
 ### Dune
 
