@@ -22,11 +22,11 @@ const categoryToTags: Record<TagCategory, Tag[]> = {
   practicality: ["Practical", "Theory"],
 };
 const tagStyles: Record<Tag, string> = {
-  "Computer science": "bg-blue-100 text-blue-800",
-  Mathematics: "bg-blue-100 text-blue-800",
-  Lifestyle: "bg-blue-100 text-blue-800",
-  Theory: "bg-blue-100 text-blue-800",
-  Practical: "bg-blue-100 text-blue-800",
+  "Computer science": "bg-maximum-blue-100 text-maximum-blue-800",
+  Mathematics: "bg-slate-blue-100 text-slate-blue-800",
+  Lifestyle: "bg-tuscan-sun-100 text-tuscan-sun-800",
+  Theory: "bg-sea-green-100 text-sea-green-800",
+  Practical: "bg-sap-green-100 text-sap-green-800",
 };
 
 const finishedDates = ["Long ago"] as const;
@@ -296,7 +296,7 @@ export default function Nonfiction() {
               {tags.map((tag) => (
                 <button
                   key={`${tag}-main`}
-                  className={`text-xs rounded-full px-1.5 py-0.5 ${selectedTags.includes(tag) ? tagStyles[tag] : "bg-gray-100"}`}
+                  className={`text-xs rounded-full px-1.5 py-0.5 ${selectedTags.includes(tag) ? tagStyles[tag] : "bg-neutral-100"}`}
                   onClick={() => toggleTag(tag)}
                 >
                   {tag}
@@ -365,10 +365,14 @@ export default function Nonfiction() {
                   key={item.title}
                   className="flex justify-between py-1 gap-x-2 items-end"
                 >
-                  <Link href={item.href} className="font-medium underline">
+                  <Link
+                    href={item.href}
+                    className="font-medium"
+                    style={{ color: "black", textDecorationColor: "black" }}
+                  >
                     {item.title}
                   </Link>
-                  <div className="text-gray-600 text-sm text-right whitespace-nowrap">
+                  <div className="text-neutral-600 text-sm text-right whitespace-nowrap">
                     {formatDate(item.finishedDate)}
                   </div>
                 </div>
@@ -392,7 +396,7 @@ export default function Nonfiction() {
                         className={`text-xs rounded-full px-2 py-0.5 whitespace-nowrap ${
                           selectedTags.includes(tag)
                             ? tagStyles[tag]
-                            : "bg-gray-100"
+                            : "bg-neutral-100"
                         }`}
                         onClick={() => toggleTag(tag)}
                       >
@@ -405,13 +409,13 @@ export default function Nonfiction() {
                   (typeof item.comments === "string" ? (
                     <div
                       key={i}
-                      className="text-gray-600 text-sm mb-0.5"
+                      className="text-neutral-600 text-sm mb-0.5"
                       dangerouslySetInnerHTML={{
                         __html: md.render(item.comments),
                       }}
                     />
                   ) : (
-                    <div key={i} className="text-gray-600 text-sm mb-0.5">
+                    <div key={i} className="text-neutral-600 text-sm mb-0.5">
                       {item.comments}
                     </div>
                   ))}

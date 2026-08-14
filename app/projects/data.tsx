@@ -11,9 +11,9 @@ export type Project = {
 export type Tag = "TypeScript" | "Rust" | "C++" | "Bash";
 
 export const tagColor: Record<Tag, string> = {
-  TypeScript: "bg-blue-100 text-blue-800",
-  Rust: "bg-orange-100 text-orange-800",
-  "C++": "bg-amber-100 text-amber-800",
+  TypeScript: "bg-maximum-blue-100 text-maximum-blue-800",
+  Rust: "bg-kobicha-100 text-kobicha-800",
+  "C++": "bg-tuscan-sun-100 text-tuscan-sun-800",
   Bash: "bg-neutral-100 text-neutral-800",
 };
 

@@ -59,30 +59,30 @@ const categoryToTags: Record<TagCategory, Tag[]> = {
 };
 
 const tagStyles: Record<Tag, string> = {
-  Webnovel: "bg-gray-300 text-gray-900",
-  Novel: "bg-gray-300 text-gray-900",
-  Webcomic: "bg-gray-300 text-gray-900",
+  Webnovel: "bg-neutral-200 text-neutral-800",
+  Novel: "bg-neutral-200 text-neutral-800",
+  Webcomic: "bg-neutral-200 text-neutral-800",
 
-  Chinese: "bg-yellow-100 text-yellow-900",
-  Japanese: "bg-yellow-100 text-yellow-900",
-  English: "bg-yellow-100 text-yellow-900",
-  French: "bg-yellow-100 text-yellow-900",
-  Korean: "bg-yellow-100 text-yellow-900",
+  Chinese: "bg-tuscan-sun-100 text-tuscan-sun-900",
+  Japanese: "bg-tuscan-sun-100 text-tuscan-sun-900",
+  English: "bg-tuscan-sun-100 text-tuscan-sun-900",
+  French: "bg-tuscan-sun-100 text-tuscan-sun-900",
+  Korean: "bg-tuscan-sun-100 text-tuscan-sun-900",
 
-  BL: "bg-red-100 text-red-900",
-  GL: "bg-red-100 text-red-900",
-  BG: "bg-red-100 text-red-900",
+  BL: "bg-tangerine-100 text-tangerine-900",
+  GL: "bg-tangerine-100 text-tangerine-900",
+  BG: "bg-tangerine-100 text-tangerine-900",
 
-  Wuxia: "bg-sky-100 text-sky-900",
-  Xianxia: "bg-sky-100 text-sky-900",
-  "Imperial China": "bg-sky-100 text-sky-900",
-  "Western Royalty": "bg-sky-100 text-sky-900",
-  Modern: "bg-sky-100 text-sky-900",
-  "Sci-Fi": "bg-sky-100 text-sky-900",
-  ABO: "bg-pink-100 text-pink-900",
-  "Infinite Flow": "bg-green-100 text-green-900",
-  Transmigration: "bg-orange-100 text-orange-900",
-  "Role Reversal": "bg-orange-100 text-orange-900",
+  Wuxia: "bg-maximum-blue-100 text-maximum-blue-900",
+  Xianxia: "bg-maximum-blue-100 text-maximum-blue-900",
+  "Imperial China": "bg-maximum-blue-100 text-maximum-blue-900",
+  "Western Royalty": "bg-maximum-blue-100 text-maximum-blue-900",
+  Modern: "bg-maximum-blue-100 text-maximum-blue-900",
+  "Sci-Fi": "bg-maximum-blue-100 text-maximum-blue-900",
+  ABO: "bg-new-york-pink-100 text-new-york-pink-900",
+  "Infinite Flow": "bg-sap-green-100 text-sap-green-900",
+  Transmigration: "bg-kobicha-100 text-kobicha-900",
+  "Role Reversal": "bg-kobicha-100 text-kobicha-900",
 };
 
 const finishedDates = [
@@ -356,7 +356,7 @@ export default function Fiction() {
               {tags.map((tag) => (
                 <button
                   key={`${tag}-main`}
-                  className={`text-xs rounded-full px-1.5 py-0.5 ${selectedTags.includes(tag) ? tagStyles[tag] : "bg-gray-100"}`}
+                  className={`text-xs rounded-full px-1.5 py-0.5 ${selectedTags.includes(tag) ? tagStyles[tag] : "bg-neutral-100"}`}
                   onClick={() => toggleTag(tag)}
                 >
                   {tag}
@@ -425,10 +425,14 @@ export default function Fiction() {
                   key={item.title}
                   className="flex justify-between py-1 gap-x-2 items-end"
                 >
-                  <Link href={item.href} className="font-medium underline">
+                  <Link
+                    href={item.href}
+                    className="font-medium"
+                    style={{ color: "black", textDecorationColor: "black" }}
+                  >
                     {item.title}
                   </Link>
-                  <div className="text-gray-600 text-sm text-right whitespace-nowrap">
+                  <div className="text-neutral-600 text-sm text-right whitespace-nowrap">
                     {formatDate(item.finishedDate)}
                   </div>
                 </div>
@@ -453,7 +457,7 @@ export default function Fiction() {
                         className={`text-xs rounded-full px-2 py-0.5 whitespace-nowrap ${
                           selectedTags.includes(tag)
                             ? tagStyles[tag]
-                            : "bg-gray-100"
+                            : "bg-neutral-100"
                         }`}
                         onClick={() => toggleTag(tag)}
                       >
@@ -466,13 +470,13 @@ export default function Fiction() {
                   (typeof item.comments === "string" ? (
                     <div
                       key={i}
-                      className="text-gray-600 text-sm mb-0.5"
+                      className="text-neutral-600 text-sm mb-0.5"
                       dangerouslySetInnerHTML={{
                         __html: md.render(item.comments),
                       }}
                     />
                   ) : (
-                    <div key={i} className="text-gray-600 text-sm mb-0.5">
+                    <div key={i} className="text-neutral-600 text-sm mb-0.5">
                       {item.comments}
                     </div>
                   ))}

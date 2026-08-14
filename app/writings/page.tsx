@@ -27,7 +27,7 @@ export default function Page() {
 
   return (
     <section className="px-2">
-      <h1 className="font-semibold text-2xl mb-4 tracking-tighter">Writings</h1>
+      <h1 className="font-semibold text-2xl mb-4 tracking-tight">Writings</h1>
       <Suspense>
         <PostsList allPosts={allPosts} />
       </Suspense>

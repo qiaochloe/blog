@@ -23,7 +23,7 @@ export default function Page() {
   return (
     <section className="px-2">
       <h1 className="mb-4 text-2xl font-semibold tracking-tight text-center">Chloe Qiao</h1>
-      <div className="content mb-8 flex flex-col gap-y-4 text-justify">
+      <div className="content mb-8 flex flex-col gap-y-4">
         <p>
           Hi! I am a student at Brown University studying computer science. I am particularly interested in computer networks, operating systems, and compilers.
         </p>
@@ -38,21 +38,21 @@ export default function Page() {
         </p>
       </div>
 
-      <h2 className="mb-4 text-xl font-semibold tracking-tight text-center">Selected Projects</h2>
+      <h2 className="mb-4 text-lg font-semibold tracking-tight">Selected Projects</h2>
       <ProjectList projects={selectedProjects} />
 
       {posts.length > 0 && (
-        <h1 className="my-8 mb-2 text-xl font-semibold tracking-tight text-center"> Updates</h1>
+        <h2 className="mt-10 mb-4 text-lg font-semibold tracking-tight">Updates</h2>
       )}
       {posts.map((post) => (
         <div key={post.slug} className="w-full pb-1">
           <div className="flex justify-between">
             <Link href={`/${post.slug}`}>
-              <h2 className="text-neutral-900 tracking-tight hover:underline">
+              <h2 className="text-neutral-900 font-medium tracking-tight hover:underline">
                 {post.data.title ?? post.slug}
               </h2>
             </Link>
-            <p className="text-neutral-600 tracking-tight text-sm">
+            <p className="text-neutral-500 tracking-tight text-sm">
               {formatDate(post.recentDate)}
             </p>
           </div>

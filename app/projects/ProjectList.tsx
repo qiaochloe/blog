@@ -10,7 +10,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
           <div key={project.title} id={slug} className="w-full mb-6 group">
             <div className="flex items-baseline justify-between gap-x-2">
               <div className="flex flex-wrap items-baseline gap-x-2">
-                <h2 className="relative text-neutral-900 tracking-tight pb-1">
+                <h2 className="relative text-neutral-900 font-medium tracking-tight pb-1">
                   <a href={`#${slug}`} className="anchor absolute -ml-[1em] pr-[0.5em] invisible group-hover:visible no-underline text-neutral-300 after:content-['#']" />
                   {project.title}
                 </h2>

@@ -76,7 +76,7 @@ export default async function Page({
 
   const articleContent = (
     <>
-      <h1 className="title font-semibold text-2xl tracking-tighter">
+      <h1 className="title font-semibold text-2xl tracking-tight">
         <div
           dangerouslySetInnerHTML={{
             __html: md.renderInline(title),

@@ -1,5 +1,106 @@
 @import "tailwindcss";
 
+@theme {
+  --color-maximum-blue-50: #edfbfd;
+  --color-maximum-blue-100: #d6f5fa;
+  --color-maximum-blue-200: #b5e9f2;
+  --color-maximum-blue-300: #91d8e8;
+  --color-maximum-blue-400: #6ec5dd;
+  --color-maximum-blue-500: #4bb0d2;
+  --color-maximum-blue-600: #319dc4;
+  --color-maximum-blue-700: #277da1;
+  --color-maximum-blue-800: #1d6181;
+  --color-maximum-blue-900: #134862;
+
+  --color-new-york-pink-50: #fcf0ed;
+  --color-new-york-pink-100: #fae5e1;
+  --color-new-york-pink-200: #f3cbc4;
+  --color-new-york-pink-300: #eab1a9;
+  --color-new-york-pink-400: #de938c;
+  --color-new-york-pink-500: #d47973;
+  --color-new-york-pink-600: #ca5c58;
+  --color-new-york-pink-700: #ba3f3b;
+  --color-new-york-pink-800: #942f2e;
+  --color-new-york-pink-900: #732221;
+
+  --color-kobicha-50: #fcf7ee;
+  --color-kobicha-100: #f6ebda;
+  --color-kobicha-200: #e9d6b9;
+  --color-kobicha-300: #dabe9a;
+  --color-kobicha-400: #caa67d;
+  --color-kobicha-500: #b98e5f;
+  --color-kobicha-600: #a37448;
+  --color-kobicha-700: #855a38;
+  --color-kobicha-800: #684327;
+  --color-kobicha-900: #4a2b17;
+
+  --color-tuscan-sun-50: #fef2d2;
+  --color-tuscan-sun-100: #fde5a5;
+  --color-tuscan-sun-200: #f9c74f;
+  --color-tuscan-sun-300: #f8b830;
+  --color-tuscan-sun-400: #f5a50f;
+  --color-tuscan-sun-500: #dd8f08;
+  --color-tuscan-sun-600: #bb7607;
+  --color-tuscan-sun-700: #9d6106;
+  --color-tuscan-sun-800: #814b04;
+  --color-tuscan-sun-900: #5e3502;
+
+  --color-sap-green-50: #f4faeb;
+  --color-sap-green-100: #ebf5db;
+  --color-sap-green-200: #d3e6b7;
+  --color-sap-green-300: #bcd699;
+  --color-sap-green-400: #a1c577;
+  --color-sap-green-500: #87b55a;
+  --color-sap-green-600: #6c9843;
+  --color-sap-green-700: #537a33;
+  --color-sap-green-800: #416327;
+  --color-sap-green-900: #2f4b1b;
+
+  --color-sea-green-50: #eafaf7;
+  --color-sea-green-100: #d3f3ed;
+  --color-sea-green-200: #aae4d7;
+  --color-sea-green-300: #88d3c0;
+  --color-sea-green-400: #62c0a7;
+  --color-sea-green-500: #43aa8b;
+  --color-sea-green-600: #388f73;
+  --color-sea-green-700: #2d7b61;
+  --color-sea-green-800: #22634c;
+  --color-sea-green-900: #184e39;
+
+  --color-slate-blue-50: #f4eefc;
+  --color-slate-blue-100: #e8ddf8;
+  --color-slate-blue-200: #d3c1f0;
+  --color-slate-blue-300: #baa3e6;
+  --color-slate-blue-400: #a186da;
+  --color-slate-blue-500: #8a6dd0;
+  --color-slate-blue-600: #6e4fc4;
+  --color-slate-blue-700: #563bb0;
+  --color-slate-blue-800: #473196;
+  --color-slate-blue-900: #352579;
+
+  --color-tangerine-50: #fff1e6;
+  --color-tangerine-100: #ffe4d2;
+  --color-tangerine-200: #fdc8a5;
+  --color-tangerine-300: #fba674;
+  --color-tangerine-400: #f9844a;
+  --color-tangerine-500: #f86520;
+  --color-tangerine-600: #e94b07;
+  --color-tangerine-700: #c13806;
+  --color-tangerine-800: #9e2b05;
+  --color-tangerine-900: #771e03;
+
+  --color-blue-slate-50: #f1f7f9;
+  --color-blue-slate-100: #e3eef2;
+  --color-blue-slate-200: #c8dbe4;
+  --color-blue-slate-300: #afc7d4;
+  --color-blue-slate-400: #9ab5c6;
+  --color-blue-slate-500: #82a0b5;
+  --color-blue-slate-600: #698ba5;
+  --color-blue-slate-700: #577590;
+  --color-blue-slate-800: #445d74;
+  --color-blue-slate-900: #314559;
+}
+
 :root {
   --sh-class: #2d5e9d;
   --sh-identifier: #354150;
@@ -14,6 +115,10 @@
 
 html {
   min-width: 360px;
+  /* Always reserve space for the scrollbar so page width (and the navbar)
+     doesn't shift between short pages (no scrollbar) and long ones. */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 /* HIGHLIGHT */
@@ -26,7 +131,7 @@ html {
 /* CONTENT for pages like home and projects */
 
 .content a:not(.anchor) {
-  @apply text-blue-500 hover:underline hover:text-blue-800 decoration-blue-400 underline-offset-2 decoration-[0.1em];
+  @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
 }
 
 /* PROSE */
@@ -46,7 +151,7 @@ html {
 }
 
 .prose a {
-  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700;
+  @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
 }
 
 .prose .anchor:after {
@@ -71,12 +176,12 @@ html {
 
 /* Inline code (inside text) */
 .prose :not(pre) > code {
-  @apply px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-xs;
+  @apply px-1.5 py-0.5 rounded-md bg-neutral-100 font-mono text-xs;
 }
 
 /* Code block <pre><code> */
 .prose pre {
-  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
+  @apply text-xs bg-neutral-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
   border: initial;
 }
 
@@ -94,14 +199,14 @@ html {
 
 .prose h2 {
   @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
-  color: #1f3c93;
-  border-bottom: 1px solid #b3bed8;
+  color: var(--color-tangerine-700);
+  border-bottom: 1px solid var(--color-tangerine-200);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .prose h3 {
   @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
-  color: #009688;
+  color: var(--color-tangerine-600);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -188,7 +293,7 @@ html {
 }
 
 .prose-notes a {
-  @apply text-blue-600 underline decoration-blue-400 underline-offset-2 decoration-[0.1em] hover:text-blue-800 hover:decoration-blue-700;
+  @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
 }
 
 .prose-notes h1 {
@@ -198,8 +303,8 @@ html {
 
 .prose-notes h2 {
   @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
-  color: #1f3c93;
-  border-bottom: 1px solid #b3bed8;
+  color: var(--color-blue-slate-800);
+  border-bottom: 1px solid var(--color-blue-slate-200);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   counter-increment: note-h2;
   counter-reset: note-h3;
@@ -212,7 +317,7 @@ html {
 
 .prose-notes h3 {
   @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
-  color: #009688;
+  color: var(--color-blue-slate-700);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   counter-increment: note-h3;
   display: grid;
@@ -245,14 +350,14 @@ html {
 
 .prose-notes h2::after {
   @apply text-base font-medium;
-  color: #8f9fc4;
+  color: var(--color-blue-slate-500);
   content: counter(note-h2);
   justify-self: end;
 }
 
 .prose-notes h3::after {
   @apply text-base font-medium;
-  color: #7eb8b1;
+  color: var(--color-blue-slate-400);
   content: counter(note-h2) "." counter(note-h3);
   justify-self: end;
 }
@@ -289,12 +394,12 @@ html {
 
 /* Inline code (inside text) */
 .prose-notes :not(pre) > code {
-  @apply px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-xs;
+  @apply px-1.5 py-0.5 rounded-md bg-neutral-100 font-mono text-xs;
 }
 
 /* Code block <pre><code> */
 .prose-notes pre {
-  @apply text-xs bg-zinc-100 p-2 overflow-x-auto my-2 rounded-sm font-mono;
+  @apply text-xs bg-neutral-100 p-2 overflow-x-auto my-2 rounded-sm font-mono;
   border: initial;
 }
 
@@ -337,7 +442,7 @@ th {
 }
 
 tr:nth-child(even) {
-  background-color: #f4f4f5;
+  background-color: #f5f5f5;
 }
 
 tr:nth-child(odd) {

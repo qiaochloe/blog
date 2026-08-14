@@ -23,24 +23,24 @@ type Tag = "hobby" | "advice" | "reflection" | "notes";
 const defaultTags = ["hobby", "advice", "reflection", "notes"];
 
 const tagTextColor: Record<Tag, string> = {
-  hobby: "text-amber-800",
-  advice: "text-sky-800",
-  reflection: "text-emerald-800",
-  notes: "text-violet-800",
+  hobby: "text-tuscan-sun-800",
+  advice: "text-maximum-blue-800",
+  reflection: "text-sap-green-800",
+  notes: "text-slate-blue-800",
 };
 
 const tagBGColor: Record<Tag, string> = {
-  hobby: "bg-amber-100",
-  advice: "bg-sky-100",
-  reflection: "bg-emerald-100",
-  notes: "bg-violet-100",
+  hobby: "bg-tuscan-sun-100",
+  advice: "bg-maximum-blue-100",
+  reflection: "bg-sap-green-100",
+  notes: "bg-slate-blue-100",
 };
 
 const tagDotColor: Record<Tag, string> = {
-  hobby: "bg-amber-300",
-  advice: "bg-sky-300",
-  reflection: "bg-emerald-300",
-  notes: "bg-violet-300",
+  hobby: "bg-tuscan-sun-300",
+  advice: "bg-maximum-blue-300",
+  reflection: "bg-sap-green-300",
+  notes: "bg-slate-blue-300",
 };
 
 export function PostsList({ allPosts }: PostsListProps) {
@@ -103,7 +103,7 @@ export function PostsList({ allPosts }: PostsListProps) {
               className={`${
                 selectedTags[tag]
                   ? `${tagTextColor[tag]} ${tagBGColor[tag]}`
-                  : "bg-gray-300 text-gray-600"
+                  : "bg-neutral-200 text-neutral-500"
               } text-sm font-medium m-1 first:ml-0 px-2.5 py-0.5 rounded-full cursor-pointer`}
               onClick={() => toggleTag(tag)}
             >
@@ -112,7 +112,7 @@ export function PostsList({ allPosts }: PostsListProps) {
           ))}
         </div>
         <div
-          className="size-6 px-1 py-1 m-1 bg-orange-200 rounded-lg text-orange-700 flex items-center justify-center cursor-pointer transition"
+          className="size-6 px-1 py-1 m-1 bg-kobicha-100 rounded-lg text-kobicha-700 flex items-center justify-center cursor-pointer transition"
           onClick={toggleSort}
         >
           {sort === "alpha" ? (

@@ -56,7 +56,7 @@ function SnippetWithHighlight({
   return (
     <span className="text-neutral-600 text-sm">
       {before}
-      <mark className="bg-yellow-200 rounded px-0.5">{match}</mark>
+      <mark className="bg-tuscan-sun-200 rounded px-0.5">{match}</mark>
       {after}
     </span>
   );
