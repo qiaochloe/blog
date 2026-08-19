@@ -1,7 +1,7 @@
 ---
 title: Data Structures and Algorithms Notes
 publishedAt: 07-16-25
-updatedAt: 09-20-25
+updatedAt: 08-18-26
 summary: "Arrays • Linked Lists • Trees • Heaps • Segment Trees • Graphs • Union Find • Multisets • Maps"
 tags:
   - "notes"
@@ -10,9 +10,27 @@ todo: "Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree
 
 ## Arrays
 
+An **array** is a contiguous block of memory used to represent sequences. In terms of time complexity:
+- Retrieving and updating an element takes O(1) time  
+- Inserting into an array takes O(1) time, amortized
+- Deleting an element involves moving all successive elements one over, taking O(n - i) time
+
+A **subarray** is a contiguous part of an array. Techniques for solving such problems include:
+- [Two Pointer](#two-pointer)
+- [Sliding Window](#sliding-window)
+- [Prefix and Suffix Array](#prefix-and-suffix-array)
+- [Dynamic programming](#dynamic-programming), like [Kadane's Algorithm](#kadanes-algorithm)
+
+A **subsequence** is a sequence derived from an array by deleting elements without changing the order of the remaining elements. Techniques for solving such problems include:
+- [Dynamic programming](#dynamic-programming)
+
+It is also often the case that we need to have a **sorted array**. While most programming languages have a built-in sorting method, it never hurts to know a few [Sorting Algorithms](#sorting-algorithms). Sorted arrays are particularly helpful for **search** problems, which can usually be handled by [Binary Search](#binary-search).
+
+Finally, there are also [Multidimensional Array](#multidimensional-array) problems.
+
 ### Two Pointer
 
-**Usage**: Two pointer is a technique to find valid subarrays. Keep two pointers, `l` and `r`. Move `l` or `r` depending on some condition.  
+Two pointer is a technique to find valid subarrays. The basic idea is to keep two pointers, `l` and `r`, and move `l` or `r` depending on some condition.  
 
 ```python
 def f(arr):
@@ -25,11 +43,12 @@ def f(arr):
     return l
 ```
 
-**Examples**: [3Sum](https://leetcode.com/problems/3sum/description/), [Container With Most Water](https://leetcode.com/problems/container-with-most-water/description/) and [Trapping Rainwater](https://leetcode.com/problems/trapping-rain-water/description/)
+**Problems**: [3Sum](https://leetcode.com/problems/3sum/description/), [Container With Most Water](https://leetcode.com/problems/container-with-most-water/description/) and [Trapping Rainwater](https://leetcode.com/problems/trapping-rain-water/description/)
 
 ### Sliding Window
 
-**Usage**: Sliding window is a technique used to find valid subarrays.  
+Sliding window is a technique used to find valid subarrays.  
+
 **Time complexity**: There are $\frac{n(n + 1)}{2}$ subarrays, but a sliding window runs in O(n).
 
 ```python
@@ -44,21 +63,23 @@ def f(arr):
     return output
 ```
 
-### Prefix Sum
+### Prefix and Suffix Array
 
-**Usage**: Prefix sum is used to efficiently calculate the sum of a subarray.
+Prefix arrays store the running total of elements from the start of an array up to each index. It is used to answer range queries in constant time.
 
 ```python
-def f(arr):
+def prefix_sum(arr):
     prefix = [arr[0]]
     for i in range(1, len(arr)):
-        prefix.append(prefix[-1] + arr[i])
+        prefix.append(prefix[i-1] + arr[i])
     return prefix
 ```
 
+**Problems**: [Product of an Array Except Self](https://leetcode.com/problems/product-of-array-except-self)
+
 ### Kadane's Algorithm
 
-**Usage**: Kadane's algorithm is used to find the maximum sum of a contiguous subarray. At each step, either start a new subarray at `n`, or extend the previous subarray with `curr_sum + n`.
+Kadane's algorithm is used to find the maximum sum of a contiguous subarray. At each step, either start a new subarray at `n`, or extend the previous subarray with `curr_sum + n`.
 
 ```python
 def f(arr):
@@ -70,37 +91,13 @@ def f(arr):
     return best_sum
 ```
 
-### Binary Search
-
-**Usage**: Binary search is used to find a specific element in a sorted array.
-
-| Description                                                                                                                     | Loop invariant | Loop end condition          | Postprocessing                |
-|---------------------------------------------------------------------------------------------------------------------------------|----------------|-----------------------------|-------------------------------|
-| Used for finding exact targets, when it is not necessary to compare to neighbors                                                | `l <= r`       | Search space is empty       | None                          |
-| Used when the condition depends on a neighbor, such as finding finding the minimum or maximum value that satisfies a condition. | `l < r`        | Exactly one element remains | Check if `l` is valid         |
-| Used when the condition depends on two neighbors, such as finding a peak element in an array                                    | `l + 1 < r`    | Exactly two elements remain | Check if `l` or `r` are valid |
-
-```python
-def f(n, arr):
-    l, r = 0, len(arr) - 1
-    while l <= r:
-        m = (l + r) // 2
-        if arr[m] == n:
-            return m
-        elif arr[m] < n:
-            l = m + 1
-        else:
-            r = m - 1
-  return -1
-```
-
-**Examples**: [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/description).
+**Problems**: [Maximum Subarray](https://leetcode.com/problems/maximum-subarray/), [Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/)
 
 ### Sorting Algorithms
 
-**Usage**: Sorting algorithms are used to sort an array.
+Sorting algorithms are used to sort an array.
 
-**Construction**: Merge sort recursively breaks the array into left and right subarrays, sorts them, and merges the sorted lists. In the base case, the list is length 0 or 1 and is considered sorted. 
+**Merge sort** recursively breaks the array into left and right subarrays, sorts them, and merges the sorted lists. In the base case, the list is length 0 or 1 and is considered sorted. 
 
 ```python
 def merge_sort(arr): 
@@ -126,21 +123,88 @@ def merge(left, right):
     return output
 ```
 
-**Construction**: Bucket sort distributes the elements into a number of buckets, which are then sorted individually.  
+**Bucket sort** distributes the elements into a number of buckets, which are then sorted individually.  
 
 ![Bucket Sort](/algos/bucket-sort.png)
 
-**Examples**: [Maximum Gap](https://leetcode.com/problems/maximum-gap/description/).
+**Problems**: [Maximum Gap](https://leetcode.com/problems/maximum-gap/description/).
+
+### Binary Search
+
+Binary search is used to find a specific element in a sorted array.
+
+| Description                                                                                                                     | Loop invariant | Loop end condition          | Postprocessing                |
+|---------------------------------------------------------------------------------------------------------------------------------|----------------|-----------------------------|-------------------------------|
+| Used for finding exact targets, when it is not necessary to compare to neighbors                                                | `l <= r`       | Search space is empty       | None                          |
+| Used when the condition depends on a neighbor, such as finding finding the minimum or maximum value that satisfies a condition. | `l < r`        | Exactly one element remains | Check if `l` is valid         |
+| Used when the condition depends on two neighbors, such as finding a peak element in an array                                    | `l + 1 < r`    | Exactly two elements remain | Check if `l` or `r` are valid |
+
+```python
+def f(n, arr):
+    l, r = 0, len(arr) - 1
+    while l <= r:
+        m = (l + r) // 2
+        if arr[m] == n:
+            return m
+        elif arr[m] < n:
+            l = m + 1
+        else:
+            r = m - 1
+  return -1
+```
+
+**Problems**: [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/description).
+
+### Multidimensional Array
+
+In a multidimensional array, it is important to pay attention to dimensionality. Visually, the first index generally represents the row, and the second index represents the column. Thus, `arr[i][j]` refers to the element in the ith row and jth column.
+
+Note that some multidimensional array problems are actually graph problems in disguise.
+
+**Problems**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/), [Rotate Image](https://leetcode.com/problems/rotate-image/)
 
 ## Linked Lists
 
-**Description**: Linked lists are lists where each element has a pointer to the next element in the list.
+A **linked list** is a sequence where each element has a pointer to the next element in the list. 
 
-**Advice**: Use a dummy node when the head of the linked list needs to be removed or modified, such as in [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements/) and [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)).
+In terms of time complexity:
+- Searching for a node takes O(n) time
+- Inserting and deleting a node takes O(1) time
+
+### Dummy Nodes
+
+Use a **dummy node** to avoid checking for empty lists, in cases where the head of the list needs to be removed or modified.
+
+**Problems**: [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)), [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/), and [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements/).
+
+### Reverse Linked List
+
+Reverse a linked list whenever you need to traverse the list in the opposite direction.
+
+```python
+def reverse(head):
+    prev = None
+    curr = head
+
+    while curr:
+        temp = curr.next
+        curr.next = prev
+        prev = curr
+        curr = temp
+
+    return prev
+```
+
+**Problems**: [Palindrome Linked List](https://leetcode.com/problems/palindrome-linked-list/description/), [Reorder List](https://leetcode.com/problems/reorder-list), 
 
 ### Fast and Slow Pointers
 
-**Usage**: Fast and slow pointers are used to detect cycles in a linked list. The distance between `slow` and `fast` increases by `1` every turn.
+Fast and slow pointers are useful for finding elements or identifying cycles. In particular, they can be used to:
+- Detect cycles in a linked list
+- Find where a cycle begins in a linked list
+- Find the middle of a linked list
+
+The basic idea is that the `fast` pointer moves forward by two units, while the `slow` pointer moves forward by one unit. If there is a cycle, `fast` will eventually circle around and pass `slow`.
 
 ```python
 def has_cycle(head):
@@ -153,17 +217,29 @@ def has_cycle(head):
     return False
 ```
 
-We can also calculate where a cycle begins. At the point when `slow` and `fast` meet, we have A + B = A + B + C + B. We also know that `slow` is half the speed of `fast`, so 2(A + B) = A + B + C + B. Simplifying, we get A = C.
+We can also use this idea to find where the cycle begins. At the point when `slow` and `fast` meet, we have A + B = A + B + C + B. We also know that `slow` is half the speed of `fast`, so 2(A + B) = A + B + C + B. Simplifying, we get A = C.
 
 ![Fast and Slow Pointers](/algos/fast-and-slow-pointers.jpeg)
 
-Examples: [Delete the Middle Node of a Linked List](https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list)
+Problems: [Reorder List](https://leetcode.com/problems/reorder-list), [Delete the Middle Node of a Linked List](https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list)
+
+## Stacks and Queues
+
+A **stack** supports two operations: push and pop. Elements are pushed and popped in a last-in, first-out (LIFO) order. If implemented with an array or linked list, all operations are O(1).
+
+**Problems**: [Implement a Stack with Max API](https://leetcode.com/problems/max-stack/), [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/description/), [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/description/)
+
+A **queue** supports two operations: enqueue and dequeue. Elements are added (enqueued) and removed (dequeued) in first-in, first-out (FIFO) order. A *dequeue*, or a double-ended queue, is a doubly linked list in which all insertions and deletions are from one of the two ends of the list.  
+
+Queues can be implemented using linked lists, arrays, and even stacks. The main idea behind the stack implementation is to use one stack for enqueues, and another stack for dequeues. 
+
+As you might have noticed, stacks and queues are ordered by time of insertion. They are different from priority queues (also know as [Heaps](#heaps)), which order by the value of the element.
 
 ## Trees
 
-**Description**: A tree is a directed graph where each node has exactly one parent, except for the root node.   
+A **tree** is a directed graph where each node has exactly one parent, except for the root node.
 
-**Construction**: A tree is generally constructed by having each parent store pointers to their child nodes.
+A tree can be constructed by having each parent store pointers to their child nodes.
 
 ```python
 class Node:
@@ -172,25 +248,11 @@ class Node:
         self.children = []
 ```
 
-### Binary Trees
-
-**Description**: A binary tree is a tree where nodes can have at most two children. An important type of binary tree are **complete** binary trees, which are trees that fill every level from left to right.  
-
-**Construction**: Complete binary trees are often implemented with arrays for efficiency.
-
-Let the root node be index `0`. For a given node at index `i`:
-
-1. Its left child is at index `2 * i + 1`
-2. Its right child is at index `2 * i + 2`
-3. Its parent is at index `floor((i - 1) / 2)`
-
-**Usage**: Complete binary trees are used in [binary heaps](#heap) and [segment trees](#segment-trees). 
-
 ### Tree Traversal
 
 There are multiple ways to traverse a tree. They can be categorized by whether they are depth-first (DFS) or breadth-first (BFS). There are three variants of DFS: pre-order (node-left-right), post-order (left-right-node), and in-order (left-node-right). 
 
-**Construction**: DFS needs a stack, so it is usually implemented recursively to take advantage of the call stack. However, it can also be implemented iteratively.
+**DFS** needs a stack, so it is usually implemented recursively to take advantage of the call stack. However, it can also be implemented iteratively.
 
 
 ```python
@@ -222,7 +284,7 @@ def traverse(root):
             stack.push(node.left)
 ```
 
-**Construction**: BFS needs a queue to keep track of nodes at the current level, so it is usually implemented iteratively. 
+**BFS** needs a queue to keep track of nodes at the current level, so it is usually implemented iteratively. 
 
 ```python
 # BFS, iterative
@@ -237,9 +299,25 @@ def traverse(root):
         curr = nxt
 ```
 
+## Binary Trees
+
+A binary tree is a type of tree where nodes can have at most two children. 
+
+### Complete Binary Trees
+
+A complete binary tree is completely filled on every level from left to right. 
+
+Complete binary trees are often implemented with arrays for efficiency. Let the root node be index `0`. For a given node at index `i`:
+
+1. Its left child is at index `2 * i + 1`
+2. Its right child is at index `2 * i + 2`
+3. Its parent is at index `floor((i - 1) / 2)`
+
+Complete binary trees are used in [binary heaps](#heap) and [segment trees](#segment-trees).
+
 ### Segment Trees
 
-**Usage**: A segment tree is used for range queries and updates. 
+A segment tree is used for range queries and updates. 
 
 **Time complexity**: It can achieve both in O(log n) time. This is better than simple loops, which take O(n) time for querying, and prefix sums, which take O(n) time for updates.
 
@@ -285,47 +363,54 @@ def update(i, val):
         i >>= 1
 ```
 
-**Examples**: [Block Placement Queries](https://leetcode.com/problems/block-placement-queries/description/).  
+**Problems**: [Block Placement Queries](https://leetcode.com/problems/block-placement-queries/description/).  
 **References**: [[1]](https://www.geeksforgeeks.org/dsa/segment-tree-efficient-implementation/).
 
-## Heaps
+### Heaps
 
-**Description:** A heap is a tree-based data structure that satisfies the **heap property**, which states that a parent node should be less than (or greater than) its children nodes. It generally supports functions like `push` and `pop`.
+A **heap** is a tree-based data structure that satisfies the **heap property**, which states that a parent node should be less than (or greater than) its children nodes. Use a heap when all you care about is the largest or (or smallest) elements, and you do not need to support any operations for arbitrary elements.
 
-**Construction**: A binary heap uses a binary tree to implement the heap. 
+A heap can be implemented using a binary tree, in which case it is called a **binary heap**. 
 
 - In `push`, instantiate the element to the bottom left of the binary tree. While the element is smaller than its parent, swap it.
 - In `pop`, take out the root and replace it with the node at the bottom left of the tree. While the new root is larger than either of its children, swap with the smaller child.
 
-**Time complexity**: `push` and `pop` are O(log n).
+In terms of time complexity, it supports:
+- O(log n) insertions
+- O(1) lookup for max element
+- O(log n) deletion of the max element
 
-**Advice**: The python library `heapq` also implements a min heap.
+### Binary Search Trees
 
-```python
-import heapq
-arr = [3, 4, 1, 2]
-heapq.heapify(arr)
-heapq.heappop(arr)
-heapq.heappush(5)
-heapq.nsmallest(1, arr)
-heapq.nlargest(1, arr)
-```
+A binary search tree (BST) is a binary tree which enforcs a global left-right order. For every node, all values in the left subtree are smaller than the node, and all values in the right subtree are larger than the node. An in-order traversal of a BST yields a fully sorted list.
+
+In terms of time complexity:
+- Finding the min and max elements is O(log n)
+- Lookup, deletion, and search is also O(log n)
+
+## Hashmaps
+
+A **hashmap** stores information in key-value pairs. It uses a hash function to turn a key into an index, where the value is stored.
+
+- Because keys are hashed, there is no ordering in a hashmap.
+- It's very important to make sure that keys hash to the same value, so one should avoid having mutable keys.
+- If two keys map to the same location, there is a collision. One way to deal with a collision is to maintain a linked list of objects at the array index.
 
 ## Graphs
 
-**Description**: A graph is a data structure with a set of nodes connected by edges.
+A graph is a data structure with a set of nodes connected by edges.
 
 ### Topological Sort
 
-**Usage**: Topological sort is used to find an ordering on a directed acyclic graph. Note that there is no ordering if there is a cycle.
+Topological sort is used to find an ordering on a directed acyclic graph. Note that there is no ordering if there is a cycle.
 
-**Construction**: Kahn's algorithm can be used to find a topological sort. 
+**Kahn's algorithm** can be used to find a topological sort. 
 
 1. Find all free nodes with no dependencies
 2. Whenever a free node is added to the ordering, decrement the degree of its neighboring nodes. 
 3. If the length of the ordering is less than the number of nodes in the DAG, then there is at least one cycle.
 
-**Construction**: One can also do a depth-first search to find a topological sort.
+One can also do a depth-first search to find a topological sort.
 
 1. Perform DFS on every unvisited node on the graph
 2. In each DFS call, first visit all unvisited neighbors, pushing them onto a stack while backtracking. The first visited node should be on the top of the stack.
@@ -335,9 +420,9 @@ heapq.nlargest(1, arr)
 
 ## Union Find 
 
-**Usage**: Union find is used to keep track of disjoint sets. To determine whether `a` and `b` are in the same sets, simply check whether `find(a) == find(b)`.
+Union find is used to keep track of disjoint sets. To determine whether `a` and `b` are in the same sets, simply check whether `find(a) == find(b)`.
 
-**Construction**: Union find is constructed by maintaining a representative element ("parent") for the entire set.
+Union find is constructed by maintaining a representative element ("parent") for the entire set.
 - `union` takes two elements and combines their sets by making one element the parent of the other
 - `find` takes an element and returns the topmost parent
 
@@ -381,11 +466,43 @@ def union(a, b):
         rank[pb] += 1 
 ```
 
+## Dynamic Programming
+
+Dynamic programming is used for problems where future decisions depend on earlier decisions. This may involve looking for the optimum value or the number of ways to do something.
+
+One way to do dynamic programming is with top-down **memoization**.
+
+```python
+memo = {}
+def fib(n):
+    if n == 0 or i == 1:
+        return n
+    if n not in memo:
+        memo[n] = f(n - 1) + f(n - 2)
+    return memo[n]
+```
+
+Another way to do dynamic programming is from the bottom-up. Start with base cases and iteratively build up to the solution in order.
+
+```python
+def fib(n):
+    if n == 0:
+        return 0
+    prev, curr = 0, 1
+    for i in range(2, n):
+        prev, curr = curr, prev + curr
+    return curr
+```
+
+**Problems**: [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock), [Climbing Stairs](https://leetcode.com/problems/climbing-stairs), [Coin Change](https://leetcode.com/problems/coin-change)
+
+
+
 ## Backtracking
 
-**Usage**: Backtracking is used to solve constraint satisfaction problems (CSP) where partial candidate solutions which can be checked relatively quickly.
+Backtracking is used to solve constraint satisfaction problems (CSP) where partial candidate solutions which can be checked relatively quickly.
 
-**Construction**: Incrementally build candidates to the solution. Abandon a candidate ("backtrack") as soon as you determine that the candidate cannot lead to a valid solution.
+The general idea is to incrementally build candidates to the solution. Abandon a candidate ("backtrack") as soon as you determine that the candidate cannot lead to a valid solution.
 
 ```python
 def f():
@@ -396,7 +513,7 @@ def f():
         nonlocal output, partial
 
         # Base case
-        if is_solution(partial):   
+        if is_solution(partial):
             output.append(partial[:])
             return
 
@@ -414,32 +531,9 @@ def f():
     return output
 ```
 
-**Examples**: [Permutations](https://leetcode.com/problems/permutations/description) and [Combinations](https://leetcode.com/problems/combinations/description).
+**Problems**: [Permutations](https://leetcode.com/problems/permutations/description) and [Combinations](https://leetcode.com/problems/combinations/description).
 
-## Dynamic Programming
+## References
 
-**Usage**: Dynamic programming is used for problems where future decisions depend on earlier decisions. These may involve looking for the optimum value or the number of ways to do something.
-
-**Construction**: One way to do dynamic programming is with top-down memoization.
-
-```python
-memo = {}
-def fib(n):
-    if n == 0 or i == 1:
-        return n
-    if n not in memo:
-        memo[n] = f(n - 1) + f(n - 2)
-    return memo[n]
-```
-
-**Construction**: Another way to do dynamic programming is from the bottom-up. Start with base cases and iteratively build up to the solution in order.
-
-```python
-def fib(n):
-    if n == 0:
-        return 0
-    prev, curr = 0, 1
-    for i in range(2, n):
-        prev, curr = curr, prev + curr
-    return curr
-```
+- [NeetCode](https://neetcode.io/) provides a structured interview roadmap through LeetCode problems. If you are new to interview-style problems, I do recommend starting with the NeetCode 150 .
+- [LeetCode](https://leetcode.com/) is the main practice site I use. One good place to start is the [Blind 75](https://leetcode.com/problem-list/oizxjoit/).
