@@ -199,14 +199,14 @@ html {
 
 .prose h2 {
   @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
-  color: var(--color-tangerine-700);
-  border-bottom: 1px solid var(--color-tangerine-200);
+  color: var(--color-blue-slate-800);
+  border-bottom: 1px solid var(--color-blue-slate-200);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .prose h3 {
   @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
-  color: var(--color-tangerine-600);
+  color: var(--color-blue-slate-700);
   font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
