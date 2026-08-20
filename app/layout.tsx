@@ -69,7 +69,7 @@ export default function RootLayout({
           <MaxWidthWrapper>
             <PostPageLayout>
               <Navbar />
-              <div className="mt-6">{children}</div>
+              <div className="mt-6 sm:min-w-xl">{children}</div>
               <Footer />
             </PostPageLayout>
           </MaxWidthWrapper>
