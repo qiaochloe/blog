@@ -137,7 +137,7 @@ html {
 /* PROSE */
 
 .prose .anchor {
-  @apply absolute invisible no-underline;
+  @apply absolute invisible no-underline hover:no-underline;
 
   margin-left: -1em;
   padding-right: 0.5em;
@@ -329,7 +329,7 @@ html {
 
 .prose-notes h2 .anchor,
 .prose-notes h3 .anchor {
-  @apply absolute invisible no-underline;
+  @apply absolute invisible no-underline hover:no-underline;
   margin-left: -1em;
   padding-right: 0.5em;
   width: 80%;
