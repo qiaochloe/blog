@@ -4,15 +4,6 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, X } from "lucide-react";
-import { TocMobileButton } from "app/components/TocMobileButton";
-import type { TocHeading } from "app/utils/headings";
-
-const NARROW_PATHS = new Set(["writings", "about", "now", "rss"]);
-
-function isPostPage(pathname: string): boolean {
-  const segments = pathname.replace(/^\//, "").split("/").filter(Boolean);
-  return segments.length === 1 && !NARROW_PATHS.has(segments[0]);
-}
 
 const navItems = {
   "/": {
@@ -72,28 +63,6 @@ export function Navbar() {
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [tocHeadings, setTocHeadings] = useState<TocHeading[]>([]);
-
-  useEffect(() => {
-    if (!isPostPage(pathname)) {
-      setTocHeadings([]);
-      return;
-    }
-    const t = setTimeout(() => {
-      const el = document.getElementById("toc-headings");
-      const raw = el?.getAttribute("data-headings");
-      if (raw) {
-        try {
-          setTocHeadings(JSON.parse(raw));
-        } catch {
-          setTocHeadings([]);
-        }
-      } else {
-        setTocHeadings([]);
-      }
-    }, 0);
-    return () => clearTimeout(t);
-  }, [pathname]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -261,11 +230,6 @@ export function Navbar() {
               })}
             </div>
             <div className="relative ml-auto flex items-center gap-0 shrink-0">
-              {tocHeadings.length > 0 && (
-                <div className="lg:hidden">
-                  <TocMobileButton headings={tocHeadings} />
-                </div>
-              )}
               {/* Mobile: magnifying glass opens search modal */}
               <button
                 type="button"

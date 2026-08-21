@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
+import { TableOfContents } from "app/components/TableOfContents";
 import { TocPortal } from "app/components/TocPortal";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
@@ -74,7 +75,7 @@ export default async function Page({
   const processedContent = preprocessFootnotes(preprocessGfmTables(post.content));
   const isNotes = post.data.tags?.includes("notes");
 
-  const articleContent = (
+  const headerContent = (
     <>
       <h1 className="title font-semibold text-2xl tracking-tight">
         <div
@@ -93,22 +94,17 @@ export default async function Page({
           )}
         </div>
       )}
-      <article className={isNotes ? undefined : "prose"}>
-        <CustomMDX source={processedContent} />
-      </article>
     </>
+  );
+
+  const bodyContent = (
+    <article className={isNotes ? undefined : "prose"}>
+      <CustomMDX source={processedContent} />
+    </article>
   );
 
   return (
     <section>
-      {showToc && (
-        <div
-          id="toc-headings"
-          data-headings={JSON.stringify(headings)}
-          className="hidden"
-          aria-hidden
-        />
-      )}
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -133,26 +129,12 @@ export default async function Page({
           }),
         }}
       />
-      {showToc ? (
-        <>
-          <TocPortal headings={headings} />
-          <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
-            {isNotes ? (
-              <div className="prose-notes">{articleContent}</div>
-            ) : (
-              <div>{articleContent}</div>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
-          {isNotes ? (
-            <div className="prose-notes">{articleContent}</div>
-          ) : (
-            <div>{articleContent}</div>
-          )}
-        </div>
-      )}
+      {showToc && <TocPortal headings={headings} />}
+      <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
+        <div className={isNotes ? "prose-notes" : undefined}>{headerContent}</div>
+        {showToc && <TableOfContents headings={headings} variant="mobile" />}
+        <div className={isNotes ? "prose-notes" : undefined}>{bodyContent}</div>
+      </div>
     </section>
   );
 }

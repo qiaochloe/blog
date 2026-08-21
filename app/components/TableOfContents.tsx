@@ -72,15 +72,14 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
 
   const sections = groupHeadings(headings);
 
-  const tocList = (
+  const sidebarList = (
     <ul className="space-y-0.5 text-sm">
       {sections.map(({ heading, children: subheadings }) => {
         const hasChildren = subheadings.length > 0;
         const isExpanded = expandedIds.has(heading.id);
         const activeSubheadingIsHidden =
           hasChildren && !isExpanded && subheadings.some((s) => s.id === activeId);
-        const isParentActive =
-          activeId === heading.id || activeSubheadingIsHidden;
+        const isParentActive = activeId === heading.id || activeSubheadingIsHidden;
 
         return (
           <li key={heading.id} className="leading-tight">
@@ -140,13 +139,42 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
   if (variant === "mobile") {
     return (
       <nav
-        className="toc toc-mobile mb-6 md:hidden"
+        className="toc toc-mobile mb-6 lg:hidden"
         aria-label="On this page"
       >
-        <h2 className="text-sm font-semibold text-neutral-900 tracking-tight mb-2">
+        <p className="text-xs font-semibold text-neutral-900 tracking-tight mb-1.5">
           Contents
-        </h2>
-        {tocList}
+        </p>
+        <ul className="space-y-0.5 text-sm">
+          {sections.map(({ heading, children: subheadings }) => (
+            <li key={heading.id} className="leading-tight">
+              <a
+                href={`#${heading.id}`}
+                className={`toc-link block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
+                  activeId === heading.id ? "toc-link-active font-semibold text-neutral-900" : ""
+                }`}
+              >
+                {heading.text}
+              </a>
+              {subheadings.length > 0 && (
+                <ul className="space-y-0.5 mt-0.5 pl-4">
+                  {subheadings.map(({ level, text, id }) => (
+                    <li key={id} style={{ paddingLeft: (level - 3) * 8 }} className="break-words">
+                      <a
+                        href={`#${id}`}
+                        className={`toc-link block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
+                          activeId === id ? "toc-link-active font-semibold text-neutral-900" : ""
+                        }`}
+                      >
+                        {text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
       </nav>
     );
   }
@@ -159,7 +187,7 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
       <h2 className="text-xs font-semibold text-neutral-900 tracking-tight mb-1.5">
         Contents
       </h2>
-      {tocList}
+      {sidebarList}
     </nav>
   );
 }
