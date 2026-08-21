@@ -214,13 +214,13 @@ export function Navbar() {
           id="nav"
         >
           <div className="flex flex-row flex-wrap items-center gap-x-0 gap-y-2 w-full">
-            <div className="flex flex-row space-x-0 pr-4 min-w-0 shrink">
+            <div className="flex flex-row space-x-0 pr-2 sm:pr-4 min-w-0 shrink">
               {Object.entries(navItems).map(([path, { name }]) => {
                 return (
                   <Link
                     key={path}
                     href={path}
-                    className={`flex align-middle relative py-1 px-2 transition-colors ${
+                    className={`flex align-middle relative py-1 px-1.5 sm:px-2 transition-colors ${
                       path === pathname ? "underline" : "hover:underline"
                     }`}
                   >

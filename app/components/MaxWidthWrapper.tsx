@@ -16,7 +16,7 @@ export function MaxWidthWrapper({
   const maxWidthClass = isPostPage ? "max-w-5xl" : "max-w-xl";
 
   return (
-    <div className={`${maxWidthClass} mt-8 mx-auto overflow-visible`}>
+    <div className={`${maxWidthClass} mt-8 mx-auto px-4 overflow-visible`}>
       {children}
     </div>
   );

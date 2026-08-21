@@ -150,7 +150,7 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
             <li key={heading.id} className="leading-tight">
               <a
                 href={`#${heading.id}`}
-                className={`toc-link block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
+                className={`toc-link inline-block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
                   activeId === heading.id ? "toc-link-active font-semibold text-neutral-900" : ""
                 }`}
               >
@@ -162,7 +162,7 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
                     <li key={id} style={{ paddingLeft: (level - 3) * 8 }} className="break-words">
                       <a
                         href={`#${id}`}
-                        className={`toc-link block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
+                        className={`toc-link inline-block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
                           activeId === id ? "toc-link-active font-semibold text-neutral-900" : ""
                         }`}
                       >
