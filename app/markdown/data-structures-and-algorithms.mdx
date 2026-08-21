@@ -1,11 +1,11 @@
 ---
 title: Data Structures and Algorithms Notes
 publishedAt: 07-16-25
-updatedAt: 08-18-26
-summary: "Arrays • Linked Lists • Trees • Heaps • Segment Trees • Graphs • Union Find • Multisets • Maps"
+updatedAt: 08-20-26
+summary: "Arrays • Linked Lists • Stacks and Queues • Trees • Binary Trees • Hashmaps • Graphs • Union Find • Dynamic Programming • Backtracking"
 tags:
   - "notes"
-todo: "Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, time complexity, sets The time complexity of a set: Average O(1) for insertion, deletion, membership Usually implemented as a hashset, tree, simple array The time complexity of a Hash map: Average O(1) for insertion, deletion, lookup via hashing Worst case O(n). If all keys hash to the same bucket, them all elements in the bucket need to be traversed linearly to find the desired key. How to handle collisions - Separate chaining Open addressing via linear probing Implementation of stack"
+todo: "Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, parallel algorithms"
 ---
 
 ## Arrays
@@ -16,17 +16,17 @@ An **array** is a contiguous block of memory used to represent sequences. In ter
 - Deleting an element involves moving all successive elements one over, taking O(n - i) time
 
 A **subarray** is a contiguous part of an array. Techniques for solving such problems include:
-- [Two Pointer](#two-pointer)
-- [Sliding Window](#sliding-window)
-- [Prefix and Suffix Array](#prefix-and-suffix-array)
-- [Dynamic programming](#dynamic-programming), like [Kadane's Algorithm](#kadanes-algorithm)
+- [Two pointer](#two-pointer)
+- [Sliding window](#sliding-window)
+- [Prefix and suffix array](#prefix-and-suffix-array)
+- [Dynamic programming](#dynamic-programming), like [Kadane's algorithm](#kadanes-algorithm)
 
 A **subsequence** is a sequence derived from an array by deleting elements without changing the order of the remaining elements. Techniques for solving such problems include:
 - [Dynamic programming](#dynamic-programming)
 
-It is also often the case that we need to have a **sorted array**. While most programming languages have a built-in sorting method, it never hurts to know a few [Sorting Algorithms](#sorting-algorithms). Sorted arrays are particularly helpful for **search** problems, which can usually be handled by [Binary Search](#binary-search).
+It is also often the case that we need to have a **sorted array**. While most programming languages have a built-in sorting method, it never hurts to know a few [sorting algorithms](#sorting-algorithms). Sorted arrays are particularly helpful for **search** problems, which can usually be handled by [binary search](#binary-search).
 
-Finally, there are also [Multidimensional Array](#multidimensional-array) problems.
+Finally, there are also [multidimensional array](#multidimensional-array) problems.
 
 ### Two Pointer
 
@@ -95,7 +95,8 @@ def f(arr):
 
 ### Sorting Algorithms
 
-Sorting algorithms are used to sort an array.
+Sorting algorithms are used to sort an array.  
+**Time complexity**: O(n log n)
 
 **Merge sort** recursively breaks the array into left and right subarrays, sorts them, and merges the sorted lists. In the base case, the list is length 0 or 1 and is considered sorted. 
 
@@ -122,12 +123,6 @@ def merge(left, right):
     output.extend(right[j:])
     return output
 ```
-
-**Bucket sort** distributes the elements into a number of buckets, which are then sorted individually.  
-
-![Bucket Sort](/algos/bucket-sort.png)
-
-**Problems**: [Maximum Gap](https://leetcode.com/problems/maximum-gap/description/).
 
 ### Binary Search
 
@@ -394,7 +389,10 @@ A **hashmap** stores information in key-value pairs. It uses a hash function to 
 
 - Because keys are hashed, there is no ordering in a hashmap.
 - It's very important to make sure that keys hash to the same value, so one should avoid having mutable keys.
-- If two keys map to the same location, there is a collision. One way to deal with a collision is to maintain a linked list of objects at the array index.
+
+If two keys map to the same location, there will be a collision, which can be handled by:
+- Separate chaining 
+- Open addressing via linear probing
 
 ## Graphs
 
@@ -402,19 +400,24 @@ A graph is a data structure with a set of nodes connected by edges.
 
 ### Topological Sort
 
-Topological sort is used to find an ordering on a directed acyclic graph. Note that there is no ordering if there is a cycle.
+Topological sort is used to find an ordering on a directed acyclic graph. Note that the ordering may not be unique, and there is no ordering if there is a cycle.
 
-**Kahn's algorithm** can be used to find a topological sort. 
+**Kahn's algorithm**
 
 1. Find all free nodes with no dependencies
 2. Whenever a free node is added to the ordering, decrement the degree of its neighboring nodes. 
 3. If the length of the ordering is less than the number of nodes in the DAG, then there is at least one cycle.
 
-One can also do a depth-first search to find a topological sort.
+<KahnAlgorithmDemo />
 
-1. Perform DFS on every unvisited node on the graph
-2. In each DFS call, first visit all unvisited neighbors, pushing them onto a stack while backtracking. The first visited node should be on the top of the stack.
-3. The stack contains the ordering. If the length of the stack is less than the number of nodes in the DAG, then there is at least one cycle.
+**Depth-first search**
+
+1. While there are unvisited nodes, choose a random node to perform DFS.
+2. Push the node to the stack. Then perform DFS on each neighbor, continuing to push them on the stack. Eventually, there should be a node with no unvisited neighbors on the top of the stack.
+2. On backtrack, prepend this node in the ordering.
+3. During DFS, if you reach a node that's still on the stack, there is a cycle.
+
+<DFSTopoSortDemo />
 
 **References**: [Kahn's Algorithm](https://youtu.be/cIBFEhD77b4?si=imuNBdJnPdnJQ6-K) and [Topological Sort with DFS](https://youtu.be/eL-KzMXSXXI?si=L3x33f-LEt1PiOc0).
 
@@ -494,9 +497,9 @@ def fib(n):
     return curr
 ```
 
-**Problems**: [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock), [Climbing Stairs](https://leetcode.com/problems/climbing-stairs), [Coin Change](https://leetcode.com/problems/coin-change)
+**1D Problems**: [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock), [Climbing Stairs](https://leetcode.com/problems/climbing-stairs), [Coin Change](https://leetcode.com/problems/coin-change)
 
-
+**2D Problems**: [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)
 
 ## Backtracking
 

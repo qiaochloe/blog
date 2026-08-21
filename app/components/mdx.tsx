@@ -17,6 +17,8 @@ import {
   PuzzlethonMap,
   PuzzlethonCarberry,
 } from "./Puzzlethon";
+import { KahnAlgorithmDemo } from "./KahnAlgorithmDemo";
+import { DFSTopoSortDemo } from "./DFSTopoSortDemo";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -113,6 +115,9 @@ let components = {
   PuzzlethonHinting,
   PuzzlethonMap,
   PuzzlethonCarberry,
+  // Algorithms
+  KahnAlgorithmDemo,
+  DFSTopoSortDemo,
 };
 
 export function CustomMDX(props) {
