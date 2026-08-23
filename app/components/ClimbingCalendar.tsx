@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import calendarData from "app/data/climbing-calendar.json";
 
 const days: Record<string, number> = calendarData.days;
@@ -43,6 +43,15 @@ export default function ClimbingCalendar() {
   }, []);
 
   const [year, setYear] = useState(years[0] ?? new Date().getUTCFullYear());
+  const [tip, setTip] = useState<{ text: string } | null>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+
+  const positionTip = (e: React.MouseEvent) => {
+    const el = tipRef.current;
+    if (!el) return;
+    el.style.left = `${Math.min(e.clientX + 12, window.innerWidth - 150)}px`;
+    el.style.top = `${e.clientY + 12}px`;
+  };
 
   const activeDays = useMemo(
     () => Object.keys(days).filter((k) => k.startsWith(`${year}-`)).length,
@@ -136,14 +145,19 @@ export default function ClimbingCalendar() {
               <div key={i} className="flex flex-1 flex-col gap-[2px]">
                 {col.map((active, r) => {
                   const epoch = gridStart + (i * 7 + r) * 86400000;
+                  const text = active
+                    ? `Climbing on ${keyOf(epoch)}`
+                    : keyOf(epoch);
                   return (
                     <div
                       key={r}
-                      title={
-                        active
-                          ? `Climbing on ${keyOf(epoch)}`
-                          : keyOf(epoch)
-                      }
+                      aria-label={text}
+                      onMouseEnter={(e) => {
+                        setTip({ text });
+                        positionTip(e);
+                      }}
+                      onMouseMove={positionTip}
+                      onMouseLeave={() => setTip(null)}
                       className={`h-[13px] w-full rounded-[1px] ${
                         active ? "bg-sap-green-500" : "bg-neutral-100"
                       }`}
@@ -155,6 +169,16 @@ export default function ClimbingCalendar() {
           </div>
         </div>
       </div>
+
+      {tip && (
+        <div
+          ref={tipRef}
+          role="tooltip"
+          className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-neutral-900/90 px-2 py-1 text-xs text-white"
+        >
+          {tip.text}
+        </div>
+      )}
     </div>
   );
 }
