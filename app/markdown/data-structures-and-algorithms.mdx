@@ -1,7 +1,7 @@
 ---
 title: Data Structures and Algorithms Notes
 publishedAt: 07-16-25
-updatedAt: 08-20-26
+updatedAt: 08-24-26
 summary: "Arrays • Linked Lists • Stacks and Queues • Trees • Binary Trees • Hashmaps • Graphs • Union Find • Dynamic Programming • Backtracking"
 tags:
   - "notes"
@@ -126,7 +126,8 @@ def merge(left, right):
 
 ### Binary Search
 
-Binary search is used to find a specific element in a sorted array.
+Binary search is used to find a specific element in a sorted array.  
+**Time complexity**: O(log n)
 
 | Description                                                                                                                     | Loop invariant | Loop end condition          | Postprocessing                |
 |---------------------------------------------------------------------------------------------------------------------------------|----------------|-----------------------------|-------------------------------|
@@ -294,6 +295,43 @@ def traverse(root):
         curr = nxt
 ```
 
+### Tries
+
+A trie (also known a prefix tree) is a tree data structure used to efficiently store and retrieve keys in a set of strings.
+
+```python
+class PrefixTree:
+    def __init__(self):
+        self.children = {} 
+        self.terminated = False
+
+    def insert(self, word: str) -> None:
+        if len(word) == 0:
+            self.terminated = True
+            return
+
+        c = word[0]
+        if c not in self.children:
+            self.children[c] = PrefixTree()
+        self.children[c].insert(word[1:])
+
+    def search(self, word: str) -> bool:
+        if len(word) == 0:
+            return self.terminated
+        c = word[0]
+        if c not in self.children:
+            return False
+        return self.children[c].search(word[1:])
+
+    def startsWith(self, prefix: str) -> bool:
+        if len(prefix) == 0:
+            return True
+        c = prefix[0]
+        if c not in self.children:
+            return False
+        return self.children[c].startsWith(prefix[1:])
+```
+
 ## Binary Trees
 
 A binary tree is a type of tree where nodes can have at most two children. 
@@ -383,12 +421,17 @@ In terms of time complexity:
 - Finding the min and max elements is O(log n)
 - Lookup, deletion, and search is also O(log n)
 
+**Problems**: [Lowest Common Ancestor of a Binary Search Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree), 
+
 ## Hashmaps
 
-A **hashmap** stores information in key-value pairs. It uses a hash function to turn a key into an index, where the value is stored.
+A **hashmap** stores information in key-value pairs. It uses a hash function to turn a key into an index, where the value is stored. 
 
-- Because keys are hashed, there is no ordering in a hashmap.
-- It's very important to make sure that keys hash to the same value, so one should avoid having mutable keys.
+In terms of time complexity, it supports:
+- O(1) insertion
+- O(1) lookup
+
+Because keys are hashed, there is no ordering in a hashmap. It's very important to make sure that keys hash to the same value, so one should avoid having mutable keys. 
 
 If two keys map to the same location, there will be a collision, which can be handled by:
 - Separate chaining 
@@ -499,7 +542,7 @@ def fib(n):
 
 **1D Problems**: [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock), [Climbing Stairs](https://leetcode.com/problems/climbing-stairs), [Coin Change](https://leetcode.com/problems/coin-change)
 
-**2D Problems**: [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)
+**2D Problems**: [Best Time to Buy and Sell Stock with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/), [Coin Change II](https://leetcode.com/problems/coin-change-ii), [Target Sum](https://leetcode.com/problems/target-sum), [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)
 
 ## Backtracking
 
@@ -517,7 +560,7 @@ def f():
 
         # Base case
         if is_solution(partial):
-            output.append(partial[:])
+            output.append(partial[:]) # Need to copy the list
             return
 
         # Pruning
