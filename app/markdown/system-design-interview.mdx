@@ -2,20 +2,22 @@
 title: "System Design Notes"
 summary: "Web Architecture • Rate Limiter • Key Value Store • Unique ID Generator • URL Shortener"
 publishedAt: "2025-12-20"
-updatedAt: "2025-12-22"
+updatedAt: "2026-08-24"
 tags:
   - "notes"
 ---
 
 ## Web Architecture
 
-First, the **client** has a domain name (e.g. example.com). It queries the **DNS** to resolve the domain to an IP address. The IP address returned by DNS typically belongs to a traffic entry point, such as a CDN edge or a load balancer, rather than a single origin server.
+The **client** has a domain name (e.g. example.com). It queries the **DNS** to resolve the domain to an IP address. The IP address returned by DNS typically belongs to a traffic entry point, such as a content delivery network (CDN) edge or a load balancer, rather than a single origin server.
 
 The client then sends an HTTPS request to that IP. If a **CDN** is in front, the request is handled by a nearby edge server, which may serve cached static content directly or forward the request to the origin infrastructure on a cache miss.
 
-Requests that reach the origin are handled by a **load balancer**, which distributes traffic across multiple application servers. These servers expose **API endpoints** (often RESTful), using standard HTTP methods (GET, POST, PUT, DELETE) to operate on resources.
+Requests that reach the origin are handled by a **load balancer**, which distributes traffic across multiple application servers. These servers expose API endpoints using standard HTTP methods (GET, POST, PUT, DELETE) to operate on resources.
 
 To fulfill a request, application servers may query a database, cache, or other backend services before returning a response to the client.
+
+![Web architecture](/system-design/web-architecture.jpeg)
 
 Application servers may also use a **message queue** to offload tasks to background workers. A message queue enables asynchronous communication by decoupling task producers from consumers, allowing each to scale independently. In production, queues are typically backed by a durable broker, such as Redis, RabbitMQ, or Kafka, that manages message storage, delivery, and coordination between workers.
 
@@ -39,24 +41,34 @@ Here are the main design questions for a rate limiter:
 
 Rate limiting algorithms include:
 1. Token bucket
-2. Leaking bucket
+2. Leaky bucket
 3. Fixed window counter 
 4. Sliding window log algorithm
 5. Sliding window counter algorithm
 
-In a **token bucket** algorithm, tokens are added to a bucket at a fixed rate. Each request consumes a token. If the bucket is empty, requests are denied. This allows for bursts of traffic if tokens are available.
+In the **token bucket** design, tokens are added to a bucket at a fixed rate. Each request consumes a token. If the bucket is empty, requests are denied. This allows for bursts of traffic if tokens are available.
 
-In a **leaking bucket** algorithm, requests are added to a queue (the bucket) and processed at a fixed rate. If the bucket is full, incoming requests are denied. This enforces a constant output rate.
+![Token bucket](/system-design/token-bucket.png)
 
-In a **fixed window counter** algorithm, the number of requests is counted within fixed time windows (e.g., per minute). If the count exceeds the limit, further requests are denied until the next window. This can lead to bursts of traffic at the edges of windows.
+In the **leaky bucket** design, requests are added to the bucket and processed at a fixed rate. If the bucket is full, incoming requests are denied. This enforces a constant output rate.
 
-In a **sliding window log** algorithm, each request is timestamped and stored in a log. To check the rate limit, the log is scanned to count requests within the sliding time window. This provides accurate rate limiting but can be memory-intensive.
+![Leaky bucket](/system-design/leaky-bucket.png)
 
-In a **sliding window counter** algorithm, the time window is divided into smaller intervals. Each interval maintains a count of requests. To check the rate limit, counts from the relevant intervals are summed. This reduces memory usage compared to the sliding window log.
+In the **fixed window counter** design, the number of requests is counted within fixed time windows (e.g., per minute). If the count exceeds the limit, further requests are denied until the next window. This can lead to bursts of traffic at the edges of windows.
+
+![Fixed window counter](/system-design/fixed-window-counter.png)
+
+In the **sliding window log** design, each request is timestamped and stored in a log. To check the rate limit, the log is scanned to count requests within the sliding time window. This provides accurate rate limiting but can be memory-intensive.
+
+![Sliding window log](/system-design/sliding-window-log.png)
+
+In the **sliding window counter** algorithm, the time window is divided into smaller intervals. Each interval maintains a count of requests. To check the rate limit, counts from the relevant intervals are summed. This reduces memory usage compared to the sliding window log.
+
+![Sliding window counter](/system-design/sliding-window-counter.png)
 
 ### Rate Limiting Architecture
 
-Generally, rate limiting should be done on the server side to ensure that clients cannot bypass it. Middleware solutions (such as API gateways) can also be used to offload rate limiting from application servers.
+Rate limiting should be done on the server side to ensure that clients cannot bypass it. Middleware solutions (such as API gateways) can also be used to offload rate limiting from application servers.
 
 Each of the algorithms requires some form of data storage to keep track of request counts or timestamps. We cannot store this data in a database because disk access is slow. Instead, we should store this in an in-memory data store like Redis or Memcached. Redis offers commands like INCR and EXPIRE to increase the counter and set a time-to-live (TTL) for the key.
 
@@ -73,19 +85,17 @@ There are two challenges to distributed rate limiting: (1) race conditions and (
 A KV store supports the `put(key, value)` and `get(key)` operations.
 KV stores can either be **single server** or **distributed**.
 
-### Single Server
+Within a single server, we can optimize the key value store by:
+1. Compressing cold memory 
+2. Caching hot memory in an in-memory store in addition to the disk  
 
-Two single server optimizations are (1) data compression and (2) in-memory or disk storage based on access-frequency.
-
-### Distributed Server
-
-The **CAP theorem** states that a store can only guarantee two of the following three properties: (1) **consistency**, (2) **availability**, and (3) **partition tolerance**. Because it is not possible to avoid network partitions, distributed KV stores must either be CP or AP.
-
-There are many components to a distributed store:
+Within a distributed key-value store, we need to decide on:
 1. Data partitioning
 2. Data replication
 3. Consistency model & conflict resolution
 4. Failure detection and recovery
+
+The **CAP theorem** states that a distributed system can only guarantee two of the following three properties: (1) **consistency**, (2) **availability**, and (3) **partition tolerance**. Because it is not possible to avoid network partitions, distributed KV stores must either be CP or AP.
 
 ### Data Partitioning and Replication
 
@@ -144,17 +154,20 @@ Here are some common approaches to generating unique IDs in a distributed system
 
 ## URL Shortener
 
-The system should support the following operations:
-1. URL shortening
-2. URL redirecting
-
-First define the API endpoints:
+An URL shortener should support the following API endpoints:
 1. `POST /api/shorten`
    - Request: `{ "original_url": "https://example.com" }`
    - Response: `{ "short_url": "https://short.ly/abc" }`
 2. `GET /\{short_url}`
-   - Response: 301 redirect to original URL
+   - Response: HTTP status code 301 redirect to original URL
 
-To implement URL shortening, there are two options. The first option is to hash the original URL to generate a unique key. Most hash functions produce long strings, so take the first $n$ characters of the hash and rehash if a collision is found in the database. To avoid expensive database lookups, a bloom filter can be used to quickly check for potential collisions. The second option is to [generate a unique ID](#unique-id-generator). The ID can also be shorted by converting it to base-62.
+To implement URL shortening, there are two options:
+- The first option is to hash the original URL to generate a unique key. Most hash functions produce long strings, so take the first $n$ characters of the hash and rehash if a collision is found in the database. To avoid expensive database lookups, a bloom filter can be used to quickly check for potential collisions. 
+- The second option is to [generate a unique ID](#unique-id-generator) each time. This ID can also be shorted by converting it to base-62.
 
 To implement URL redirecting, the system should look up the original URL from the database using the unique key and return a 301 redirect response to the client.
+
+## References
+
+- [System Design Interview](https://www.goodreads.com/book/show/54109255-system-design-interview-an-insider-s-guide)
+- [Redis will finally make sense after this video](https://www.youtube.com/watch?v=S7_SOmxO5DA&list=WL&index=38)
