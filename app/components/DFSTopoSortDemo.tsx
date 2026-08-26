@@ -32,49 +32,46 @@ const START_ORDER = [5, 4, 0, 1, 2, 3];
 
 type Step = {
   node: number | null;
+  seen: number[];
   order: number[];
-  stack: number[];
 };
 
 function buildSteps(): Step[] {
-  const visited = new Set<number>();
+  const seen = new Set<number>();
   const order: number[] = [];
-  const stack: number[] = [];
-  const steps: Step[] = [{ node: null, stack: [], order: [] }];
+  const steps: Step[] = [{ node: null, seen: [], order: [] }];
 
   const enter = (u: number) => {
-    visited.add(u);
-    stack.push(u);
-    steps.push({ node: u, stack: [...stack], order: [...order] });
+    seen.add(u);
+    steps.push({ node: u, seen: Array.from(seen), order: [...order] });
   };
 
   const finish = (u: number) => {
-    stack.pop();
     order.unshift(u);
-    steps.push({ node: u, stack: [...stack], order: [...order] });
+    steps.push({ node: u, seen: Array.from(seen), order: [...order] });
   };
 
   const dfs = (u: number) => {
     enter(u);
     for (const v of ADJ[u]) {
-      if (!visited.has(v)) dfs(v);
+      if (!seen.has(v)) dfs(v);
     }
     finish(u);
   };
 
   for (const n of START_ORDER) {
-    if (!visited.has(n)) dfs(n);
+    if (!seen.has(n)) dfs(n);
   }
 
   return steps;
 }
 
-type Status = "pending" | "stack" | "current" | "done";
+type Status = "pending" | "seen" | "current" | "done";
 
 function nodeStatus(node: number, step: Step): Status {
   if (step.node === node) return "current";
   if (step.order.includes(node)) return "done";
-  if (step.stack.includes(node)) return "stack";
+  if (step.seen.includes(node)) return "seen";
   return "pending";
 }
 
@@ -88,7 +85,7 @@ const NODE_STYLE: Record<
     strokeWidth: 1.5,
     text: "#314559",
   },
-  stack: {
+  seen: {
     fill: "#f9844a",
     stroke: "#c13806",
     strokeWidth: 1.5,
@@ -129,6 +126,10 @@ function shortenEdge(a: [number, number], b: [number, number]) {
 
 function list(value: number[]): string {
   return value.length === 0 ? "[]" : `[${value.join(", ")}]`;
+}
+
+function set(value: number[]): string {
+  return value.length === 0 ? "{}" : `{${value.join(", ")}}`;
 }
 
 export function DFSTopoSortDemo() {
@@ -234,7 +235,7 @@ export function DFSTopoSortDemo() {
           <div className="flex flex-col gap-1 whitespace-nowrap text-xs text-neutral-600">
             <span className="flex items-center gap-1.5">
               <span className="flex h-2.5 w-2.5 shrink-0 rounded-full bg-tangerine-400" />
-              on stack
+              seen
             </span>
             <span className="flex items-center gap-1.5">
               <span className="flex h-2.5 w-2.5 shrink-0 rounded-full bg-sea-green-500" />
@@ -253,10 +254,10 @@ export function DFSTopoSortDemo() {
           <div className="space-y-1 whitespace-nowrap">
             <div className="flex items-baseline gap-1.5">
               <span className="w-10 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-                Stack
+                Seen
               </span>
               <span className="font-mono text-xs text-neutral-800">
-                {list(step.stack)}
+                {set(step.seen)}
               </span>
             </div>
             <div className="flex items-baseline gap-1.5">
@@ -308,4 +309,3 @@ export function DFSTopoSortDemo() {
     </div>
   );
 }
-

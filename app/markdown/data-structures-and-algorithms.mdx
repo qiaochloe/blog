@@ -455,10 +455,10 @@ Topological sort is used to find an ordering on a directed acyclic graph. Note t
 
 **Depth-first search**
 
-1. While there are unvisited nodes, choose a random node to perform DFS.
-2. Push the node to the stack. Then perform DFS on each neighbor, continuing to push them on the stack. Eventually, there should be a node with no unvisited neighbors on the top of the stack.
-2. On backtrack, prepend this node in the ordering.
-3. During DFS, if you reach a node that's still on the stack, there is a cycle.
+1. While there are unvisited nodes, choose a random node and perform DFS on it.
+2. Mark each visited node in the seen list, then keep recursing into its unvisited neighbors. 
+3. When you reach a node with no unvisited neighbors, push it into the ordering and backtrack.
+4. If you ever reach a node that's seen but not yet in the ordering, there is a cycle.
 
 <DFSTopoSortDemo />
 
