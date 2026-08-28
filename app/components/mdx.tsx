@@ -19,6 +19,8 @@ import {
 } from "./Puzzlethon";
 import { KahnAlgorithmDemo } from "./KahnAlgorithmDemo";
 import { DFSTopoSortDemo } from "./DFSTopoSortDemo";
+import { DijkstraDemo } from "./DijkstraDemo";
+import { BellmanFordDemo } from "./BellmanFordDemo";
 import ClimbingCalendar from "./ClimbingCalendar";
 
 function Table({ data }) {
@@ -119,6 +121,8 @@ let components = {
   // Algorithms
   KahnAlgorithmDemo,
   DFSTopoSortDemo,
+  DijkstraDemo,
+  BellmanFordDemo,
   ClimbingCalendar,
 };
 

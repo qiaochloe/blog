@@ -126,30 +126,48 @@ def merge(left, right):
 
 ### Binary Search
 
-Binary search is used to find a specific element in a sorted array.  
+Binary search is used to find a specific element in a monotonic array. An array is monotonic if it is sorted, or if we can define some kind of condition that switches from true to false along the array.
+
 **Time complexity**: O(log n)
 
-| Description                                                                                                                     | Loop invariant | Loop end condition          | Postprocessing                |
-|---------------------------------------------------------------------------------------------------------------------------------|----------------|-----------------------------|-------------------------------|
-| Used for finding exact targets, when it is not necessary to compare to neighbors                                                | `l <= r`       | Search space is empty       | None                          |
-| Used when the condition depends on a neighbor, such as finding finding the minimum or maximum value that satisfies a condition. | `l < r`        | Exactly one element remains | Check if `l` is valid         |
-| Used when the condition depends on two neighbors, such as finding a peak element in an array                                    | `l + 1 < r`    | Exactly two elements remain | Check if `l` or `r` are valid |
+The most basic binary search is:
 
 ```python
-def f(n, arr):
-    l, r = 0, len(arr) - 1
+def binary_search(arr, target) -> int:
+    l, r = 0, n
     while l <= r:
         m = (l + r) // 2
-        if arr[m] == n:
+        if arr[m] == target:
             return m
-        elif arr[m] < n:
+        elif arr[m] > arr[l]:
             l = m + 1
         else:
             r = m - 1
-  return -1
+    return -1
 ```
 
+A more generalized template is:
+
+```python
+def binary_search(arr) -> int:
+    def cond(i) -> bool:
+        pass
+
+    l, r = 0, n
+    while l < r:
+        m = (l + r) // 2
+        if cond(m):
+            r = m
+        else:
+            l = m + 1
+    return l
+```
+
+This finds the first element that appears `True` after a sequence of `False`.
+
 **Problems**: [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/description).
+
+**References**: [Powerful Ultimate Binary Search Template](https://leetcode.com/discuss/post/786126/python-powerful-ultimate-binary-search-t-rwv8/)
 
 ### Multidimensional Array
 
@@ -440,6 +458,29 @@ If two keys map to the same location, there will be a collision, which can be ha
 ## Graphs
 
 A graph is a data structure with a set of nodes connected by edges.
+
+### Shortest Path
+
+To find the shortest path from a source node `k` to all other nodes in a weighted graph, we can use Dijkstra's algorithm or the Bellman-Ford algorithm.
+
+Dijkstra's algorithm
+1. Create a set of all unvisited nodes
+2. Assign every node a distance from the starting node. For the starting node, it is 0, and for all other nodes, it is ∞
+3. Maintain a priority queue ordered by distance, initially containing only the starting node with distance 0
+4. Pop the node with the smallest distance from the priority queue. If it has already been visited, skip it; otherwise mark it as visited and remove it from the set of unvisited nodes
+5. For each unvisited neighbor, if the distance to the current node plus the edge weight to the neighbor is less than the neighbor's current distance, update the neighbor's distance and push it into the priority queue
+6. Repeat until the priority queue is empty. Every node now holds its shortest distance from the starting node
+
+<DijkstraDemo />
+
+Bellman-Ford algorithm
+1. Assign every node a distance from the starting node. For the starting node, it is 0, and for all other nodes, it is ∞
+2. Repeat the following step `n - 1` times (once for each of the `n` nodes minus the starting node): for every edge `u -> v` with weight `w`, if the distance to `u` plus `w` is less than the distance to `v`, update the distance to `v`. This is called **relaxation**
+3. After the `n - 1` passes, check all edges once more. If any relaxation is still possible, the graph contains a negative-weight cycle, and a shortest path does not exist
+
+Bellman-Ford works on graphs with negative edge weights (unlike Dijkstra's), at the cost of running in $O(VE)$ time instead of $O((V + E) \log V)$. The `n - 1` passes are enough because any acyclic shortest path uses at most `n - 1` edges.
+
+<BellmanFordDemo />
 
 ### Topological Sort
 
