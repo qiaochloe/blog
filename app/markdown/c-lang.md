@@ -2,30 +2,17 @@
 title: A Tour Through C
 summary: Syntax • File Structure • Debugging
 publishedAt: "2025-03-22"
+updatedAt: "2026-09-06"
 tags:
   - "notes"
-todo: "union, enums, arrow syntax for pointers, ternaries, goto"
+todo: "union, goto"
 ---
-
-This is a review of C syntax, file structure, and debugging—mainly for folks who are already familiar with computer systems and just need a refresher on syntax and ecosystem.
 
 I originally put these notes together while sitting in on Brown's [Computer Systems](https://csci0300.github.io/) lectures. These notes pull a lot from the excellent materials on the course website, especially the TAs' C Primer ([1](https://csci0300.github.io/assets/c-primer1.html), [2](https://csci0300.github.io/assets/c-primer2.html), [3](https://csci0300.github.io/assets/c-primer3.html)) and [Lab 1](https://csci0300.github.io/assign/labs/lab1.html).
 
 ## Syntax
 
-### Basic Syntax
-
-**Comments** start with `//` or `/*`.
-
-```c
-// This is a single line comment.
-
-/*
- * This is
- * a multi-line
- * comment
- */
-```
+### Primatives
 
 **Variables** can be declared, initialized, and mutated.
 
@@ -83,6 +70,21 @@ int y;
 signed int z;
 ```
 
+### Comments, Functions, and Control Flow
+
+**Comments** start with `//` or `/*`.
+
+```c
+// This is a single line comment.
+
+/*
+ * This is
+ * a multi-line
+ * comment
+ */
+```
+
+
 **Functions** are declared with a return type, a name, and a list of parameters. Note that `void` is used to say that the function has no return value.
 
 ```c
@@ -95,7 +97,7 @@ void say_hello() {
 }
 ```
 
-**if-else** statements have a condition and a body
+**if-else** statements have a condition and a body.
 
 ```c
 int a = 0;
@@ -148,7 +150,9 @@ while (i < 10) {
 }
 ```
 
-**Structs** are typed and support destructuring.
+### Structs and Enums
+
+**Structs** are composite data types. Its elements can be accessed with the `.` operator, such as in `struct.elem`. If there is a pointer to a struct, its elements can be accessed with the `->` operator, such as in `struct_ptr->elem`. This is semantically equivalent to `(*struct_ptr).elem`.
 
 ```c
 #include <math.h>
@@ -167,6 +171,52 @@ int test_distance() {
   struct point p2 = {1, 1};
   return distance(p1, p2) == sqrt(2);
 }
+```
+
+**Enums** are named integer constants.
+
+```c
+// Implicitly 0, 1, 2, etc
+enum state {
+  UNUSED,
+  USED,
+  RUNNABLE,
+  RUNNING
+};
+
+// Explicitly assigned
+enum status {
+  SUCCESS = 200,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED, // automatically becomes 401
+  INTERNAL_ERROR = 500
+};
+```
+
+To avoid writing `struct` or `enum` each time you declare a variable, you can use a `typedef` alias. The structure of `typedef` looks like this:
+
+```c
+typedef type name;
+```
+
+For example, we can declare:
+
+```c
+typedef unsigned long long u64;
+
+typedef char name[16];
+
+typedef struct {
+  int x;
+  int y;
+} point;
+
+typedef enum {
+  UNUSED,
+  USED,
+  RUNNABLE,
+  RUNNING
+} state;
 ```
 
 ### Pointers
@@ -208,6 +258,8 @@ printf("%p\n", n_ptr);          // 0x16ce3afb8 = 0x16ce3afa8 + 4 * 4
 
 Note: In practice, no one types out memory addresses by hand. We almost always use `&` to get a handle on a memory address.
 
+### Arrays and String Literals
+
 **Arrays** are pointers to the first element in the array. This works because arrays occupy contiguous blocks of memory, and each element in the array has a known type and size. You can do pointer arithmetic to get the memory of any element in the array.
 
 ```c
@@ -246,7 +298,15 @@ a[0] = 'h';
 b[0] = 'h';
 ```
 
-**Function pointers** are pointers that point to functions.
+### Function Pointers
+
+**Function pointers** are pointers that point to functions. The syntax of a function pointer is:
+
+```
+return_type (*pointer_name)(parameter types);
+```
+
+For example, we can declare a pointer to an `add` function like this:
 
 ```c
 int add(int a, int b) {
@@ -257,9 +317,11 @@ addPtr = &add;
 int sum = (*addPtr)(2, 3); // 5
 ```
 
-You can also use pointers in parameters or return values.
+Note that the parentheses around `*pointer_name` are necessary because of operator precedence. For example,
+- `int (*ptr)(int, int)` declares a pointer to a function that returns an `int`
+- `int *ptr(int, int)` declares a regular function named `ptr` that returns an `int*`
 
-`addFactory` is a function that takes in an integer `n` and returns a function pointer of type `int (*)(int, int)`.
+You can also use pointers in parameters or return values. For example, `addFactory` is a function that takes in an integer `n` and returns a function pointer of type `int (*)(int, int)`.
 
 ```c
 int (*addFactory(int n))(int, int) {
@@ -268,7 +330,7 @@ int (*addFactory(int n))(int, int) {
 }
 ```
 
-### Heap
+### Malloc and Free
 
 The compiler can **automatically** allocate memory on the **stack** using type information. However, if we don't know the size of the memory until runtime, the programmer needs to **dynamically** allocate memory on the **heap**.
 
