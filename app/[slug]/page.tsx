@@ -7,6 +7,7 @@ import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { preprocessGfmTables } from "app/utils/gfm-tables";
 import { preprocessFootnotes } from "app/utils/footnotes";
+import { preprocessHighlightMarker } from "app/utils/highlight-marker";
 import { extractHeadings } from "app/utils/headings";
 import { baseUrl } from "app/sitemap";
 import MarkdownIt from "markdown-it";
@@ -72,7 +73,9 @@ export default async function Page({
   const title = post.data.title ?? post.slug ?? "Untitled";
   const headings = extractHeadings(post.content);
   const showToc = headings.length >= 1;
-  const processedContent = preprocessFootnotes(preprocessGfmTables(post.content));
+  const processedContent = preprocessFootnotes(
+    preprocessHighlightMarker(preprocessGfmTables(post.content)),
+  );
   const isNotes = post.data.tags?.includes("notes");
 
   const headerContent = (
@@ -131,7 +134,9 @@ export default async function Page({
       />
       {showToc && <TocPortal headings={headings} />}
       <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
-        <div className={isNotes ? "prose-notes" : undefined}>{headerContent}</div>
+        <div className={isNotes ? "prose-notes" : undefined}>
+          {headerContent}
+        </div>
         {showToc && <TableOfContents headings={headings} variant="mobile" />}
         <div className={isNotes ? "prose-notes" : undefined}>{bodyContent}</div>
       </div>

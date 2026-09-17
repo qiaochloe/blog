@@ -185,6 +185,16 @@ html {
   border: initial;
 }
 
+/* Highlighted text (==text==) */
+.prose mark {
+  @apply font-normal text-inherit;
+  background-color: var(--color-tuscan-sun-100);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .prose img {
   @apply m-0;
 }
@@ -201,13 +211,25 @@ html {
   @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
   color: var(--color-blue-slate-800);
   border-bottom: 1px solid var(--color-blue-slate-200);
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-figtree),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
 }
 
 .prose h3 {
   @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
   color: var(--color-blue-slate-700);
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-figtree),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
 }
 
 .prose h4 {
@@ -305,7 +327,13 @@ html {
   @apply mt-8 mb-3 text-xl font-semibold scroll-mt-24 pb-0.5 tracking-tight;
   color: var(--color-blue-slate-800);
   border-bottom: 1px solid var(--color-blue-slate-200);
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-figtree),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   counter-increment: note-h2;
   counter-reset: note-h3;
   display: grid;
@@ -318,7 +346,13 @@ html {
 .prose-notes h3 {
   @apply mt-6 mb-1.5 text-lg font-semibold scroll-mt-24;
   color: var(--color-blue-slate-700);
-  font-family: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-figtree),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   counter-increment: note-h3;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -401,6 +435,16 @@ html {
 .prose-notes pre {
   @apply text-xs bg-neutral-100 p-2 overflow-x-auto my-2 rounded-sm font-mono;
   border: initial;
+}
+
+/* Highlighted text (==text==) */
+.prose-notes mark {
+  @apply font-normal text-inherit;
+  background-color: var(--color-tuscan-sun-100);
+  padding: 0.05em 0.2em;
+  border-radius: 0.25em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 pre::-webkit-scrollbar {
