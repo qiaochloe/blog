@@ -1,0 +1,101 @@
+---
+title: High-Performance Network Systems Notes
+summary: "Evaluating Systems"
+publishedAt: "2026-09-10"
+updatedAt: "2026-09-17"
+tags:
+  - "notes"
+---
+
+## Introduction
+
+What is performance?
+- Throughput
+- Latency
+- Resource usage
+
+Why do we care about performance?
+- User experience
+- Resource costs
+
+We know that specialization can improve performance. For example, Google designed TPUs to better perform matrix multiplication and convolutions. On the other hand, "premature optimization is the root of all evil" (Donald Knuth). We should also make sure to evaluate the *costs* of improving our performance.
+
+## Evaluating Systems
+
+### Open, Closed, and Partially-Open Systems
+
+In a closed-loop system, there is a fixed number of clients which make a request, wait for a response from the server, and then make another request. New requests only arrive when the server responds.
+
+$\rho = X \times E[S]$, where:
+- $\rho$ is server load
+- $X$ is mean throughput, or req/s
+- $E[S]$ is mean service demand, or work/req
+
+In an open-loop system, there is a set rate of requests that are sent to the server, independent of whether the server responds to requests. 
+
+$\rho = \lambda \times E[S]$, where:
+
+- $\rho$ is server load
+- $\lambda$ is average arrival rate (req/s)
+- $E[S]$ is mean service demand, or work/req
+
+In a partially-open-loop system, there is a set rate of users that visit the server. Each user has some probability $p$ that, after receiving a response, makes another request. Thus, there is a variable number of requests per user session.
+
+$\rho = \lambda \times E[R] \times E[S]$, where:
+
+- $\rho$ is server load
+- $E[R]$ is mean number of req/session, or $1 / (1 - p)$
+- $E[S]$ is mean service demand, or work/req
+
+### Principles of Workload Generators
+
+In order to accurately evaluate a system, we must identify whether the system is in reality open, closed, or partly-open. Shroeder et al. suggests that we should first model each system as a partially-open system, and then decide whether an open or closed model is appropriate.
+
+![Breakdown of response times](/csci-1675/response-time-breakdown.png)
+
+1. For a given load, mean response times are significantly lower in closed systems than in open systems. 
+    - Because an open-loop system has a fixed number of clients, there is an upper bound on the number of requests in the queue, and thus a limit on queuing delay.
+    - A closed-loop system can have a queue that grows indefinitely. This problem is generally addressed by dropping requests, buffering in a message queue, or applying backpressure on the clients.
+2. As the number of clients increases, closed systems become more similar to open systems.
+3. While service demand variability has a large effect in open systems, the effect is much smaller in closed systems.
+    - When there is service demand variability, short tasks become stuck behind long tasks in a queue (head-of-line blocking)
+    - Open systems have an unbounded queue size, so many short jobs can be stuck behind long jobs
+    - Closed systems have a fixed queue length, so *fewer* short jobs are stuck behind long jobs
+4. While open systems benefit significantly from scheduling with respect to response time, closed systems improve much less. 
+    - Scheduling can prevent small jobs from queueing behind large jobs, which has a higher impact in open systems
+5. Closed systems only improve if there is moderate think time and a large number of clients. 
+    - If think time is very low, then the scheduler cannot distinguish between clients
+    - If think time is very high, then server load is small, there is very little queuing delay, and thus scheduling does not have much of an effect
+6. Scheduling can limit the effect of variability in both open and closed systems, although the effect is less for closed systems due to principle (3)
+7. A partly-open system behaves similarly to an open system when the mean number of reqs per session is small. It behaves similarly to a closed system when the mean number of reqs per session is big.
+8. In a partly-open system, think time has little effect on mean response time.
+
+**References**: [Open Versus Closed: A Cautionary Tale](https://www.usenix.org/legacy/event/nsdi06/tech/full_papers/schroeder/schroeder.pdf)
+
+### Issues with Measuring Tail Latency
+
+1. Most load-testers use a closed-loop system, underestimating tail latency.
+2. With enough load, clients may start to experience queuing delay, leading to a bias in latency measurements.
+3. Load testers that maintain an internal histograms with static buckets can lose information when latency exceeds the upper bound of the histogram. Histogram binning needs to be adaptive.
+3. For some systems, the estimated latency can converge to different values, even after running for a long time (hysteresis). If there is a pattern of hysteresis, then the measurement must be run multiple times, and the converged values should be aggregated (e.g. mean, median).
+4. A load-generator should have a warm-up, calibration (for histogram buckets), and measurement phase. 
+
+**References**: [Treadmill: Attributing the Source of Tail Latency
+through Precise Load Testing and Statistical Inference](https://www.jasonmars.org/wp-content/uploads/2020/04/ISCA.2016.47.pdf)
+
+### Attempted, Offered, and Achieved Load
+
+Assume that an open loop request generator can achieve an infinitely high load (req/s). To decrease the load, increase the wait time between requests. To set an achieved load of $T$ tasks per second, we must wait $1/T$ seconds per task.
+
+There are several ways to implement wait:
+- `sleep` is a system call that tells the operating system to pause a thread for a set amount of time. One issue is that the CPU scheduler will not necessarily start the process at exactly the desired time.
+- Busy loops are more accurate but are limited by the number of cores on the machine.
+
+Assume that a closed loop request generator achieves a low load (req/s) because it needs to wait for a response. To increase the load (req/s) of a closed loop request generator, increase the number of threads performing work. If one request generator can achieve $T$ tasks per second, we can scale to $nT$ tasks per second by having $n$ threads. Note that we can only increase load by a discrete amount.
+
+Note that there is a difference between attempted load, offered load, and achived load.
+- Attempted load ($T$): a configuration parameter for the workload generator
+- Offered load: the amount of load we actually generated with our workload generator
+- Achieved load: the behavior of the system
+
+In most cases, our offered load will be approximately equal to our attempted load. Any difference in attempted load and offered load is caused by implementation bugs. Our achieved load will always be equal or less than our offered load.
