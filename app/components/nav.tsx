@@ -45,11 +45,11 @@ function SnippetWithHighlight({
   const match = text.slice(highlightStart, highlightEnd);
   const after = text.slice(highlightEnd);
   return (
-    <span className="text-neutral-600 text-sm">
+    <div className="text-neutral-600 text-sm mt-1">
       {before}
       <mark className="bg-tuscan-sun-200 rounded px-0.5">{match}</mark>
       {after}
-    </span>
+    </div>
   );
 }
 
@@ -186,13 +186,14 @@ export function Navbar() {
                       <span className="font-medium text-neutral-900 block">
                         {r.title}
                       </span>
-                      {r.snippets[0] && (
+                      {r.snippets.slice(0, 3).map((snippet, i) => (
                         <SnippetWithHighlight
-                          text={r.snippets[0].text}
-                          highlightStart={r.snippets[0].highlightStart}
-                          highlightEnd={r.snippets[0].highlightEnd}
+                          key={i}
+                          text={snippet.text}
+                          highlightStart={snippet.highlightStart}
+                          highlightEnd={snippet.highlightEnd}
                         />
-                      )}
+                      ))}
                     </Link>
                   </li>
                 ))}
@@ -276,13 +277,14 @@ export function Navbar() {
                               <span className="font-medium text-neutral-900 block">
                                 {r.title}
                               </span>
-                              {r.snippets[0] && (
+                              {r.snippets.slice(0, 3).map((snippet, i) => (
                                 <SnippetWithHighlight
-                                  text={r.snippets[0].text}
-                                  highlightStart={r.snippets[0].highlightStart}
-                                  highlightEnd={r.snippets[0].highlightEnd}
+                                  key={i}
+                                  text={snippet.text}
+                                  highlightStart={snippet.highlightStart}
+                                  highlightEnd={snippet.highlightEnd}
                                 />
-                              )}
+                              ))}
                             </Link>
                           </li>
                         ))}

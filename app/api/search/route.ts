@@ -1,8 +1,21 @@
 import { getPosts } from "app/posts";
 import { NextRequest } from "next/server";
 
-const SNIPPET_RADIUS = 50;
+const SNIPPET_RADIUS = 60;
 const MAX_SNIPPETS_PER_POST = 3;
+
+const FIELD_BOOST = {
+  title: 10,
+  summary: 3,
+  content: 1,
+};
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 0);
+}
 
 function stripMarkdownForSearch(text: string): string {
   return text
@@ -13,7 +26,6 @@ function stripMarkdownForSearch(text: string): string {
     .trim();
 }
 
-/** Strip markdown for display in snippet previews (plain text only). */
 function stripMarkdownForPreview(text: string): string {
   return text
     .replace(/#{1,6}\s/g, "")
@@ -33,49 +45,23 @@ function stripMarkdownForPreview(text: string): string {
     .trim();
 }
 
-function findSnippets(
-  content: string,
-  query: string,
-  maxSnippets: number
-): { text: string; highlightStart: number; highlightEnd: number }[] {
-  const snippets: { text: string; highlightStart: number; highlightEnd: number }[] = [];
-  const normalized = content.toLowerCase();
-  const q = query.toLowerCase().trim();
-  if (q.length === 0) return snippets;
+type Snippet = {
+  text: string;
+  highlightStart: number;
+  highlightEnd: number;
+};
 
-  let fromIndex = 0;
-  while (snippets.length < maxSnippets) {
-    const matchIndex = normalized.indexOf(q, fromIndex);
-    if (matchIndex === -1) break;
-
-    const snippetStart = Math.max(0, matchIndex - SNIPPET_RADIUS);
-    const snippetEnd = Math.min(
-      content.length,
-      matchIndex + q.length + SNIPPET_RADIUS
-    );
-    let rawText = content.slice(snippetStart, snippetEnd);
-    if (snippetStart > 0) rawText = "…" + rawText;
-    if (snippetEnd < content.length) rawText = rawText + "…";
-
-    const text = stripMarkdownForPreview(rawText);
-    const matchInStripped = text.toLowerCase().indexOf(q);
-    if (matchInStripped === -1) {
-      fromIndex = matchIndex + 1;
-      continue;
-    }
-    const highlightStart = matchInStripped;
-    const highlightEnd = highlightStart + q.length;
-
-    snippets.push({ text, highlightStart, highlightEnd });
-    fromIndex = matchIndex + 1;
+function countOccurrences(text: string, term: string): number {
+  let count = 0;
+  let idx = 0;
+  while ((idx = text.indexOf(term, idx)) !== -1) {
+    count++;
+    idx += term.length;
   }
-  return snippets;
+  return count;
 }
 
-function buildSnippetFromTitleOrSummary(
-  field: string,
-  query: string
-): { text: string; highlightStart: number; highlightEnd: number } | null {
+function buildSnippetFromField(field: string, query: string): Snippet | null {
   const plain = stripMarkdownForPreview(field);
   const q = query.toLowerCase().trim();
   const matchIndex = plain.toLowerCase().indexOf(q);
@@ -87,59 +73,151 @@ function buildSnippetFromTitleOrSummary(
   };
 }
 
+function extractSnippet(
+  plain: string,
+  matchIndex: number,
+  matchLen: number,
+): Snippet {
+  const start = Math.max(0, matchIndex - SNIPPET_RADIUS);
+  const end = Math.min(plain.length, matchIndex + matchLen + SNIPPET_RADIUS);
+  let text = plain.slice(start, end);
+  const leadingEllipsis = start > 0;
+  const trailingEllipsis = end < plain.length;
+  if (leadingEllipsis) text = "…" + text;
+  if (trailingEllipsis) text = text + "…";
+
+  const highlightStart = matchIndex - start + (leadingEllipsis ? 1 : 0);
+  const highlightEnd = highlightStart + matchLen;
+  return { text, highlightStart, highlightEnd };
+}
+
+function snippetsOverlap(a: Snippet, b: Snippet): boolean {
+  return (
+    Math.abs(a.highlightStart - b.highlightStart) < SNIPPET_RADIUS ||
+    Math.abs(a.highlightEnd - b.highlightEnd) < SNIPPET_RADIUS
+  );
+}
+
+function findContentSnippets(
+  content: string,
+  queryTerms: string[],
+  maxSnippets: number,
+): Snippet[] {
+  const snippets: Snippet[] = [];
+  if (queryTerms.length === 0 || maxSnippets <= 0) return snippets;
+
+  const plain = stripMarkdownForPreview(content);
+  const plainLower = plain.toLowerCase();
+
+  // Prefer the exact phrase first.
+  const phrase = queryTerms.join(" ");
+  const phraseIndex = plainLower.indexOf(phrase);
+  if (phraseIndex !== -1) {
+    snippets.push(extractSnippet(plain, phraseIndex, phrase.length));
+  }
+
+  // Then individual terms, longest first as a simple rarity proxy.
+  const sortedTerms = [...queryTerms].sort((a, b) => b.length - a.length);
+  for (const term of sortedTerms) {
+    if (snippets.length >= maxSnippets) break;
+    let fromIndex = 0;
+    while (snippets.length < maxSnippets) {
+      const idx = plainLower.indexOf(term, fromIndex);
+      if (idx === -1) break;
+      const candidate = extractSnippet(plain, idx, term.length);
+      const isDuplicate = snippets.some((s) => snippetsOverlap(s, candidate));
+      if (!isDuplicate) {
+        snippets.push(candidate);
+      }
+      fromIndex = idx + 1;
+    }
+  }
+
+  return snippets;
+}
+
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) {
     return Response.json({ results: [] });
   }
 
+  const queryTerms = tokenize(q);
+  if (queryTerms.length === 0) {
+    return Response.json({ results: [] });
+  }
+
   const posts = getPosts();
-  const results: {
+  const qLower = q.toLowerCase();
+
+  const scoredResults: {
     slug: string;
     title: string;
     summary?: string;
-    snippets: { text: string; highlightStart: number; highlightEnd: number }[];
+    snippets: Snippet[];
+    score: number;
   }[] = [];
-
-  const qLower = q.toLowerCase();
 
   for (const post of posts) {
     const title = post.data.title ?? post.slug;
     const summary = (post.data.summary ?? "").trim();
     const contentPlain = stripMarkdownForSearch(post.content);
-    const titleMatch = title.toLowerCase().includes(qLower);
-    const summaryMatch = summary.toLowerCase().includes(qLower);
-    const contentMatch = contentPlain.toLowerCase().includes(qLower);
 
-    if (!titleMatch && !summaryMatch && !contentMatch) continue;
+    const titleLower = title.toLowerCase();
+    const summaryLower = summary.toLowerCase();
+    const contentLower = contentPlain.toLowerCase();
 
-    const snippets: { text: string; highlightStart: number; highlightEnd: number }[] = [];
-
-    if (titleMatch) {
-      const t = buildSnippetFromTitleOrSummary(title, q);
-      if (t) snippets.push(t);
-    }
-    if (summaryMatch && snippets.length < MAX_SNIPPETS_PER_POST) {
-      const s = buildSnippetFromTitleOrSummary(summary, q);
-      if (s) snippets.push(s);
-    }
-    const contentSnippets = findSnippets(
-      post.content,
-      q,
-      MAX_SNIPPETS_PER_POST - snippets.length
+    const allTermsMatch = queryTerms.every(
+      (term) =>
+        titleLower.includes(term) ||
+        summaryLower.includes(term) ||
+        contentLower.includes(term),
     );
-    for (const snip of contentSnippets) {
-      if (snippets.length >= MAX_SNIPPETS_PER_POST) break;
-      snippets.push(snip);
+    if (!allTermsMatch) continue;
+
+    let score = 0;
+    for (const term of queryTerms) {
+      score += countOccurrences(titleLower, term) * FIELD_BOOST.title;
+      score += countOccurrences(summaryLower, term) * FIELD_BOOST.summary;
+      score += countOccurrences(contentLower, term) * FIELD_BOOST.content;
     }
 
-    results.push({
+    // Add bonus for exact full-query matches, with title weighted highest
+    if (titleLower.includes(qLower)) score += FIELD_BOOST.title * 2;
+    if (summaryLower.includes(qLower)) score += FIELD_BOOST.summary;
+    if (contentLower.includes(qLower)) score += FIELD_BOOST.content;
+
+    const snippets: Snippet[] = [];
+
+    const titleSnippet = buildSnippetFromField(title, q);
+    if (titleSnippet) snippets.push(titleSnippet);
+
+    if (snippets.length < MAX_SNIPPETS_PER_POST) {
+      const summarySnippet = buildSnippetFromField(summary, q);
+      if (summarySnippet) snippets.push(summarySnippet);
+    }
+
+    if (snippets.length < MAX_SNIPPETS_PER_POST) {
+      const contentSnippets = findContentSnippets(
+        post.content,
+        queryTerms,
+        MAX_SNIPPETS_PER_POST - snippets.length,
+      );
+      snippets.push(...contentSnippets);
+    }
+
+    scoredResults.push({
       slug: post.slug,
       title: stripMarkdownForPreview(title),
       summary: summary ? stripMarkdownForPreview(summary) : undefined,
       snippets,
+      score,
     });
   }
 
-  return Response.json({ results });
+  scoredResults.sort((a, b) => b.score - a.score);
+
+  return Response.json({
+    results: scoredResults.map(({ score, ...rest }) => rest),
+  });
 }
