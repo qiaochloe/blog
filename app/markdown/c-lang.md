@@ -1,8 +1,8 @@
 ---
 title: A Tour Through C
-summary: Syntax • File Structure • Debugging
+summary: Syntax • File Structure • Debugging • C++
 publishedAt: "2025-03-22"
-updatedAt: "2026-09-06"
+updatedAt: "2026-09-14"
 tags:
   - "notes"
 todo: "union, goto"
@@ -12,7 +12,7 @@ I originally put these notes together while sitting in on Brown's [Computer Syst
 
 ## Syntax
 
-### Primatives
+### Primitives
 
 **Variables** can be declared, initialized, and mutated.
 
@@ -649,9 +649,9 @@ xxd <file2> > file2.hex
 diff -u file1.hex file2.hex
 ```
 
-## Algorithms
+## Tips & Tricks
 
-Bitwise operations:
+Mod, multiplication, and division by 2 can be done using bitwise operations: 
 
 ```c
 n & 1; // mod 2
@@ -659,16 +659,12 @@ n << 1; // multiply by 2
 n >> 1; // divide by 2
 ```
 
-Use **bitmasks** if you only want certain bits of a number. For example, we can calculate mod 16 by getting the 4 bits of the integer, or bit-masking every bit before it.
+**Bitmasks** can be used to extract certain bits of a number. For example, we can calculate mod 16 by getting the 4 bits of the integer, or bit-masking every bit before it.
 
 ```c
 n & 0b0000'0000'0000'0000'0000'0000'0000'1111
 n & 0xf
 ```
-
-## Miscellaneous Problems
-
-Single number:
 
 Every element appears twice except for one. Find that single one.
 
@@ -682,7 +678,7 @@ int singleNumber(int* nums, int numsSize) {
 }
 ```
 
-Power of Two:
+Determine if a number is a power of two.
 
 ```c
 bool isPowerOfTwo(int n) {
@@ -690,22 +686,7 @@ bool isPowerOfTwo(int n) {
 }
 ```
 
-Gray code:
-
-```c
-int* grayCode(int n, int* returnSize) {
-    int numElems = (1<<n);
-    int *ret = (int*)malloc(sizeof(int) * numElems);
-
-    for (int i = 0; i < numElems; i++) {
-        ret[i] = i ^ (i>>1);
-    }
-    *returnSize = numElems;
-    return ret;
-}
-```
-
-Reversing a linked list:
+Reverse a linked list.
 
 ```c
 typedef struct {
@@ -729,7 +710,7 @@ ListNode* reverseList(ListNode* head) {
 }
 ```
 
-Valid Anagram:
+Determine whether the string is an anagram.  
 
 ```c
 bool isAnagram(char* s, char* t) {
@@ -751,4 +732,150 @@ bool isAnagram(char* s, char* t) {
     }
     return 1;
 }
+```
+
+## C++
+
+C++ was built as an extension of the C programming language. However, it adds support for object-oriented programming via classes and objects.
+
+### Printing
+
+In legacy C++ (C++20 and older), the standard approach to printing is to use `std::cout`. 
+
+```cpp
+std::cout << "Hello, World!" << std::endl;
+```
+
+In modern C++ (C++23+), there is now a `<print>` library to handle output:
+
+```cpp
+#include <print>
+std::println("Hello, World!");
+```
+
+### Function Overloading
+
+C++ also contains an `auto` keyword to tell the compiler to deduce the variable's type. For example:
+
+```cpp
+auto plusOne(double x) {
+  return x + 1;
+}
+```
+
+C++ supports both function and operator overloading. This makes it more similar to object-oriented languages than C. For example:
+
+```cpp
+int plusOne(int x) {
+  return x + 1;
+}
+
+auto plusOne(double x) {
+  return x + 1;
+}
+
+auto x = plusOne(42); // calls plusOne<int>
+auto z = plusOne(2.71);  // calls plusOne<double>
+```
+
+### Lambdas
+
+C++ also has lambdas. The syntax is:
+
+```cpp
+[capture_clause] (params) specifiers -> return_type { body }
+```
+
+The capture clause allows a lambda to access local variables from its enclosing space. 
+
+| Capture Syntax | Description                              |
+|----------------|------------------------------------------|
+| `[]`           | Capture nothing                          |
+| `[x]`          | Capture `x` by value                     |
+| `[&x]`         | Capture `x` by reference                 |
+| `[=]`          | Capture all local variables by value     |
+| `[&]`          | Capture all local variables by reference |
+| `[=, &x]`      | Capture everything by value, but `x` by reference|
+
+By default, variables captured by value are treated as `const` inside of the lambda body. If you need to modify the copied values, you need to add the `mutable` specifier.
+
+### Structs and Classes
+
+In C, a `struct` is a simple data container. In C++, a `struct` or `class` is an object that can have default values, methods, constructors and destructors, and inheritance.
+
+The only difference between `struct` and `class` is that `struct`s have public memory access by default, while `class`es have private member access by default.
+
+```cpp
+struct Rectangle {
+  double length;
+  double width = 1;
+
+  double makeSquare(double sideLength) {
+    length = sideLength;
+    width = sideLength;
+  }
+};
+
+auto r1 = Rectangle{ .length = 2, .width = 4 };
+auto r2 = Rectangle{ 2, 4 }; // equivalent
+r1.makeSquare(3);
+```
+
+### Data Structures
+
+`std::array` is a fixed-length array. 
+
+```cpp
+#include <array>
+
+auto x = std::array<int, 3>{}; // need to declare elem type and length
+auto y = std::array{ 1, 2, 3 }; // elems can be initialized
+auto [a, b, c] = x; // can be unpacked
+```
+
+`std::vector` is a dynamic-length array.
+
+```cpp
+#include <vector>
+
+auto x = std::vector<int>{};
+auto y = std::vector{ 1, 2, 3 };
+x.push_back(42); 
+x.pop_back();
+```
+
+`std::tuple` is a container most commonly used to have multiple return values in C++.
+
+```cpp
+#include <tuple>
+
+auto doubleEach(auto ...x) {
+  return std::tuple { x + x... };
+}
+
+auto [x, y] = doubleEach(1, 2.5, std::string{ "abc" });
+```
+
+### Iteration
+
+There are two primary methods for iteration: range-for loops and index-based loops.
+
+```cpp
+// range-for
+for (auto element : container) { }
+
+// index-based
+for (auto i = 0; i < container.size(); ++i) {}
+```
+
+### References
+
+In C++, everything is passed by value by default. You can avoid expensive copies by creating a reference to the object. A reference is an alias for an existing variable and acts exactly like the variable. 
+
+You can declare a reference by placing an `&` in between the data type and the reference name.
+
+```cpp
+auto vec = vector<int>{ 1, 2, 3 };
+int& ref = vec;
+ref.push_back(4); // modifies the memory of vec
 ```
