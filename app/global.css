@@ -475,8 +475,8 @@ table {
 th,
 td {
   padding: 0.25rem 1rem;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
   vertical-align: top;
   font-size: 0.875rem;
 }
