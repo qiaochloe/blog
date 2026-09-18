@@ -263,6 +263,19 @@ const nonfiction: Book[] = [
       </>
     ),
   },
+  {
+    title: "Moonwalking with Einstein",
+    href: "https://www.goodreads.com/book/show/6346975-moonwalking-with-einstein",
+    img: "moonwalking-with-einstein.jpg",
+    tags: ["Practical"],
+    finishedDate: "Long ago",
+    comments: (
+      <p>
+        The main premise of this book is that good memory can be trained.
+        There's no magic to it. One of the most inspiring stories I've read.
+      </p>
+    ),
+  },
 ];
 
 export default function Nonfiction() {
