@@ -1,0 +1,398 @@
+---
+title: A Tour Through Go
+summary: Syntax • Project Structure
+publishedAt: "2026-09-19"
+updatedAt: "2026-09-20"
+tags:
+  - "notes"
+---
+
+## Syntax
+
+### Types
+
+The primitive types in Go are:
+
+```
+bool
+string
+
+int  int8  int16  int32  int64
+uint uint8 uint16 uint32 uint64
+
+float32   float64
+complex32 complex64
+
+byte // alias for uint8
+rune // alias int32
+```
+
+Variables declared without an explicit initial value are given their zero value (`0`, `false`, `""`).
+
+Assignment between items of different types requires explicit conversion.
+The expression `T(v)` converts the value `v` to the type `T`. 
+
+### Variables and Constants
+
+The `var` statement declares a list of variables. The type is the last element.
+If the variable is intialized, the type can be omitted.
+
+```go
+var x, y, z int
+var x, y, z = 1, 2, 3
+```
+
+Inside a function, there is the syntactic sugar `:=` which can be used in place of `var`. Outside of a funciton, every statement needs to begin with a keyword, so it is not possible to use `:=`.
+
+```go
+func main() {
+    k := 0
+}
+```
+
+Constants are declared with the `const` keyword. They cannot be declared using the `:=` syntax.
+
+### Functions
+
+In Go, the type of a parameter comes after the parameter name.
+
+```go
+func add(x int, y int) int {
+    return x + y
+}
+```
+
+If consecutive parameters share the same type, you can share the type declaration.
+
+```go
+func sub(x, y int) int {
+    return x - y
+}
+```
+
+A function can return any number of results.
+
+```go
+func swap(x, y string) (string, string) {
+    return y, x
+}
+```
+
+Go's return values can be named. A "naked" return will return the variables declared inside of the body.
+
+```go
+func split(sum int) (x, y int) {
+    x = sum % 10
+    y = sum / 10
+    return
+} 
+```
+
+### Closures
+
+Functions are first-class citizens. It is possible to return an anonymous function which is some closure over a location variable.
+
+```go
+func intSeq() func() int {
+    i := 0
+    return func() int {
+        i++
+        return i
+    }
+}
+
+nextInt := intSeq()
+nextInt()
+nextInt()
+nextInt()
+```
+
+### Control Flow
+
+`if` statements can start with a short statement to execute before the condition.
+
+```go
+if v := math.Pow(2, 8); v < 256 {
+    fmt.Println("Less than 256")
+} else {
+    fmt.Println("Greater than 256")
+}
+```
+
+The only looping construct is the `for` loop. `for` loops can act equivalently to `while` and `loop` in other languages.
+
+```go
+sum := 0
+
+// for loop
+for i := 0; i < 10; i++ {
+    sum += i
+}
+
+// while loop
+for sum < 1000 {
+    sum += sum
+}
+
+// loop forever
+for {
+}
+```
+
+The `range` keyword can be used inside of a `for` loop to iterate over elements in various data structures. 
+
+| Data Type | First Value                  | Second Value  |
+|-----------|------------------------------|---------------|
+| List      | Index (`int`)                | Element value |
+| Map       | Key                          | Element value |
+| String    | Byte Index (`int`)           | Character (`rune`) |
+| Integer   | Current number (starts at 0) | None          |
+
+```go
+for index, val := range arr {}
+for key, val := range map {}
+for index, char := range "str" {}
+for i := range 10 {}
+```
+
+A `switch` statement can match on the condition expression. A switch without a condition is the same as `switch true`, and it can be used to write long if-then-else chains.
+
+```go
+switch os := runtime.GOOS; os {
+case "darwin":
+    fmt.Println("macOS")
+case "linux":
+    fmt.Println("Linux")
+default:
+    fmt.Printf("%s\n", os)
+}
+```
+
+A `defer` statement pushes a function call onto a stack, which executes when the surrounding function returns. The deferred calls are executed in LIFO order.
+
+```go
+func main() {
+	fmt.Println("counting")
+
+	for i := 0; i < 10; i++ {
+		defer fmt.Println(i)
+	}
+
+	fmt.Println("done")
+}
+```
+
+### Arrays and Slices
+
+The type `[n]T` is an array of length `n` with elements of type `T`. Arrays cannot be resized.
+
+```go
+var a [10]int
+primes := [6]int{2, 3, 5, 7, 11, 13}
+```
+
+The type `[]T` is a slice with elements of type `T`. A slice is a dynamically-sized view into the elements of an array. Its length can be extended and reduced at will, so long as it has sufficient capacity.
+
+Changing the elements of a slice modifies the corresponding elements of its underlying array.
+
+```go
+var s []int = primes[1:4] // reference elems 1 to 3
+s = primes[:4]            // extend its length
+s[0] = 0                  // mutate
+```
+
+A slice literal is like an array literal without the length. The code below builds an array of type `[5]int`, and then builds a slice that references it.
+
+```go
+[]int{1, 2, 3, 4, 5}
+```
+
+Slices can be created with a `make` function which takes in teh type, length, and capacity. `make` is how you create dynamicall-sized arrays.
+
+```go
+a := make([]int, 5)
+b := make([]int, 0, 5)
+```
+
+Slices can be extended with `append`, which takes in the slice and values to be appended. If the capacity of `s` cannot fit all the given values, a bigger array will be allocated and the returned slice will point to the newly allocated array.
+
+### Maps
+
+The type `map[T1]T2` is a map from keys of type `T1` to values of type `T2`. 
+
+Map literals have all the keys listed.
+
+```go
+var m = map[string]int{
+    "Alice": 5,
+    "Bob": 10
+}
+```
+
+The `make` function can return a map of the given type, intiialized.
+
+```go
+var m map[string]int
+m = make(map[string]int)
+m["Alice"] = 5
+m["Bob"] = 10 
+```
+
+To test that a key is present:
+
+```
+elem, ok = m[key]
+```
+
+### Pointers
+
+Similar to C, Go has pointers.
+
+```go
+i := 42
+p = &i
+*p += 43
+```
+
+If you take the address of a local variable, the compiler will automatically heap-allocate it.
+
+### Structs
+
+The `type` keyword is used to declare custom data types or create type aliases. 
+
+```go
+type UserID string
+type Velocity = float64 // Velocity and float64 are exactly the same type
+```
+
+A `struct` is a collection of fields. It is possible to just list a subset of fields using the `Name:` syntax.
+
+```go
+type Point struct {
+    X, Y float64
+}
+
+fmt.Println(Point{1, 2})
+fmt.Println(Point{X: 1}) // Y: 0 is implicit
+```
+
+### Methods
+
+Go does not have classes, but you can define methods on types. A method is a function with a special receiver argument that goes between `func` and the method name.
+
+You can only declare a method with a receiver whose type is defined in the same package as the method.
+
+```go
+type Point struct {
+    X, Y float64
+}
+
+func (p Point) Abs() float64 {
+    return math.Sqrt(p.X * p.X + p.Y * p.Y)
+}
+```
+
+Methods can also have a pointer as a receiver. This allows the method to modify the value that its receiver points to. It also avoid copying the value on each method call.
+
+```go
+func (p *Point) Scale(f float64) {
+    p.X = p.X * f
+    p.Y = p.Y * f
+}
+```
+
+Go has a number of syntactic shortcuts to help with handling pointers:
+- To access the field `X` of a struct when we have the struct pointer `ptr`, we could write `(*ptr).X`. However, Go allows us to just write `ptr.X`.
+- If we pass a struct `p` to a method that takes a pointer receiver, Go will automatically interpret `p.method()` as `(&p).method()`.
+- If we pass a struct pointer `ptr` to a method that takes a value receiver, Go will automatically interpret `ptr.method()` as `(*ptr).method()`.
+
+```go
+var p = Point{1, 1}
+p.Scale(5)   // OK
+ptr := &p
+ptr.Scale(5) // OK
+```
+
+### Interfaces
+
+An interface type is a set of method signatures. A value of an interface type is any value that implements those methods.
+
+A type implements an interface by implementing its methods. It is not necessary to declare that it "implements" the interface.
+
+```go
+type I interface {
+    M()
+}
+
+type T struct {
+    S string
+}
+
+// T implements I
+func (t T) M() {
+    fmt.Println(t.S)
+}
+```
+
+### Generics
+
+Functions can be made generic using type parameters.
+
+For example, the declaration below states that `s` is a slice of any type `T` that fulfills the constraint `comparable`. `x` is also a value of the same type. `comparable` is a constraint that states that it should be possible to use `==` and `!=` on value of this type.
+
+```go
+func Index[T comparable](s []T, x T) int
+```
+
+In addition to generic functions, there are also generic types. 
+
+For example, the declaration below describes a single-linked list that holds any type of value.
+
+```go
+type List[T any] struct {
+    next *List[T]
+    val T
+}
+```
+
+### Errors
+
+To return a basic, static text error message, use the `errors` package.
+
+```go
+errors.New("cannot divide by zero")
+```
+
+To return a formatter error message, use `fmt.Sprintf`.
+
+```go
+key := "Alice"
+fmt.Errorf("overlapping command for %s", key)
+```
+
+## Project Structure
+
+### Packages
+
+Every Go program is made of packages. Programs start running in package `main`.
+
+```go
+package main
+```
+
+If a variable begins with a capital letter, it is exported.
+
+### Modules
+
+A module is a collection of related packages that are versioned and distributed together as a single unit. It is defined by a specific file tree that contains a `go.mod` file at its root.
+
+Command commands:
+- `go mod init` initializes a new module
+- `go get <path>@<version>` updates a specific dependency
+- `go list -m all` lists all dependencies
+- `go mod tidy` automatically adds missing dependencies and prunes unused ones
+- `go mod vendor` copies all modules required to build the project into a local directory named `vendor/`
+
+A workspace allows you to work on multiple modules without having to edit individual `go.mod` files.
+
+**References**: [A Tour of Go](https://go.dev/tour/welcome/1)
