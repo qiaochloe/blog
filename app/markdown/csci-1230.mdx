@@ -19,16 +19,30 @@ There are three main disciplines of graphics: modeling shape and appearance, ani
 
 An image is a 2D grid of cells called pixels, where each pixel holds some set of values. A pixel (**pic**ture + **el**ement) is a unit with some kind of value. A pixel value can represent intensity (grayscale), color (RGB), opacity, or depth. 
 
-What are the advantages and disadvantages of floating-point vs. integer format?
-- Floating point takes a lot more storage than integer
-- 24 bits is usually enough for the human eye
-- Floating point is usually used as the intermediate format for calculations
+In the grayscale image below, each pixel requires only one value to encode its intensity. By convention, `0` is the lowest intensity (black) and `1` is the highest intensity (white).
 
-How do we store images in memory?
+![Grayscale image](/csci-1230/grayscale-image.png)
+
+In a RGBA image, each pixel has four distinct values, which each represents red, green, blue, and alpha. Each value ranges from `0` to `255`. 
+
+![RGBA image](/csci-1230/rgba-image.png)
+
+An RGB value of `(255, 0, 0)` gives us red, `(0, 255, 0)` gives us green, and `(0, 0, 255)` gives us blue. Surprisingly, an RGB value of `(255, 255, 255)` gives us pure white. This is because we are working with light from the computer screen rather than pigment from paint. This gives us [additive color](https://en.wikipedia.org/wiki/Additive_color) rather than [subtractive color](https://en.wikipedia.org/wiki/Subtractive_color). 
+
+### Datatypes and Memory
+
+Notice that intensity is represented with a `float64`, while color is represented with a `uint8`. The reason we use `uint8` for RGB images is that `float64` takes up a lot of storage. If we used floats for RGBA images, each pixel would require 16 bytes, and a 1000 x 1000 image would take up 16 MB of memory.
+
+Most displays today use [24-bit true color](https://en.wikipedia.org/wiki/Color_depth#True_color_(24-bit)), which is 8 bits per color channel. Since each color channel has $2^8 = 256$ distinct values, we generate $256^4 \approx 17$ million different RGB colors. The human eye can discriminate only around 10 million colors, so this is generally sufficient. However, humans are fairly good at noticing uneven changes in color in [color banding](https://en.wikipedia.org/wiki/Colour_banding), which can be undesirable.
+
+There are multiple ways to store images in memory:
 - Array of structs (AoS), where each struct represents an RGB value
 - Struct of arrays (SoA), where each array represents a R, G, or B channel
-
 Different memory organizations affect cache locality.
+
+It is also common to store 2D arrays of data in 1D data structures. There are two common ways of doing this: (1) row-major ordering and (2) column-major ordering.
+
+![Row and column major ordering](/csci-1230/row-and-column-major-ordering.png)
 
 ## Vector Graphics
 
