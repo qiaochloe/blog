@@ -2,16 +2,10 @@
 title: "Operating Systems Notes"
 summary: Booting • I/O Devices
 publishedAt: 2026-09-16
-updatedAt: 2026-09-18
+updatedAt: 2026-09-21
 tags:
 - notes
 ---
-
-## Introduction
-
-### Raspberry Pi Architecture
-
-![Raspberry pi architecture](/csci-1670/raspberry-pi-architecture.png)
 
 ## Booting
 
@@ -20,11 +14,15 @@ tags:
 Booting proceeds in stages:
 - Stage 0: CPU starts executing the ROM, which is mapped in RAM 
 - Stage 1: ROM loads the bootloader from persistent storage
-- Stage 2: Bootloder loads the kernel ("image") into a fixed physical address
+- Stage 2: Bootloader loads the kernel ("image") into a fixed physical address
+
+In stage 0, there is a fixed circuit that tells the CPU to jump to the first instruction of read-only memory (ROM). The stage 1 bootloader in ROM enables necessary devices (harddisk, SSD, RAM) and loads the stage 2 bootloader from persistent storage into RAM. 
+
+The stage 2 bootloader is usually a small program that is stored in a fixed location on the storage device. (This helps the stage 1 bootloader find it.) The stage 2 bootloader is responsible for loading the kernel into a fixed address in RAM. It then jumps to the first instruction of the kernel code, when then runs.
+
+The stage 2 bootloader is usually configurable by the programmer. It is generally written in assembly because C assumes that there is a stack, which does not exist yet. 
 
 ![Booting sequence](/csci-1670/booting.png)
-
-Boot code is written in assembly. (C assumes that there is a stack, which does not exist yet.)
 
 ### Booting for Real
 
@@ -57,19 +55,27 @@ Raspberry Pi
  
 ## I/O Devices
 
-### Device Registers and Device Drivers
+### Interacting with I/O Devices 
 
-An I/O device will expose some kind of interface that allows us to control the device. These interfaces are commonly called **device registers**. If we change the bits in a device register, this will physically pull the pin HIGH or LOW and change the state of the device.
+An I/O device will expose some kind of interface that allows us to control the device. These interfaces are commonly called ==device registers==. If we change the bits in a device register, this will physically pull the pin HIGH or LOW and change the state of the device.
 
-**Device drivers** are pieces of software that understands how to interact with the device and its device registers. Device drivers typically run inside of the kernel because interacting with devices is a privileged operation.
+==Device drivers== are pieces of software that understands how to interact with the device and its device registers. Device drivers typically run inside of the kernel because interacting with devices is a privileged operation.
 
 ### Memory-Mapped I/O
 
-**Question**: How should the hardware communicate with a device?
+**Question**: How can the CPU communicate with a peripheral device?
 
-There are two primary means of device communication:
-1. Explicit I/O instructions, such as `in <register>, <port>` and `out <register>, <port>`
-2. Memory-mapped I/O. The hardware makes device registers available as if they were memory locations. When the OS issues a read or write to the address, the hardware routes it to the device.
+There are two primary means of communication:
+1. [Port-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O). Explicit I/O instructions, such as `in <register>, <port>` and `out <register>, <port>` 
+2. [Memory-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O). The hardware makes device registers available as if they were memory locations. When the OS issues a read or write to the address, the hardware routes it to the device.
+
+With memory-mapped I/O, the physical address space now contains more than just DRAM. 
+
+![Physical address space](/csci-1670/physical-address-space.png)
+
+When the CPU attempts to access a memory address, there is a selector that either routes it to the connected device or to RAM.
+
+![Physical routing](/csci-1670/physical-routing.png)
 
 ### UART
 
@@ -77,6 +83,39 @@ UART stands for Universal Asynchronous Receiver-Transmitter. It is a hardware de
 
 For example, we can write a program which writes and reads from the UART. The UART then forwards the writes to another device. 
 
-The UART needs to be modified so that it works with the device. It can be customized in terms of:
+![UART diagram](/csci-1670/uart-diagram.png)
+
+The UART needs to be modified so that it works with the attached device. It can be customized in terms of:
 - Baud rate (bits/second)
 - Parity
+
+## Executable Formats
+
+Executable files basically describe how a program should be run. It may contain:
+- Machine code
+- Global variables
+- Entry point
+- Relocation information
+
+Different operating systems have different executable formats:
+- Unix/Linux: ELF
+- MacOS: Mach-O
+- Windows: PE (Portable Executable)
+
+For more information about the ELF format, see [CSCI 1655 notes](/csci-1650#elf).
+
+## Appendix
+
+This appendix contains project-specific diagrams.
+
+### Raspberry Pi Architecture
+
+The diagram below shows a simplified view of the Raspberry Pi architecture. Notice that ROM and UART are both on the system on chip (SoC).   
+
+![Raspberry pi architecture](/csci-1670/raspberry-pi-architecture.png)
+
+### Memory Layout
+
+On the Raspberry Pi, the kernel must be at the fixed address **0x80000**. The kernel stack can be placed at an address of your choosing.
+
+![Memory layout](/csci-1670/memory-layout.png)
