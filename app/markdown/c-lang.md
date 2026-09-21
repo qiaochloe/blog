@@ -1,8 +1,8 @@
 ---
 title: A Tour Through C
-summary: Syntax • File Structure • Debugging • C++
+summary: Syntax • Project Structure • Debugging • C++
 publishedAt: "2025-03-22"
-updatedAt: "2026-09-14"
+updatedAt: "2026-09-20"
 tags:
   - "notes"
 todo: "union, goto"
@@ -378,15 +378,14 @@ The `static` keyword has multiple functions:
 
 3. A `static` function is also not seen outside of the C file it is defined in.
 
-`#define` is a directive used to define macros.
-Macros are replaced by their value by the preprocessor before the code is compiled.
+`#define` is a directive used to define macros. Macros are replaced by their value by the preprocessor before the code is compiled.
 
 ```c
 #define PI 3.14159
 #define AREA(r) (PI * r * r)
 ```
 
-## File Structure
+## Project Structure
 
 ### C Files
 
@@ -826,11 +825,16 @@ r1.makeSquare(3);
 `std::array` is a fixed-length array. 
 
 ```cpp
+#include <algorithm>
 #include <array>
 
 auto x = std::array<int, 3>{}; // need to declare elem type and length
 auto y = std::array{ 1, 2, 3 }; // elems can be initialized
 auto [a, b, c] = x; // can be unpacked
+
+// fill with some value
+std::array<float, 10> arr;
+arr.fill(0.5);
 ```
 
 `std::vector` is a dynamic-length array.
@@ -842,6 +846,10 @@ auto x = std::vector<int>{};
 auto y = std::vector{ 1, 2, 3 };
 x.push_back(42); 
 x.pop_back();
+
+// assign 10 units with a value of 0.5
+std::vector<float, 10> vec;
+vec.assign(10, 0.5);
 ```
 
 `std::tuple` is a container most commonly used to have multiple return values in C++.
@@ -878,4 +886,25 @@ You can declare a reference by placing an `&` in between the data type and the r
 auto vec = vector<int>{ 1, 2, 3 };
 int& ref = vec;
 ref.push_back(4); // modifies the memory of vec
+```
+
+### Preprocessor Directives
+
+`#pragma once` is a preprocessor directive designed to ensure that a header file is included only once during compilation. This helps avoid declaring a `struct` multiple times and running into compiler errors.
+
+```cpp
+#pragma once
+
+struct RGBA {
+    ...
+}
+```
+
+Note that `#pragma once` is non-standard, but is supported by most major compilers. It replaces traditional header guards in the C++ standard which uses `#ifndef`, `#define`, and `#endif`. 
+
+```cpp
+#ifndef RGBA
+#define RGBA
+...
+#endif
 ```
