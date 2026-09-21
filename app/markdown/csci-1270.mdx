@@ -1,0 +1,98 @@
+---
+title: "Databases Notes"
+summary: "Relational Algebra • SQL"
+publishedAt: "2026-09-13"
+updatedAt: "2026-09-21"
+tags:
+  - "notes"
+---
+
+## Introduction
+
+The database symbol is a cylinder because databases were originally stored on a hard disk of stacked plates.
+
+**Question**: Why use a database management system (DBMS) instead of a filesystem?
+
+1. Data consistency (schema)
+2. Crash recovery
+3. Efficient data retrieval 
+4. Concurrent access to data
+5. Physical data independence (ability to change how data is stored without changing application code)
+
+A DBMS allows users to store, query, and update databases in accordance to some data model. Examples of data models include:
+1. Relational
+2. Key-value
+3. Graph
+4. Document 
+5. Vector
+
+DBMS design principles:
+1. More specialized databases, driven by application semantics
+2. Few primitives (relational operators) which can be composed
+3. Data independence; applications should not need to understand how data is stored
+2. Declarative programming
+
+## Relational Algebra
+
+Early database applications tightly coupled logical and physical layers, which made it difficult to make any changes to the program. To deal with the maintenance overhead, Ted Codd wrote [A relational model of data for large shared data banks](https://dl.acm.org/doi/10.1145/362384.362685), which later became the basis of the relational data model.
+
+The key ideas are:
+- Data should be stored in simple data structures (relations)
+- The DBMS should be responsible for the physical storage of the data
+- Data should be accessed through high-level, declarative language, so that the DBMS can optimize it
+
+Terminology:
+- A relation is an unordered set of tuples
+- A tuple is a set of attribute values
+- A primary key uniquely identifies a single tuple in a relation
+- A foreign key specifies that an attribute from one relation maps to a tuple in another relation
+
+Relational models can define constraints, such as:
+- Table schema is respected
+- Primary keys are unique
+- The foreign key exists in another table
+- Global assertions
+
+There are two different types of data management languages (DMLs):
+1. Procedural: the query specifies how to find the desired result (e.g. relational algebra)
+2. Declarative: the query only specifies what data is wanted (e.g. SQL)
+
+Relational algebra is based on set algebra. That means that it represents relations as unordered lists with no duplicates. Each operator takes in one relation and outputs a new relation. 
+
+| Symbol                           | Meaning                                                                        |
+|----------------------------------|--------------------------------------------------------------------------------|
+| $\sigma_{\text{pred}}(R)$        | Select all tuples which satisfy `pred`                                         |
+| $\Pi_{\text{A1, A2, ..., An}}(R)$ | Generate a relation with only the specified attributes                        |
+| $R \cup S$                       | Generate a relation that contains all tuples that appear in either relation    |
+| $R \cap S$                       | Generate a relation that contains all tuples that appear in both relations     |
+| $R - S$                          | Generate a relation that contains all tuples that appear in $R$ but not in $S$ |
+| $R \times S$                     | Generate the Cartesian product of the two relations                            |
+| $R \bowtie S$                    | Perform a natural join; only return tuples which have common attributes        |
+
+## SQL
+
+Unlike in relational algebra, SQL assumes that data is stored in a bag, not a set. This means that there can be duplicated rows. This is for efficiency reasons—if we do a union on two very large tables, it is expensive to deduplicate the output.
+
+SQL operations
+1. Selection ($\sigma$)
+2. Projection ($\Pi$)
+3. Aggregation
+4. Join
+5. Views
+
+`GROUP BY` rules:
+1. Non-aggregated values in `SELECT` output must appear in `GROUP BY` clause.
+2. Each `GROUP BY` clause will cause the output to contain one tuple per group.
+
+Types of `JOIN`:
+- Cross join: Cartesian product
+- Inner join: every pair that matches, dropping non-matching pairs
+- Outer join: every pair that matches, keeping non-matching tuples
+
+Within inner joins, there is also:
+- Natural join ($R \bowtie S$): matcch tuples where the shared attributes are equivalent
+- Theta or equijoin ($R \bowtie_\theta S$): match tuples using some join predicate defined by $\theta$
+- Semi join ($R \ltimes S$): same as theta join, except output relation only contains attributes from $R$
+- Anti semijoin ($R \rhd S$): tuples of $R$ that do not match with any tuple of $S$ (not technically an inner join)
+
+For more details about SQL syntax, go to the [SQL](/sql) page.
