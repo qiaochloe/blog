@@ -1,13 +1,13 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Evaluating Systems"
+summary: "Performance • Instrumentation"
 publishedAt: "2026-09-10"
-updatedAt: "2026-09-17"
+updatedAt: "2026-09-22"
 tags:
   - "notes"
 ---
 
-## Introduction
+## Performance
 
 What is performance?
 - Throughput
@@ -18,9 +18,11 @@ Why do we care about performance?
 - User experience
 - Resource costs
 
-We know that specialization can improve performance. For example, Google designed TPUs to better perform matrix multiplication and convolutions. On the other hand, "premature optimization is the root of all evil" (Donald Knuth). We should also make sure to evaluate the *costs* of improving our performance.
+Specialization can improve performance. For example, Google designed TPUs to better perform matrix multiplication and convolutions. 
 
-## Evaluating Systems
+On the other hand, "premature optimization is the root of all evil" (Donald Knuth). We should also make sure to evaluate the *costs* of improving our performance.
+
+## Instrumentation
 
 ### Open, Closed, and Partially-Open Systems
 
@@ -46,6 +48,8 @@ $\rho = \lambda \times E[R] \times E[S]$, where:
 - $\rho$ is server load
 - $E[R]$ is mean number of req/session, or $1 / (1 - p)$
 - $E[S]$ is mean service demand, or work/req
+
+**References**: [Open Versus Closed: A Cautionary Tale](https://www.usenix.org/legacy/event/nsdi06/tech/full_papers/schroeder/schroeder.pdf)
 
 ### Principles of Workload Generators
 
@@ -93,9 +97,43 @@ There are several ways to implement wait:
 
 Assume that a closed loop request generator achieves a low load (req/s) because it needs to wait for a response. To increase the load (req/s) of a closed loop request generator, increase the number of threads performing work. If one request generator can achieve $T$ tasks per second, we can scale to $nT$ tasks per second by having $n$ threads. Note that we can only increase load by a discrete amount.
 
-Note that there is a difference between attempted load, offered load, and achived load.
-- Attempted load ($T$): a configuration parameter for the workload generator
-- Offered load: the amount of load we actually generated with our workload generator
-- Achieved load: the behavior of the system
+Note that there is a difference between attempted load, offered load, and achived load:
+- Attempted load ($T$): the condition in which we want to measure the system; usually a configuration parameter in the workload generator
+- Offered load: the number of req/s we actually generated with our workload generator
+- Achieved load: the number of req/s the system actually did
 
 In most cases, our offered load will be approximately equal to our attempted load. Any difference in attempted load and offered load is caused by implementation bugs. Our achieved load will always be equal or less than our offered load.
+
+### Poisson Process
+
+A Poisson process models events as ocurring independently and at a constant average rate $\lambda$. It has two nice properties:
+- It is memoryless, which means that the probability of an event in the next instant doesn't depend on how long we've already waited
+- Events in non-overlapping time windows don't affect each other
+The convolution of multiple independent Poisson random variables results in another Poisson random variable whose mean is the sum of the two individual means.
+If packet arrivals follows a Poisson process with rate $\lambda$, then the number of events $k$ in a fixed window of length $t$ is:
+
+$$
+P_\lambda(k) = \frac{(\lambda t)^ke^{-\lambda t}}{k!}
+$$
+
+For example, if $\lambda = 0.5$, then the probability that load is greater than $1$ is 
+
+$$
+P(X > 1) = 1 - P_\lambda(1) + P_\lambda(0) \approx 0.09
+$$
+
+And if $\lambda = 1$, then the probability that load is greater than $1$ is 
+
+$$
+P(X > 1) = 1 - P_\lambda(1) + P_\lambda(0) \approx 0.26
+$$
+
+In a real system, we might queue up requests instead. If $\lambda$ is less than the amount of load that the server can manager, then the queue probably will not grow forever. There is a stable probability even when the timescale is infinite.
+
+Using this model with a Poisson distribution of offered load and queuing delay, there will be a latency distribution for each offered load:
+
+![Latency throughput graph with boxplots](/csci-1675/latency-throughput-boxplots.png)
+
+**Question**: How can we report a metric capturing both latency and throughput?
+
+Generally, we establish an SLO (service-level objective) or SLA (service-level agreement) that promises that at Y latency, the system will satisfy an offered load of X.
