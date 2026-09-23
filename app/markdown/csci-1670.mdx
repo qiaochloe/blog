@@ -1,8 +1,8 @@
 ---
 title: "Operating Systems Notes"
-summary: Booting • I/O Devices
+summary: "Booting • I/O Devices • Processes"
 publishedAt: 2026-09-16
-updatedAt: 2026-09-21
+updatedAt: 2026-09-23
 tags:
 - notes
 ---
@@ -12,19 +12,21 @@ tags:
 ### Stages of Booting
 
 Booting proceeds in stages:
-- Stage 0: CPU starts executing the ROM, which is mapped in RAM 
+- Stage 0: CPU starts executing the ROM
 - Stage 1: ROM loads the bootloader from persistent storage
 - Stage 2: Bootloader loads the kernel ("image") into a fixed physical address
 
-In stage 0, there is a fixed circuit that tells the CPU to jump to the first instruction of read-only memory (ROM). The stage 1 bootloader in ROM enables necessary devices (harddisk, SSD, RAM) and loads the stage 2 bootloader from persistent storage into RAM. 
+In stage 0, there is a fixed circuit that tells the CPU to jump to the first instruction of read-only memory (ROM). ROM can be both directly executed and mapped into RAM. 
 
-The stage 2 bootloader is usually a small program that is stored in a fixed location on the storage device. (This helps the stage 1 bootloader find it.) The stage 2 bootloader is responsible for loading the kernel into a fixed address in RAM. It then jumps to the first instruction of the kernel code, when then runs.
+The stage 1 bootloader in ROM enables necessary devices (harddisk, SSD, RAM) and loads the stage 2 bootloader from persistent storage into RAM. This bootloader is generally fixed-size and OS-independent.
 
-The stage 2 bootloader is usually configurable by the programmer. It is generally written in assembly because C assumes that there is a stack, which does not exist yet. 
+The stage 2 bootloader is usually a program that is stored in a fixed location on the storage device. (This helps the stage 1 bootloader find it.) The stage 2 bootloader is usually configurable by the programmer. It is generally written in assembly because C assumes that there is a stack, which does not exist yet. 
+
+The stage 2 bootloader is responsible for loading the kernel into a fixed address in RAM. It then jumps to the first instruction of the kernel code. The OS kernel sets up its own stack and memory segments.
 
 ![Booting sequence](/csci-1670/booting.png)
 
-### Booting for Real
+<Extra title="Booting Example: x86-64, Apple Silicon, and Raspberry Pi">
 
 |               | Stage 0                     | Stage 1                       | Stage 2                          | Stage 3               |
 |---------------|-----------------------------|-------------------------------|----------------------------------|-----------------------|
@@ -52,24 +54,50 @@ Raspberry Pi
 - [OSdev wiki page: System Initialization (x86)](https://wiki.osdev.org/System_Initialization_%28x86%29)
 - [OSdev wiki page: MBR (x86)](https://wiki.osdev.org/MBR_%28x86%29)
 - [Asahi Linux blog post on the Apple Silicon bootup process](https://asahilinux.org/2021/03/progress-report-january-february-2021/) 
- 
+
+</Extra>
+
 ## I/O Devices
 
-### Interacting with I/O Devices 
+### Device Drivers
 
-An I/O device will expose some kind of interface that allows us to control the device. These interfaces are commonly called ==device registers==. If we change the bits in a device register, this will physically pull the pin HIGH or LOW and change the state of the device.
+An I/O device will expose some kind of interface that allows us to control the device. These interfaces are commonly called ==device registers==. If we change the bits in a device register, this will physically pull the pin HIGH or LOW and change the state of the device. For example, if you want to send a character to the console, you can write the character to the device's data register. 
 
 ==Device drivers== are pieces of software that understands how to interact with the device and its device registers. Device drivers typically run inside of the kernel because interacting with devices is a privileged operation.
 
-### Memory-Mapped I/O
+<Extra title="Device Example: UART">
 
-**Question**: How can the CPU communicate with a peripheral device?
+UART stands for Universal Asynchronous Receiver-Transmitter. It is a hardware device that can communicate with other devices via a receiver and transmitter.
+
+Note that UART needs to be modified so that it works with the attached device. It can be customized in terms of:
+- Baud rate (bits/second)
+- Number of bits per character (7 or 8)
+- Parity
+
+The UART exposes the following device registers:
+- Control Register (CR): turns device and transmission on and off
+- Line Control Register (LCRH): configures transmission parameters lke bits per character and parity
+- Baud Rate Registers (IBRD, FBRD): set baud rate
+- Flag Register (FR): can be read to understand state of hardware (e.g. whether FIFOs are full)
+- Data Register (DR): used to actually send and receive data
+
+![UART diagram](/csci-1670/uart-diagram.png)
+
+</Extra>
+
+### PMIO and MMIO
+
+**Question**: Now that the devices expose device drivers, how can the CPU actually modify these device drivers?
 
 There are two primary means of communication:
-1. [Port-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O). Explicit I/O instructions, such as `in <register>, <port>` and `out <register>, <port>` 
-2. [Memory-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O). The hardware makes device registers available as if they were memory locations. When the OS issues a read or write to the address, the hardware routes it to the device.
+1. In [port-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O) (PMIO), there are explicit I/O instructions, such as `in <register>, <port>` and `out <register>, <port>` 
+2. In [memory-mapped I/O](https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O) (MMIO), the hardware makes device registers available as if they were memory locations. When the OS issues a read or write to the address, the hardware routes it to the device.
 
-With memory-mapped I/O, the physical address space now contains more than just DRAM. 
+With memory-mapped I/O, the physical address space now contains more than just RAM. On bare metal, the physical address space comprises of:
+1. RAM regions used by running programs
+2. Reserved regions wired directly to hardware devices (like console)
+
+Note that this device MMIO region is fixed by the hardware, not by the operating system.
 
 ![Physical address space](/csci-1670/physical-address-space.png)
 
@@ -77,21 +105,9 @@ When the CPU attempts to access a memory address, there is a selector that eithe
 
 ![Physical routing](/csci-1670/physical-routing.png)
 
-### UART
-
-UART stands for Universal Asynchronous Receiver-Transmitter. It is a hardware device that can communicate with other devices via a receiver and transmitter.
-
-For example, we can write a program which writes and reads from the UART. The UART then forwards the writes to another device. 
-
-![UART diagram](/csci-1670/uart-diagram.png)
-
-The UART needs to be modified so that it works with the attached device. It can be customized in terms of:
-- Baud rate (bits/second)
-- Parity
-
 ## Executable Formats
 
-Executable files basically describe how a program should be run. It may contain:
+On storage, programs are encoded using an executable form. It may contain:
 - Machine code
 - Global variables
 - Entry point
@@ -102,11 +118,68 @@ Different operating systems have different executable formats:
 - MacOS: Mach-O
 - Windows: PE (Portable Executable)
 
+The program loader's job is to read the executable in the stored executable format, parse the information, and load the relevant segments into the memory region chosen for the sepcific process. 
+
+The loader must also ensure that all pointers contained in the executable point to the right places in memory. This may involve *relocating* sybols (functions and variables) whose memory addresses aren't known at compile time, but only at load time.
+
 For more information about the ELF format, see [CSCI 1655 notes](/csci-1650#elf).
+
+## Processes
+
+### Multiprogramming
+
+Instead of running each process one by one (batch programming), we may want to run more than 1 program on the computer concurrently (multiprogramming).
+
+**Question**: Why do we want multiprogramming?
+
+Compared to the CPU, hardware devices are very slow. If we didn't have concurrency, the CPU might be idle for long periods of time while the program is waiting for I/O. Running several processes concurrently lets the OS multiplex a fast CPU across slow devices.
+
+**Question**: What do we need for multiprogramming?
+
+First, we need to be able to load multiple processes into memory. We also need a way to keep track of each of these processes through some kind of data structures. Finally, we also need a way to switch the CPU between different processes.
+
+### The Process Table
+
+A ==process descriptor==, also known as a process control block (PCB), is a data structure that stores information about a single process. It contains:
+- The state of the process (`UNUSED`, `USED`, `RUNNABLE`, `RUNNING`)
+- The process ID (PID), so that programs can refer to a process without having a pointer into kernel memory 
+- A pointer to the process's stack
+- A pointer to its context
+
+A process table is just an array of process descriptors. 
+
+The kernel maintains a pointer to the descriptor of the current process running on the CPU.
+
+### Context-Switching
+
+From the CPU's point of view, a running process is just defined by:
+1. The general-purpose registers (`x0`-`x30`) which hold the program's live values, its base pointer in `x29`, and its return address in `x30`
+2. The stack pointer (`sp`) which points to the top of the stack
+3. The program counter (`pc`) or instruction pointer which contains the address of the next instruction to run
+4. The processor state, which includes condition flags (N/Z/C/V) that a following conditional branch depends on, the current exception level, which stack pointer is in use, and which interrupts are masked
+
+To change the process that the CPU is working on, we must save the running process's context and load another process's context. This is called a ==context switch==. 
+
+The mechanism for a context switch usually involves a function to `save_context` and `restore_context`. These functions are usually written in assembly because we need to directly modify registers.
+
+There are two obvious places where we can store the context:
+1. Inside the process descriptor. This means that the stack pointer needs to be saved and restored explicitly. It does not generalize well to interrupts. 
+2. On the process's own stack. Just before saving, subtract the size of a context from the stack pointer to make room, and then write the registers into that space. The process descriptor stores only a pointer to it.
+
+### Concurrency
+
+In order to do a context switch, the OS needs the ability to stop the CPU from running some process. However, the OS is *itself* a process that needs to run on the CPU. 
+
+There are two ways the OS can get the CPU back from a running process:
+
+- **Cooperative concurrency**. The process gives it up voluntarily by calling into the kernel directly (via `yield()`). The problem with cooperative concurrency is that it depends on the process being polite.
+- **Preemptive concurrency**. The kernel takes the CPU back by arranging a hardware timer to interrupt the CPU periodically. When the timer fires, the CPU stops executing and jumps into the kernel, where it can schedule another process. 
+
+Preemption also allows the OS to respond to devices quickly. When a network packet arrives or when there is a disk read, the data is stored in a limited memory region.The OS needs to respond before that memory region is overwritten by other data.
 
 ## Appendix
 
-This appendix contains project-specific diagrams.
+This appendix contains project-specific content.
 
 ### Raspberry Pi Architecture
 
@@ -119,3 +192,7 @@ The diagram below shows a simplified view of the Raspberry Pi architecture. Noti
 On the Raspberry Pi, the kernel must be at the fixed address **0x80000**. The kernel stack can be placed at an address of your choosing.
 
 ![Memory layout](/csci-1670/memory-layout.png)
+
+### ARM-64 Instructions
+
+The `eret` instruction can set both the program counter and the processor state atomically from `ELR_EL1` and `SPSR_EL1`.
