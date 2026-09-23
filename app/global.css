@@ -266,6 +266,10 @@ html {
   @apply border-l-4 border-neutral-200 pl-4 my-4;
 }
 
+.extra-summary {
+  @apply text-sm cursor-pointer select-none font-semibold text-neutral-900;
+}
+
 /* Footnotes */
 .prose .footnote-ref {
   @apply no-underline;

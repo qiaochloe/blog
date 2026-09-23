@@ -22,6 +22,7 @@ import { DFSTopoSortDemo } from "./DFSTopoSortDemo";
 import { DijkstraDemo } from "./DijkstraDemo";
 import { BellmanFordDemo } from "./BellmanFordDemo";
 import ClimbingCalendar from "./ClimbingCalendar";
+import { Extra } from "./Extra";
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -124,6 +125,7 @@ let components = {
   DijkstraDemo,
   BellmanFordDemo,
   ClimbingCalendar,
+  Extra,
 };
 
 export function CustomMDX(props) {
