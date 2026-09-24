@@ -1,8 +1,8 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Performance • Instrumentation"
+summary: "Performance • Measuring Performance"
 publishedAt: "2026-09-10"
-updatedAt: "2026-09-22"
+updatedAt: "2026-09-24"
 tags:
   - "notes"
 ---
@@ -22,7 +22,7 @@ Specialization can improve performance. For example, Google designed TPUs to bet
 
 On the other hand, "premature optimization is the root of all evil" (Donald Knuth). We should also make sure to evaluate the *costs* of improving our performance.
 
-## Instrumentation
+## Measuring Performance
 
 ### Open, Closed, and Partially-Open Systems
 
@@ -130,6 +130,8 @@ $$
 
 In a real system, we might queue up requests instead. If $\lambda$ is less than the amount of load that the server can manager, then the queue probably will not grow forever. There is a stable probability even when the timescale is infinite.
 
+### Metrics
+
 Using this model with a Poisson distribution of offered load and queuing delay, there will be a latency distribution for each offered load:
 
 ![Latency throughput graph with boxplots](/csci-1675/latency-throughput-boxplots.png)
@@ -137,3 +139,20 @@ Using this model with a Poisson distribution of offered load and queuing delay, 
 **Question**: How can we report a metric capturing both latency and throughput?
 
 Generally, we establish an SLO (service-level objective) or SLA (service-level agreement) that promises that at Y latency, the system will satisfy an offered load of X.
+
+**Question**: What happens to latency when offered load is greater than the capacity of the system?
+
+In some sense, we stop measuring the system at this point.
+1. If our queue can grow infinitely, then queuing delay will grow arbitrarily. At that point, there is no stable equilibrium.
+2. If the queue is finite length, we will start dropping packets. The latency will be the same as that of the latency at capacity.
+3. If the attempted load is too high, the client will start experiencing TCP backpressure, causing the offered load to drop. This will give the server a chance to recover, possibly decreasing latency.
+
+If achieved load < offered load, the system is not in a constant state.
+
+![Above capacity](/csci-1675/above-capacity.png)
+
+### perf and flamegraphs
+
+During the execution of a program, `perf` will interrupt the program many times and take a snapshot of the stack at the time of execution. Because `perf` writes to a buffer, it is possible for `perf` to drop samples.
+
+[Flame graphs](https://www.brendangregg.com/flamegraphs.html) collects this data and shows frequent datapaths. My prefered profiling utility is [samply](https://github.com/mstange/samply).
