@@ -1,8 +1,8 @@
 ---
 title: "Databases Notes"
-summary: "Relational Algebra • SQL"
+summary: "Relational Algebra • SQL • Schema Design • Storage System Design"
 publishedAt: "2026-09-13"
-updatedAt: "2026-09-21"
+updatedAt: "2026-09-24"
 tags:
   - "notes"
 ---
@@ -73,7 +73,7 @@ Relational algebra is based on set algebra. That means that it represents relati
 
 Unlike in relational algebra, SQL assumes that data is stored in a bag, not a set. This means that there can be duplicated rows. This is for efficiency reasons—if we do a union on two very large tables, it is expensive to deduplicate the output.
 
-SQL operations
+There are several classes of SQL operations:
 1. Selection ($\sigma$)
 2. Projection ($\Pi$)
 3. Aggregation
@@ -89,10 +89,58 @@ Types of `JOIN`:
 - Inner join: every pair that matches, dropping non-matching pairs
 - Outer join: every pair that matches, keeping non-matching tuples
 
-Within inner joins, there is also:
-- Natural join ($R \bowtie S$): matcch tuples where the shared attributes are equivalent
+Within inner joins, there is:
+- Natural join ($R \bowtie S$): match tuples where the shared attributes are equivalent
 - Theta or equijoin ($R \bowtie_\theta S$): match tuples using some join predicate defined by $\theta$
 - Semi join ($R \ltimes S$): same as theta join, except output relation only contains attributes from $R$
 - Anti semijoin ($R \rhd S$): tuples of $R$ that do not match with any tuple of $S$ (not technically an inner join)
 
+Within outer joins, there is:
+- Left outer join ($R\, ⟕\, S$): match all combinations of tuples where the shared attributes are equivalent, plus all tuples in $R$ that have no match in $S$
+- Right outer join ($R\, ⟖\, S$): the same as left outer join but reversed
+- Full outer join ($R\, ⟗\, S$): union of left and right outer joins
+
 For more details about SQL syntax, go to the [SQL](/sql) page.
+
+A ==view== is a (virtual) table that is the result of a SQL query. Typically, user applications are built on top of views rather than the base tables. It is not possible to update a view, which makes it good for security. 
+
+Because views may be accessed frequently, it may be impractical to run the query every time. We may want to maintain a ==materialized view==, a cache of the view that is refreshed on updates or periodically.
+
+## Schema Design
+
+A good database schema ensures data integrity and has good performance. These goals are typically in conflict with each other. 
+
+On one end of the extreme, we have only one spreadsheet with all the data. This has good performance because it is not necessary to perform any joins. But it is difficult to maintain data integrity with respect to updates, insertions, and deletions.
+
+For example, consider the following spreadsheet:
+
+| student_id | course_id | room | name  |
+|------------|-----------|------|-------|
+| 1          | 1         | 100  | Alice |
+| 2          | 1         | 200  | Bob   |
+| 2          | 2         | 200  | Bob   |
+
+- If we want to update the room number for a particular course, we need to iterate through the entire database to update the fields
+- We cannot insert a student that is not enrolled in a course
+- If we delete all students enrolled in a course, we lose information about which course is assigned to which room
+
+The alternative is to decompose the schema into multiple relations, or ==normalizing== the data. This reduces redundancy, which is good for data integrity. However, we will typically need more joins, leading to a decrease in performance.
+
+There are multiple levels of normalization:
+
+| Name                     | Description                                                                                                    |
+|--------------------------|----------------------------------------------------------------------------------------------------------------|
+| First Normal Form (1NF)  | Each cell should contain only a single value and not a list of values                                         |
+| Second Normal Form (2NF) | A table should not contain any partial dependencies where a column depends on part of a composite primary key |
+| Third Normal Form (3NF)  | A table should not contain any transitive dependencies where a column depends on another column                |
+
+## Storage System Design
+
+Layers of a DBMS:
+1. Disk manager
+2. Buffer pool manager
+3. Access methods
+4. Operator execution
+5. Query planning
+
+Reading and writing from a disk is expensive, so the database needs to implement a lot of caching and maximize sequential access (rather than random access).
