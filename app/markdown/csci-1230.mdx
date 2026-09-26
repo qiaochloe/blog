@@ -1,19 +1,33 @@
 ---
 title: Graphics Notes
-summary: "Vector Graphics"
+summary: "Raster Graphics • Vector Graphics • Views • Scenes"
 publishedAt: "2026-09-10"
-updatedAt: "2026-09-19"
+updatedAt: "2026-09-26"
 tags:
   - "notes"
 ---
 
 ## Introduction
 
-### Graphics
+There are three main disciplines of graphics: modeling shape and appearance, animation, and rendering.
+
+### Modeling
 
 ==Raster== (bitmap) graphics have a fixed array of pixels with values, and a fixed resolution. ==Vector== graphics are driven by display commands. It has a scalable resolution, which makes it ideal for typography and animation.
 
-There are three main disciplines of graphics: modeling shape and appearance, animation, and rendering.
+### Rendering
+
+The main question rendering aims to answer is: how do we make a 3D picture appear on a 2D plane?
+
+There are two ways to think about the problem:
+1. For every point on the paper, determine which object appears at the point
+2. For every object in the scene, determine which points on the paper it covers
+
+These two approaches correspond to two major classes of rendering algorithms: raytracing and rasterization.
+
+![Raytracing and rasterization](/csci-1230/raytracing-rasterization.png)
+
+## Raster Graphics
 
 ### Images and Pixels
 
@@ -44,9 +58,13 @@ It is also common to store 2D arrays of data in 1D data structures. There are tw
 
 ![Row and column major ordering](/csci-1230/row-and-column-major-ordering.png)
 
+**References**:
+- [CSCI 1230 Lab 2: Pencils](https://cs1230.graphics/labs/lab2/)
+- [CSCI 1230 Project 1: Brush](https://cs1230.graphics/projects/raster/1)
+
 ## Vector Graphics
 
-### Vector Graphics Pipeline
+### Pipeline
 
 To create a 2D vector graphic:
 1. Define object geometry
@@ -54,27 +72,111 @@ To create a 2D vector graphic:
 3. Define "window" on the world
 4. Render into raster graphics
 
-In each of the steps of this pipeline, there are different coordinate systems:
-1. Object geometry is defined in terms of ==object space==
-2. Objects are placed into ==world space==
-3. The window is defined in terms of ==view space==
-4. The rendered graphic is defined in terms of ==normalized device coordinates==, which are resolution-specific
-5. The application may only have a subregion of the OS window (viewport), so we might also need to transform into ==screen space==
+In each of the steps of this pipeline, there are many different coordinate systems:
+1. ==Object space== is the local coordinate system in which a single object is defined 
+2. ==World space== is the global coordinate system for the scene
+3. ==Camera space== is the coordinate system defined by the camera through which the scene is viewed 
 
-Why use multiple coordinate systems?
+<Extra title="Why use multiple coordinate systems?">
+We want to keep different layers modular, so we can modify each independently. For example, we may want to scale or rotate individual objects. If all objects are defined in terms of world space, then there may not be a linear matrix transformation to do this.
 
-At higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We also want to keep different layers modular, so we can modify each independently.
+Also, at higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We may have to later consider the resolution of the device (normalized device coordinates) and the viewport of the OS window that the application runs in (screen space).
+</Extra>
 
-### Scenes
+## Views
+
+### View Volume
+
+A ==view volume== contains everything the camera sees
+- A conical volume approximates what the eyes can see
+- A frustrum is a rectangular pyramid which approximates the conical view volume
+- A parallel volume doesn't stimulate the eye or camera
+
+The 3D is projected onto the ==view plane== sitting in world space. It should be perpendicular and centered around the look vector. It should also be located somewhere between the eye and the scene. 
+
+The parameters of the view volume are:
+- Position
+- Look vector
+- Orientation (often represented by up vector)
+- Aspect ratio
+- View angle
+
+A view angle determines the amount of perspective distortion in the picture. It is equivalent to a photographer choosing a specific type of lens (e.g. wide-angle or telephoto lens). In a frustrum, there is both a height angle and a width angle.
+
+![View angle](/csci-1230/view-angle.png)
+
+### Camera Space
+
+The position, look vector, and up vector are enough to define the camera coordinate system. The equivalent of $x$, $y$, and $z$ world coordinate axes in camera space are unit vectors $u$, $v$, and $w$.
+- $w$ is in the opposite direction of the look vector
+- $v$ is the component of the up vector that is perpendicular to the look vector
+- $u$ is the vector perpendicular to both $w$ and $v$
+
+$$
+w = \frac{-look}{\|look\|} \qquad
+v = \frac{up - (up \cdot w)w}{\|up - (up \cdot w) w\|} \qquad
+u = v \times w
+$$
+
+![Camera vector and axes](/csci-1230/camera-vectors-and-axes.png)
+
+Having a camera coordinate system allows us to change the orientation of the camera:
+- Roll: rotate camera around look
+- Yaw: rotate camera around $v$
+- Pitch: rotate camera around $u$
+
+![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
+
+The ==canonical camera space== is one where the camera sits at the origin, looks down at $-z$, and is oriented such that $y$ is up. The ==view matrix== transforms objects from world space into camera space.
+
+![View matrix](/csci-1230/view-matrix.png)
+
+Suppose that the camera is in position $P$ in world space. The view matrix is made from a translation that moves the world by $-P$, followed by a rotation that aligns $u$, $v$, $w$ with $x$, $y$, $z$.
+
+Note that a matrix $A$ with columns [$u$, $v$, $w$] transforms the $x$, $y$, $z$ axes to $u$, $v$, $w$ directions. The inverse of $A$ does the opposite. As it turns out, because $A$ is a orthonormal matrix, the inverse of $A$ is just its transpose. 
+
+$$
+M_{\text{translate}} =
+\begin{bmatrix}
+1 & 0 & 0 & -P_x \\
+0 & 1 & 0 & -P_y \\
+0 & 0 & 1 & -P_z \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+$$
+M_{\text{rotate}} =
+\begin{bmatrix}
+u_x & u_y & u_z & 0 \\
+v_x & v_y & v_z & 0 \\
+w_x & w_y & w_z & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+By putting the rotation and translation together, we get one matrix for transforming other objects into the camera's coordinate system.
+
+$$
+M_{\text{view}} = M_{\text{rotate}}M_{\text{translate}}
+$$
+
+Note that the view matrix does translation first and then rotation. This is because the matrix that transforms the camera to world space is composed of a rotation first and then a translation. The view matrix is the inverse of this matrix, so we must reverse the order of multiplication.
+
+## Scenes
 
 Graphics applications typically represent scenes with a DAG which stores:
 - Objects
 - Attributes (color, texture)
 - Transformations
 
-![Scene graph of robot](/csci-1230/scene-graph.png)
+To get the ==cumulative transformation matrix== of an object, simply multiple the transforms along the path from the object node to the root. For example, to transform Object 1 to world space, first apply transformation A then C.
 
-To get the cumulative transformation matrix of an object, simply walk the node up to the root.
+![Scene graph example](/csci-1230/scene-graph-example.png)
+
+To generalize a bit, each of the vertices building pointing up to the world root are ==model matrices== which transform the object from object space to world space. The final matrix is a ==view matrix== that transforms any object from world space to camera space. The inverses of these matrices provide the transformation of the opposite direction.
+
+![Model and view matrices](/csci-1230/model-and-view-matrices.png)
 
 ## Appendix
 
@@ -219,7 +321,7 @@ Both scale and rotate are linear transformations and can be represented by matri
     \end{bmatrix}
     $$
 
-Translation is *not* a linear transformation; it is an affine transformation. In order to represent it as a matrix transformation, we add a third coordinate $w$.
+Translation is *not* a linear transformation; it is an affine transformation. In order to represent it as a matrix transformation, we add another dimension to it. This is called ==homogeneous coordinates==.
 
 - $w$ is $1$ if the value is a scalars and $0$ if the value is a vector
 - $w$ does not affect subtraction of two scalars (which produces a vector), addition of a vector and a scalar (which produces a scalar), or dot product (which is mostly between two vectors)
@@ -246,11 +348,49 @@ $$
 \begin{bmatrix} x + dx \\ y + dy \\ w\end{bmatrix}
 $$
 
+Note that the order of the transformations matters. The most widely used ordering is TRS, which means to scale, rotate, and then translate.
+
+References: 
+- [CSCI 1230 Lab 3](https://cs1230.graphics/labs/lab3#ordering-scale-rotation-and-translation)
+
 ### Non-Axis Aligned 3D Rotation
 
 Scaling and translation in 3D is similar to that in 2D. Rotations are more complicated because we can now rotate around an arbitrary axis. There are several ways to do this: Euler angles, axis-angles, and quaternions.
 
-==Euler angles== are a composition of rotations around the x, y, and z axes. One problem with Euler angles is that they don't trace the shortest rotational path because rotation composition doesn't commute. To fix that, we can linearly interpolate each angle independently with some correction factor. However, this does not get an even angular velocity. Finally, when two rotation axes align, we lose a degree of freedom, causing sudden jumps (gimbal lock).
+==Euler angles== are a composition of rotations around the x, y, and z axes. 
+
+The rotation matrices for each axis, by angle $\theta$, are:
+
+$$
+R_x(\theta) =
+\begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta \\
+0 & \sin\theta & \cos\theta
+\end{bmatrix}
+$$
+
+$$
+R_y(\theta) =
+\begin{bmatrix}
+\cos\theta & 0 & \sin\theta \\
+0 & 1 & 0 \\
+-\sin\theta & 0 & \cos\theta
+\end{bmatrix}
+$$
+
+$$
+R_z(\theta) =
+\begin{bmatrix}
+\cos\theta & -\sin\theta & 0 \\
+\sin\theta & \cos\theta & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+$$
+
+A full Euler angle rotation is the composition $R = R_z(\theta_z) R_y(\theta_y) R_x(\theta_x)$, applied right to left.
+
+There are several problems with Euler angles. First, they don't trace the shortest rotational path because they don't follow the geodesic. To fix that, we can linearly interpolate each angle independently with some correction factor. However, this does not produce an even angular velocity. Also, when two rotation axes become parallel, we lose a degree of freedom, leading to odd behavior at the point.
 
 ==Axis-angle rotations== involve decomposing a point $x$ into two parts relative to the axis $r$:
 - $x_\parallel$ is the part parallel to $r$; rotation does not change it
