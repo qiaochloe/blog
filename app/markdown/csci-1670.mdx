@@ -2,9 +2,10 @@
 title: "Operating Systems Notes"
 summary: "Booting • I/O Devices • Processes"
 publishedAt: 2026-09-16
-updatedAt: 2026-09-23
+updatedAt: 2026-09-28
 tags:
 - notes
+todo: add notes about ARM64 instructions
 ---
 
 ## Booting
@@ -54,6 +55,28 @@ Raspberry Pi
 - [OSdev wiki page: System Initialization (x86)](https://wiki.osdev.org/System_Initialization_%28x86%29)
 - [OSdev wiki page: MBR (x86)](https://wiki.osdev.org/MBR_%28x86%29)
 - [Asahi Linux blog post on the Apple Silicon bootup process](https://asahilinux.org/2021/03/progress-report-january-february-2021/) 
+
+</Extra>
+
+<Extra title="Secure Boot" >
+
+In some booting processes, each component is cryptographically verified through a chain of trust. The chain of trust begins at the hardware level, laid down during chip fabrication. Each step checks that the next step is cryptographically verified.
+
+For example, Tesla depends on secure boot to lock down software components of the car. If we can change the booting process, then we can modify the software to do what we want—like unlocking the backseat heater.
+
+![Secure boot process](/csci-1670/secure-boot.png)
+
+Apple also increases its security by having a separate ==secure enclave== within its system on chip. Only the secure enclave has access to private information, like biometrics and encryption keys. Having a separate secure enclave helps defend against side-channel attacks.
+
+![Apple Secure Enclave](/csci-1670/apple-secure-enclave.png)
+
+For Macs with Apple silicon, each step checks that the component is signed by Apple. The boot process looks like this:
+
+![Mac with Apple silicon boot process](/csci-1670/mac-boot-process.png)
+
+**References**:
+- [Jailbreaking an Electric Vehicle in 2023 or What It Means to Hotwire Tesla's x86-Based Seat Heater](https://www.youtube.com/watch?v=5tLNRk7mZXo)
+- [Apple Platform Security document](https://help.apple.com/pdf/security/en_US/apple-platform-security-guide.pdf), specifically the sections "The Secure Enclave" and "Secure Boot"
 
 </Extra>
 
@@ -153,7 +176,7 @@ The kernel maintains a pointer to the descriptor of the current process running 
 ### Context-Switching
 
 From the CPU's point of view, a running process is just defined by:
-1. The general-purpose registers (`x0`-`x30`) which hold the program's live values, its base pointer in `x29`, and its return address in `x30`
+1. The general-purpose registers (`x0`-`x30`) which hold the program's live values, base pointer (in `x29`), and return address (in `x30`)
 2. The stack pointer (`sp`) which points to the top of the stack
 3. The program counter (`pc`) or instruction pointer which contains the address of the next instruction to run
 4. The processor state, which includes condition flags (N/Z/C/V) that a following conditional branch depends on, the current exception level, which stack pointer is in use, and which interrupts are masked
@@ -177,9 +200,9 @@ There are two ways the OS can get the CPU back from a running process:
 
 Preemption also allows the OS to respond to devices quickly. When a network packet arrives or when there is a disk read, the data is stored in a limited memory region.The OS needs to respond before that memory region is overwritten by other data.
 
-## Appendix
+## Appendix A
 
-This appendix contains project-specific content.
+This appendix contains specific details about the projects in [CSCI 1670](https://csci1670.github.io).
 
 ### Raspberry Pi Architecture
 
@@ -193,6 +216,53 @@ On the Raspberry Pi, the kernel must be at the fixed address **0x80000**. The ke
 
 ![Memory layout](/csci-1670/memory-layout.png)
 
-### ARM-64 Instructions
+## Appendix B
 
-The `eret` instruction can set both the program counter and the processor state atomically from `ELR_EL1` and `SPSR_EL1`.
+### ARM64 Architecture
+
+ARM64 (also sometimes called "AArch64") is a computer architecture. Practically all mobile device and some laptops (such as Apple Silicon Macbooks) use ARM64 over x86-64 because its processors have significantly lower power consumption. 
+
+Compared to x86, ARM64 has many more registers used for specific tasks.
+
+| Feature                             | x86-64                                                                  | ARM64                                                                                                                        |
+| --- | --- | --- |
+| General-purpose registers | `%rax`, `%rbx`, `%rcx`, `%rdx`, `%rsi`, `%rdi`, `%rbp`, `%rsp`, `%r8` to `%r15` (16 total) | `x0` to `x30`. `w0` to `w30` are their lower 32-bit halves (writing a `w` register zeroes the upper 32 bits) |
+| Stack register | `%rsp` is one of the 16 general-purpose registers | `sp` is a dedicated system register                                                                                          |
+| Return address          | The `call` instruction pushes the return address onto the stack.          | The `bl` ("branch with link") instruction puts the return address into `lr`, and `ret` jumps to whatever is in `lr`. |
+| Arguments and return values         | Arguments are stored on the stack and return values are stored in `%rax`. | The first eight arguments go into `x0` to `x7`. The return value comes back in `x0` |
+
+Additionally, ARM6464 instructions are more specific than those in x86-65:
+- ARM64 has special system registers which control the CPU. Only special `mrs` (read) and `msr` (write) instructions can read and write to system registers.
+- x86-64 uses `mov` instructions to move data to and from registers. ARM64 requires you to use explicit `lrd` (load) and `str` (store) instructions to load and store from memory.
+- x86-64 instructions can vary in length, while each ARM64 instruction is exactly 4 bytes.
+
+### Exception Levels
+
+ARM-64 has several exception levels which control hardware access permissions.
+- EL3 ("secure monitor")
+- EL2 ("hypervisor")
+- EL1 ("kernel")
+- EL0 ("userspace")
+
+The only way to move from a lower EL to a higher EL is to trigger a hardware exception, such as via supervisor calls (`SVC`), hypervisor calls (`HVC`), or secure monitor calls (`SMC`).
+
+The only way to move from a higher EL to a lower EL is by running the instruction `eret` (exception return). `eret` is necessary for context-switching between the process and the kernel.
+
+In an `eret` instruction, the following things happen atomically:
+- The processor state is resotred from `SPSR_ELX`
+- The program counter is set from register `ELR_ELX`
+- The stack pointer is set to the value in `SP_ELX`
+
+### System Registers
+
+In ARM64, many system registers have distinct instances per exception level. `ELX` is a placeholder for `EL1`, `EL2`, and `EL3`.
+
+| Register    | Name                              | Description                                                                                                                                                    |
+|-------------|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SPSR_ELX`  | ==Saved program status register== | Used to hold the state of the process (`PSTATE`). Its low four bits select teh exception level and the stack pointer to return to.                             |
+| `ELR_ELX`   | ==Exception link register==       | Contains the address to resume execution at. It is set by the hardware on an exception and set by the kernel when doing a context switch.                      |
+| `ESR_ELX`   | Exception syndrome register       | Contains why the exception happened                                                                                                                            |
+| `FAR_ELX`   | Fault address register            | Contains The address that caused the memory fault                                                                                                              |
+| `VBAR_EL1`  | Vector base address register      | Contains the address of the exception vector table                                                                                                             |
+| `SCTLR_EL1` | System control register           | Contains information about MMU, caches, endianness, and alignment                                                                                              |
+| `DAIF`      | Debug, Abort, IRQ, FIQ            | The interrupt-mask bits in `PSTATE`. Note that the bit positions in the `DAIF` register view, in the `DAIFSET` selection, and in `SPSR_ELX` are all different. |
