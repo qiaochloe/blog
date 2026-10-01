@@ -1,11 +1,11 @@
 ---
 title: "Operating Systems Notes"
-summary: "Booting • I/O Devices • Program Loaders • Processes"
+summary: "Booting • I/O Devices • Processes • Display"
 publishedAt: 2026-09-16
-updatedAt: 2026-09-30
+updatedAt: 2026-10-01
 tags:
 - notes
-todo: add notes about ARM64 instructions
+todo: add notes about ARM64 instructions, interrupt types
 ---
 
 ## Booting
@@ -108,6 +108,14 @@ The UART exposes the following device registers:
 
 </Extra>
 
+<Extra title="Device Example: USB">
+
+Similar to UART, USB (Universal Serial Bus) is another protocol that supports peripheral devices. This is possibly what your keyboard or mouse is using when it is plugged into your computer. 
+
+Compared to UART, USB is much more complex, and the USB host controller driver is an enormous amount of code.  
+
+</Extra>
+
 ### PMIO and MMIO
 
 **Question**: Now that the devices expose device drivers, how can the CPU actually modify these device drivers?
@@ -141,11 +149,11 @@ Different operating systems have different executable formats:
 - MacOS: Mach-O
 - Windows: PE (Portable Executable)
 
-To run a process, the OS needs to read the execuable from disk. The program loader then parses the executable format and loads the relevant segments into the memory region chosen for the sepcific process.
+To run a process, the OS needs to read the execuable from disk and run the ==program loader==. The program loader's job is to parse the executable format and load the relevant segments into the memory region chosen for the sepcific process.
 
 The loader must also ensure that all pointers contained in the executable point to the right places in memory. This may involve *relocating* sybols (functions and variables) whose memory addresses aren't known at compile time, but only at load time.
 
-In early operating systems, the loading process was done eagerly, all at once before running the program. Modern operating systems does this lazily, loading pieces of code or data only as they are needed during program execution.
+In early operating systems, this loading process was done eagerly, all at once before running the program. Modern operating systems perform this process lazily, loading pieces of code or data only as they are needed during program execution.
 
 For more information about the ELF format, see [CSCI 1655 notes](/csci-1650#elf).
 
@@ -161,7 +169,7 @@ Compared to the CPU, hardware devices are very slow. If we didn't have concurren
 
 **Question**: What do we need for multiprogramming?
 
-First, we need to be able to load multiple processes into memory. We also need a way to keep track of each of these processes through some kind of data structures. Finally, we also need a way for the OS to regain control of the CPU, so that it can switch between processes.
+First, we need to be able to load multiple processes into memory. We also need a way to keep track of each of these processes through some kind of data structures. Finally, we also need a way to switch the CPU between different processes.
 
 ### The Process Table
 
@@ -195,13 +203,9 @@ There are two obvious places where we can store the context:
 
 In order to do a context switch, the OS needs the ability to stop the CPU from running some process. However, the OS is *itself* a process that needs to run on the CPU. 
 
-One approach is ==cooperative concurrency==. The process gives it up voluntarily by calling into the kernel directly (via `yield()`). `yield()` should mimic what the hardware does on an interrupt. See [ARM64 Exception-Handling](#arm64-exception-handling) for a concrete example.
+There are two ways the OS can get the CPU back from a running process. In ==cooperative concurrency==, the process gives it up voluntarily by calling into the kernel directly (via `yield()`). `yield()` should mimic the behavior of the hardware during an interrupt. 
 
-The problem with cooperative concurrency is that it depends on the process being polite. What happens if the process never terminates?
-
-The solution to this is ==preemptive concurrency==. The kernel takes the CPU back by arranging a hardware timer to interrupt the CPU periodically. When the timer fires, the CPU stops executing and jumps into the kernel, where it can schedule another process.
-
-Preemption also allows the OS to respond to devices quickly. When a network packet arrives or when there is a disk read, the data is stored in a limited memory region.The OS needs to respond before that memory region is overwritten by other data.
+The problem with cooperative concurrency is that it depends on the process being polite. To get the kernel to forcibly take back the CPU, we need ==preemptive concurrency==. The kernel takes the CPU back by arranging a hardware timer to interrupt the CPU periodically. When the timer fires, the CPU stops executing and jumps into the kernel, where it can schedule another process. 
 
 There are several components that are necessary for preemptive concurrency:
 1. A timer device needs to periodically create interrupts
@@ -210,9 +214,19 @@ There are several components that are necessary for preemptive concurrency:
 4. The trap table needs to be configured to jump to the asynchronous interrupt handler
 5. The asynchronous interrupt handler needs to detect which interrupt occurred and call the appropriate handler (in this case, the timer interrupt handler)
 
+## Display
+
+Preemption also allows the OS to respond to devices quickly. When a network packet arrives or when there is a disk read, the data is stored in a limited memory region.The OS needs to respond before that memory region is overwritten by other data. 
+
+To achive this, peripheral devices make an interrupt request. This triggers the interrupt handler, which quickly takes the bytes out of the hardware FIO and puts them into a buffer in memory. Then it terminates and gives control back to the running process. Later, a process consumes the bytes in the buffer.
+
+While processes are waiting for a device, they are in a `BLOCKED` state. Usually, there is a ==wait channel== that allows the blocked process to be associated with some event, such as the address to some kernel data struction. The interrupt handler will wake up every process blocked on the same address by marking them as `RUNNABLE` for the scheduler.
+
+A ==framebuffer== is a region of memory that the hardware continuously reads and then renders on the display. While the screen can be shared across multiple processes, the input keyboard has to go to *some* process. Most windowing systems handle this by setting a *foreground* process or window. 
+
 ## Appendix
 
-The appendix contains specific details about the projects in [CSCI 1670](https://csci1670.github.io) and about ARM64 architecture.
+This appendix contains specific details about the projects in [CSCI 1670](https://csci1670.github.io) and about ARM64 architecture.
 
 ### Raspberry Pi Architecture
 
@@ -226,7 +240,7 @@ On the Raspberry Pi, the kernel must be at the fixed address **0x80000**. The ke
 
 ![Memory layout](/csci-1670/memory-layout.png)
 
-### ARM64 vs. x86
+### ARM64 Architecture
 
 ARM64 (also sometimes called "AArch64") is a computer architecture. Practically all mobile device and some laptops (such as Apple Silicon Macbooks) use ARM64 over x86-64 because its processors have significantly lower power consumption. 
 
@@ -239,7 +253,7 @@ Compared to x86, ARM64 has many more registers used for specific tasks.
 | Return address          | The `call` instruction pushes the return address onto the stack.          | The `bl` ("branch with link") instruction puts the return address into `lr`, and `ret` jumps to whatever is in `lr`. |
 | Arguments and return values         | Arguments are stored on the stack and return values are stored in `%rax`. | The first eight arguments go into `x0` to `x7`. The return value comes back in `x0` |
 
-Additionally, ARM64 instructions are more specific than those in x86-64:
+Additionally, ARM64 instructions are more specific than those in x86-65:
 - ARM64 has special system registers which control the CPU. Only special `mrs` (read) and `msr` (write) instructions can read and write to system registers.
 - x86-64 uses `mov` instructions to move data to and from registers. ARM64 requires you to use explicit `lrd` (load) and `str` (store) instructions to load and store from memory.
 - x86-64 instructions can vary in length, while each ARM64 instruction is exactly 4 bytes.
@@ -275,43 +289,8 @@ In ARM64, many system registers have distinct instances per exception level. `EL
 | `SCTLR_EL1` | System control register           | Contains information about MMU, caches, endianness, and alignment                                                                                              |
 | `DAIF`      | Debug, Abort, IRQ, FIQ            | The interrupt-mask bits in `PSTATE`. Note that the bit positions in the `DAIF` register view, in the `DAIFSET` selection, and in `SPSR_ELX` are all different. |
 
-### ARM64 Exception-Handling
+### Raspberry Pi Display Hardware
 
-There are two types of exceptions:
-- ==Synchronous exceptions== are caused by the instruction being executed. Examples include illegal instructions, system calls, and page faults.
-- ==Asynchronous exceptions== caused by something outside of the CPU. It occurs when a timer expires, a NIC receives a packet, or when a user presses a key. On ARM64, there are separated into interrupt requests (IRQs), fast interrupts (FIQs), and system error (SError) for hardware faults.
+The Raspberry Pi is really a Broadcom VideoCore graphics processor that happens to have 4 ARM cores attached to it. This means that the display hardware belongs to the GPU, not to the CPU.
 
-During an exception, the hardware performs the following atomically:
-- It determines the exception type and where it came from
-- It copies the address to resume at into `ELR_EL1`. 
-- It copies the CPU's current `PSTATE` into `SPSR_EL1`
-- It masks debug exceptions, SError, IRQ, and FRQ.
-- For synchronous exceptions, it records the cause in `ESR_EL1`, and for memory faults the offending address in `FAR_EL1`
-- It selects `SP_EL1` as the stack pointer and switches to EL1
-- It sets `pc` to `VBAR_EL1` plus some offset determined by the current exception level and the nature of the exception
-
-Note that the hardware *does not* save the general-purpose registers. Saving these registers is entirely the software's job. The instant the handler starts executing the first instruction, it starts destroying them. 
-
-Note that the hardware needs to find code to handle exceptions. Modern architectures support an ==exception vector table==, which is a memory location that the CPU indexes into when an exception occurs to determine where to jump next. The CPU finds this table by reading the vector base address register (`VBAR_EL1`)). 
-
-Because the CPU automatically indexes into this table based on the type of exception, the layout of the table is fixed. However, the kernel can put whatever code it wants into the table, and it can put the table anywhere in memory.
-
-On ARM64, the exception vector table is organized into 4 groups:
-
-| Offset | Group                                          | Example use                             |
-|--------|------------------------------------------------|-----------------------------------------|
-| 0x000  | Exception occurred in current EL using `SP_EL0`  | Exceptions handled in user mode         |
-| 0x200  | Exception occurred in current EL, using `SP_ELX` | Exceptions while running in the kernel  |
-| 0x400  | Exception occurred in lower EL in AArch64        | Exceptions in user mode (EL0)           |
-| 0x600  | Exception occurred in lower EL in AArch32        | Exceptions in 32-bit user mode          |
-
-Within each group:
-
-| Offset into group | Exception type |
-|-------------------|----------------|
-| 0x00              | Synchronous    |
-| 0x80              | IRQ            |
-| 0x100             | FIQ            |
-| 0x180             | SError         |
-
-Each entry in the table is 128 bytes of space for actual machine instructions.
+The CPU can request access to the display by sending a message through the **mailbox**. The CPU writes the address of a request buffer into one register; the GPU reads it, acts on it, writes results back into the buffer, and posts a reply.
