@@ -1,6 +1,6 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Views • Scenes"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing"
 publishedAt: "2026-09-10"
 updatedAt: "2026-09-26"
 tags:
@@ -83,102 +83,7 @@ We want to keep different layers modular, so we can modify each independently. F
 Also, at higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We may have to later consider the resolution of the device (normalized device coordinates) and the viewport of the OS window that the application runs in (screen space).
 </Extra>
 
-## Views
-
-### View Volume
-
-A ==view volume== contains everything the camera sees
-- A conical volume approximates what the eyes can see
-- A frustrum is a rectangular pyramid which approximates the conical view volume
-- A parallel volume doesn't stimulate the eye or camera
-
-The 3D is projected onto the ==view plane== sitting in world space. It should be perpendicular and centered around the look vector. It should also be located somewhere between the eye and the scene. 
-
-The parameters of the view volume are:
-- Position
-- Look vector
-- Orientation (often represented by up vector)
-- Aspect ratio
-- View angle
-
-A view angle determines the amount of perspective distortion in the picture. It is equivalent to a photographer choosing a specific type of lens (e.g. wide-angle or telephoto lens). In a frustrum, there is both a height angle and a width angle.
-
-![View angle](/csci-1230/view-angle.png)
-
-### Camera Space
-
-The position, look vector, and up vector are enough to define the camera coordinate system. The equivalent of $x$, $y$, and $z$ world coordinate axes in camera space are unit vectors $u$, $v$, and $w$.
-- $w$ is in the opposite direction of the look vector
-- $v$ is the component of the up vector that is perpendicular to the look vector
-- $u$ is the vector perpendicular to both $w$ and $v$
-
-$$
-w = \frac{-look}{\|look\|} \qquad
-v = \frac{up - (up \cdot w)w}{\|up - (up \cdot w) w\|} \qquad
-u = v \times w
-$$
-
-![Camera vector and axes](/csci-1230/camera-vectors-and-axes.png)
-
-Having a camera coordinate system allows us to change the orientation of the camera:
-- Roll: rotate camera around look
-- Yaw: rotate camera around $v$
-- Pitch: rotate camera around $u$
-
-![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
-
-The ==canonical camera space== is one where the camera sits at the origin, looks down at $-z$, and is oriented such that $y$ is up. The ==view matrix== transforms objects from world space into camera space.
-
-![View matrix](/csci-1230/view-matrix.png)
-
-Suppose that the camera is in position $P$ in world space. The view matrix is made from a translation that moves the world by $-P$, followed by a rotation that aligns $u$, $v$, $w$ with $x$, $y$, $z$.
-
-Note that a matrix $A$ with columns [$u$, $v$, $w$] transforms the $x$, $y$, $z$ axes to $u$, $v$, $w$ directions. The inverse of $A$ does the opposite. As it turns out, because $A$ is a orthonormal matrix, the inverse of $A$ is just its transpose. 
-
-$$
-M_{\text{translate}} =
-\begin{bmatrix}
-1 & 0 & 0 & -P_x \\
-0 & 1 & 0 & -P_y \\
-0 & 0 & 1 & -P_z \\
-0 & 0 & 0 & 1
-\end{bmatrix}
-$$
-
-$$
-M_{\text{rotate}} =
-\begin{bmatrix}
-u_x & u_y & u_z & 0 \\
-v_x & v_y & v_z & 0 \\
-w_x & w_y & w_z & 0 \\
-0 & 0 & 0 & 1
-\end{bmatrix}
-$$
-
-By putting the rotation and translation together, we get one matrix for transforming other objects into the camera's coordinate system.
-
-$$
-M_{\text{view}} = M_{\text{rotate}}M_{\text{translate}}
-$$
-
-Note that the view matrix does translation first and then rotation. This is because the matrix that transforms the camera to world space is composed of a rotation first and then a translation. The view matrix is the inverse of this matrix, so we must reverse the order of multiplication.
-
-## Scenes
-
-Graphics applications typically represent scenes with a DAG which stores:
-- Objects
-- Attributes (color, texture)
-- Transformations
-
-To get the ==cumulative transformation matrix== of an object, simply multiple the transforms along the path from the object node to the root. For example, to transform Object 1 to world space, first apply transformation A then C.
-
-![Scene graph example](/csci-1230/scene-graph-example.png)
-
-To generalize a bit, each of the vertices building pointing up to the world root are ==model matrices== which transform the object from object space to world space. The final matrix is a ==view matrix== that transforms any object from world space to camera space. The inverses of these matrices provide the transformation of the opposite direction.
-
-![Model and view matrices](/csci-1230/model-and-view-matrices.png)
-
-## Appendix
+## Transformations
 
 ### Vectors
 
@@ -188,7 +93,7 @@ $$
 (x, y) + \begin{bmatrix} a \\ b \end{bmatrix} = (x + a, y + b)
 $$
 
-The dot product is an operation that takes in two vectors and produces a scalar:
+The dot product is a scalar representation of how similar two vectors are to each other.
 
 $$
 \begin{bmatrix} a \\ b \end{bmatrix} \cdot \begin{bmatrix} c \\ d \end{bmatrix} = ac + bd
@@ -199,7 +104,7 @@ Geometric interpretations of the dot product:
 - $\begin{bmatrix} a \\ b \end{bmatrix} \cdot \begin{bmatrix} c \\ d \end{bmatrix} = 0$ when the vectors are perpendicular
 - $v \cdot w = |v||w|\cos(\theta)$, where $\theta$ is the angle between the arrows
 
-The cross product is an operation that takes in two vectors and produces a vector that is mutually perpendicular to both vectors. By convention, the direction that $a \times b$ points in is determined by the right-hand rule.
+The cross product takes in two vectors and produces a vector that is mutually perpendicular to both vectors. By convention, the direction that $a \times b$ points in is determined by the right-hand rule.
 
 $$
 a \times b = \begin{bmatrix} a_2b_3 - a_3b_2 \\ a_3b_1 - a_1b_3 \\ a_1b_2 - a_2b_1 \end{bmatrix}
@@ -413,3 +318,195 @@ The formula for the cross product can be represented as a matrix, so this entire
 ==Quaternions== are the only rotation method that can correctly do linear interpolation. A quaternion represents a rotation as a point on the surface of a 4D hypersphere. Because we are moving along the sphere, we get shortest path and constant angular velocity.
 
 **References**: [Visualizing quaternions](https://eater.net/quaternions)
+
+## Views
+
+### View Volume
+
+A ==view volume== contains everything the camera sees
+- A conical volume approximates what the eyes can see
+- A frustrum is a rectangular pyramid which approximates the conical view volume
+- A parallel volume doesn't stimulate the eye or camera
+
+The 3D is projected onto the ==view plane== sitting in world space. It should be perpendicular and centered around the look vector. It should also be located somewhere between the eye and the scene. 
+
+The parameters of the view volume are:
+- Position
+- Look vector
+- Orientation (often represented by up vector)
+- Aspect ratio
+- View angle
+
+A view angle determines the amount of perspective distortion in the picture. It is equivalent to a photographer choosing a specific type of lens (e.g. wide-angle or telephoto lens). In a frustrum, there is both a height angle and a width angle.
+
+![View angle](/csci-1230/view-angle.png)
+
+### Camera Space
+
+The position, look vector, and up vector are enough to define the camera coordinate system. The equivalent of $x$, $y$, and $z$ world coordinate axes in camera space are unit vectors $u$, $v$, and $w$.
+- $w$ is in the opposite direction of the look vector
+- $v$ is the component of the up vector that is perpendicular to the look vector
+- $u$ is the vector perpendicular to both $w$ and $v$
+
+$$
+w = \frac{-look}{\|look\|} \qquad
+v = \frac{up - (up \cdot w)w}{\|up - (up \cdot w) w\|} \qquad
+u = v \times w
+$$
+
+![Camera vector and axes](/csci-1230/camera-vectors-and-axes.png)
+
+Having a camera coordinate system allows us to change the orientation of the camera:
+- Roll: rotate camera around look
+- Yaw: rotate camera around $v$
+- Pitch: rotate camera around $u$
+
+![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
+
+The ==canonical camera space== is one where the camera sits at the origin, looks down at $-z$, and is oriented such that $y$ is up. The ==view matrix== transforms objects from world space into camera space.
+
+![View matrix](/csci-1230/view-matrix.png)
+
+Suppose that the camera is in position $P$ in world space. The view matrix is made from a translation that moves the world by $-P$, followed by a rotation that aligns $u$, $v$, $w$ with $x$, $y$, $z$.
+
+Note that a matrix $A$ with columns [$u$, $v$, $w$] transforms the $x$, $y$, $z$ axes to $u$, $v$, $w$ directions. The inverse of $A$ does the opposite. As it turns out, because $A$ is a orthonormal matrix, the inverse of $A$ is just its transpose. 
+
+$$
+M_{\text{translate}} =
+\begin{bmatrix}
+1 & 0 & 0 & -P_x \\
+0 & 1 & 0 & -P_y \\
+0 & 0 & 1 & -P_z \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+$$
+M_{\text{rotate}} =
+\begin{bmatrix}
+u_x & u_y & u_z & 0 \\
+v_x & v_y & v_z & 0 \\
+w_x & w_y & w_z & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+By putting the rotation and translation together, we get one matrix for transforming other objects into the camera's coordinate system.
+
+$$
+M_{\text{view}} = M_{\text{rotate}}M_{\text{translate}}
+$$
+
+Note that the view matrix does translation first and then rotation. This is because the matrix that transforms the camera to world space is composed of a rotation first and then a translation. The view matrix is the inverse of this matrix, so we must reverse the order of multiplication.
+
+### Scenes
+
+Graphics applications typically represent scenes with a DAG which stores:
+- Objects
+- Attributes (color, texture)
+- Transformations
+
+To get the ==cumulative transformation matrix== of an object, simply multiple the transforms along the path from the object node to the root. For example, to transform Object 1 to world space, first apply transformation A then C.
+
+![Scene graph example](/csci-1230/scene-graph-example.png)
+
+To generalize a bit, each of the vertices building pointing up to the world root are ==model matrices== which transform the object from object space to world space. The final matrix is a ==view matrix== that transforms any object from world space to camera space. The inverses of these matrices provide the transformation of the opposite direction.
+
+![Model and view matrices](/csci-1230/model-and-view-matrices.png)
+
+## Raytracing
+
+Raytracing takes the 3D objects we see at each point in camera space and projects them onto a view plane.
+
+For each pixel, we need to solve two problems:
+1. What object appears in the pixel?
+2. What color should the pixel be?
+
+To determine what object appears in the pixel, we trace a ray from the camera, through the middle of the pixel, and solve for the first point of intersection in the scene.
+
+There are two types of rays:
+- Primary rays start from the camera and determine which parts of the scene are visible from the window.
+- Secondary rays starts at points in the scene, where the primary rays hit, and are traced to other parts of the scene. They are used to compute light effects.
+
+### Primary Rays
+
+A primary ray should take the form $P + td$, where $P$ is the origin of the ray and $d$ is the direction vector. 
+
+$P$ should be set to the camera's coordinates $(p_x, p_y, p_z)$ in world space. 
+
+To find the direction of the ray, we need to find the coordinates of a pixel on the view plane. If that coordinate is $(u, v, k)$, then $d$ is simply $(p_x, p_y, p_z) - (u, v, k)$.
+
+Given a coordinate of a pixel $(i, j)$ on the view plane, we want to find the $(u, v, k)$ point corresponding to its center. This should be given by
+$$
+(i, j) \mapsto \left(\frac{i + 0.5}{W} - 0.5, \frac{j + 0.5}{H} - 0.5\right)
+$$
+
+Each coordinate is first shifted $0.5$ so that it is centered on the pixel. Then it is normalized by the dimensions of the scene plane so that it becomes a one-by-one grid. Finally, it is shifted by $(0.5)$ so that the center of the grid is at the origin $(0, 0)$.
+
+### Ray-Object Intersections
+
+Most production raytracers model shapes using triangles, but this is fairly complicated. 
+
+Ray-object intersections are easier to calculate with implicit objects. An ==implicit object== is an object that can be definited by a function $f$, where $f(Q) = 0$ iff $Q$ is a point on the service. 
+
+To find where a ray $P + td$, we intersects an object, we just need to solve for the values of $t$ such that $f(P + td) = 0$. There may be multiple values of $t$ that satisfies the equation, but we just care about the smallest, nonnegative value of $t$.
+
+Note that these objects are usually sitting in world space, but the implicit equations are defined in terms of object space. When solving for ray-object intersections, it is much easier to transform the ray into object space rather than transform the equation into world space.
+
+### Implicit Object Equations
+
+A 2D circle of radius $R$ at the origin at the origin has the equation:
+
+$$
+x^2 + y^2 - R^2 = 0
+$$
+
+An infinite plane with a normal vector $(A, B, C)$ that is distance $D$ away from $(0, 0, 0)$ has the equation:
+
+$$
+Ax + By + Cz + D = 0
+$$
+
+A sphere of radius $R$ at the origin at the origin has the equation:
+
+$$
+x^2 + y^2 + z^2 - R^2 = 0
+$$
+
+An infinite cylinder of unit radius running along the y-axis has the equation:
+
+$$
+x^2 + z^2 - 1 = 0
+$$
+
+Usually, it's more useful to work with a finite object, and define bounds on the truncated unit cylinder:
+
+$$
+x^2 + z^2 - 1 = 0,\, -0.5 \leq y \leq 0.5
+$$
+
+We should also define the implicit equations for the top and the bottom circles making up the cylinder:
+
+$$
+x^2 + y^2 - 1 \leq 0,\, y \in \{-0.5, 0.5\}
+$$
+
+### Surface Normal Vectors
+
+For illumination, we want to find the normal vector at the point $(x, y, z)$. We can find this normal vector by taking the gradient at that point:
+
+$$
+n = \nabla(x, y, z) = \left( \frac{\partial f}{\partial x}(x, y, z), 
+\frac{\partial f}{\partial y}(x, y, z),
+\frac{\partial f}{\partial z}(x, y, z) \right)
+$$
+
+Once we have calculated the normal vector in object space, we need to transform the normal vector into world space. 
+
+Note that we cannot just apply the transformation matrix $M$ because $ Mn_o \neq n_w$ when there is scaling. Scaling distorts the normal in exactly the opposite sense of scale applied to a surface. For example, scaling $y$ by a factor of $2$ causes the normal to scale by $0.5$.
+
+The right equation is $n_w = (M^t)^{-1}n_o$, unless the transformation includes a reflection (i.e. $\det(M) < 1$). The most foolproof equation is 
+
+$$
+n_w = \text{sign}(\det(M))(M^t)^{-1}n_o
+$$
