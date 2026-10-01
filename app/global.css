@@ -123,9 +123,13 @@ html {
 
 /* HIGHLIGHT */
 
-/* Make sure that hljs doesn't control the background */
+/* Make sure that hljs doesn't control the background or padding */
 .hljs {
   background: transparent !important;
+}
+
+pre code.hljs {
+  padding: 0 !important;
 }
 
 /* CONTENT for pages like home and projects */
@@ -181,7 +185,7 @@ html {
 
 /* Code block <pre><code> */
 .prose pre {
-  @apply text-xs bg-neutral-100 p-2 overflow-x-auto my-2 rounded-sm font-mono leading-relaxed;
+  @apply text-xs bg-neutral-100 px-3 py-2 overflow-x-auto my-2 rounded-sm font-mono leading-normal;
   border: initial;
 }
 
@@ -437,7 +441,7 @@ html {
 
 /* Code block <pre><code> */
 .prose-notes pre {
-  @apply text-xs bg-neutral-100 p-2 overflow-x-auto my-2 rounded-sm font-mono;
+  @apply text-xs bg-neutral-100 px-3 py-2 overflow-x-auto my-2 rounded-sm font-mono leading-normal;
   border: initial;
 }
 
