@@ -134,31 +134,20 @@ There are multiple levels of normalization:
 | Second Normal Form (2NF) | A table should not contain any partial dependencies where a column depends on part of a composite primary key |
 | Third Normal Form (3NF)  | A table should not contain any transitive dependencies where a column depends on another column                |
 
-## Storage System Design
+## Storage Manager
 
 Layers of a DBMS:
-1. Disk manager
-2. Buffer pool manager
-3. Access methods
-4. Operator execution
-5. Query planning
+1. Storage manager: handles reading and writing raw pages to and from the physical disk
+2. Buffer pool manager: manages an in-memory cache of pages
+3. Access methods: organize and access data on disk 
+4. Operator execution: implements relational operators that consume and produce tuples via the access methods
+5. Query planning: parses, optimizes, and compiles a query into a plan of operators to execute
 
-DBMSs try to ensure that consecutive blocks of a file are stored on consecutive disk
-blocks. On magnetic hard disks, doing random access costs seek time and rotational latency. While this is less significant for SSDs, there may be I/O controller overheads.
+DBMSs try to ensure that consecutive blocks are stored on consecutive disk blocks. On magnetic hard disks, doing random access costs seek time and rotational latency. While this is less significant for SSDs, there may be I/O controller overheads.
 
-### Disk Manager
+### Files, Pages, and Tuples
 
-Traditional file I/O operations involve system calls to read from or write to a file. Memory mapping (`mmap`) allows a file to be accessed directly through virtual memory addresses.
-
-![MMAP](/csci-1270/mmap.png)
-
-Many DBMSs might avoid using memory-mapped files because they require fine-grained control over I/O operations. In general, DBMSs know more about their workloads and can better optimize file fetches and flushes than the OS. Sometimes, the OS can even get in the way, like in the case of double-buffering.
-
-Typically, the DBMS stores the database as a file on disk, typically in a proprietary format. 
-
-Early DBMS systems used custom file systems on raw storage, but this had portability issues when switching to different hardware. Additionally, the performance was minimal (5-10%), so most newer DBMS do not do this.
-
-The ==storage manager== is responsible for managing a database's files. It organizes the files as a collection of pages (fixed-size block of data).
+The DBMS stores the database in a ==file== on disk, typically in a proprietary binary format. The ==storage manager== is responsible for managing a database's files. It organizes the files as a collection of ==pages==, which is a fixed-size block of data with an offset into the file. Each page contains data such as ==tuples==.
 
 There are three different notions of pages in a DBMS:
 1. Hardware page, the atomic unit of I/O to a disk (4 KB)
@@ -166,6 +155,18 @@ There are three different notions of pages in a DBMS:
 3. Database page, set by the DBMS (4-16 KB)
 
 Large database pages are good for large sequential writes, but it is more complicated to ensure atomicity. Additionally, more data needs to be loaded into RAM for small reads and writes. 
+
+### The Operating System
+
+Traditional file I/O operations involve system calls to read from or write to a file. Memory mapping (`mmap`) allows a file to be accessed directly through virtual memory addresses.
+
+![MMAP](/csci-1270/mmap.png)
+
+Many DBMSs *avoid* using memory-mapped files because they require fine-grained control over I/O operations. In general, DBMSs know more about their workloads and can better optimize file fetches and flushes than the OS. Sometimes, the OS can even get in the way, like in the case of double-buffering.
+
+However, most modern operating systems *do* use the file system API exposed by the operating system. Early DBMS systems used custom file systems on raw storage, but this had portability issues when switching to different hardware, and the performance benefit was minimal (5-10%).
+
+### File Organization
 
 There are several ways to manage pages in files on disk:
 - Heap file organization
@@ -194,12 +195,12 @@ Tuples also have a header to specify things like the ==null value bitmap==. Havi
 
 The schema is typically *not* stored in the tuple header.
 
-### Buffer Pool Manager
+## Buffer Pool Manager
 
 The buffer pool is a region of RAM managed by the DBMS. It is organized as an array of fixed-sized pages, where each array entry is called a frame. When the DBMS requests a page to be loaded from disk, a copy of the page is placed in a frame.
 
 The database wants to carefully control when dirty pages are written back to disk. It wants to use the RAM as a ==write-back cache== for disk, not as a write-through cache.
 
-The page table keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
+The ==page table== keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
 
 The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
