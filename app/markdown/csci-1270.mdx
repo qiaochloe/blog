@@ -2,7 +2,7 @@
 title: "Databases Notes"
 summary: "Relational Algebra • SQL • Schema Design • Storage System Design"
 publishedAt: "2026-09-13"
-updatedAt: "2026-09-24"
+updatedAt: "2026-10-01"
 tags:
   - "notes"
 ---
@@ -62,7 +62,7 @@ Relational algebra is based on set algebra. That means that it represents relati
 | Symbol                           | Meaning                                                                        |
 |----------------------------------|--------------------------------------------------------------------------------|
 | $\sigma_{\text{pred}}(R)$        | Select all tuples which satisfy `pred`                                         |
-| $\Pi_{\text{A1, A2, ..., An}}(R)$ | Generate a relation with only the specified attributes                        |
+| $\pi{\text{A1, A2, ..., An}}(R)$ | Generate a relation with only the specified attributes                        |
 | $R \cup S$                       | Generate a relation that contains all tuples that appear in either relation    |
 | $R \cap S$                       | Generate a relation that contains all tuples that appear in both relations     |
 | $R - S$                          | Generate a relation that contains all tuples that appear in $R$ but not in $S$ |
@@ -75,7 +75,7 @@ Unlike in relational algebra, SQL assumes that data is stored in a bag, not a se
 
 There are several classes of SQL operations:
 1. Selection ($\sigma$)
-2. Projection ($\Pi$)
+2. Projection ($\pi$)
 3. Aggregation
 4. Join
 5. Views
@@ -143,4 +143,63 @@ Layers of a DBMS:
 4. Operator execution
 5. Query planning
 
-Reading and writing from a disk is expensive, so the database needs to implement a lot of caching and maximize sequential access (rather than random access).
+DBMSs try to ensure that consecutive blocks of a file are stored on consecutive disk
+blocks. On magnetic hard disks, doing random access costs seek time and rotational latency. While this is less significant for SSDs, there may be I/O controller overheads.
+
+### Disk Manager
+
+Traditional file I/O operations involve system calls to read from or write to a file. Memory mapping (`mmap`) allows a file to be accessed directly through virtual memory addresses.
+
+![MMAP](/csci-1270/mmap.png)
+
+Many DBMSs might avoid using memory-mapped files because they require fine-grained control over I/O operations. In general, DBMSs know more about their workloads and can better optimize file fetches and flushes than the OS. Sometimes, the OS can even get in the way, like in the case of double-buffering.
+
+Typically, the DBMS stores the database as a file on disk, typically in a proprietary format. 
+
+Early DBMS systems used custom file systems on raw storage, but this had portability issues when switching to different hardware. Additionally, the performance was minimal (5-10%), so most newer DBMS do not do this.
+
+The ==storage manager== is responsible for managing a database's files. It organizes the files as a collection of pages (fixed-size block of data).
+
+There are three different notions of pages in a DBMS:
+1. Hardware page, the atomic unit of I/O to a disk (4 KB)
+2. OS page, the software abstraction of a hardware page (4 KB)
+3. Database page, set by the DBMS (4-16 KB)
+
+Large database pages are good for large sequential writes, but it is more complicated to ensure atomicity. Additionally, more data needs to be loaded into RAM for small reads and writes. 
+
+There are several ways to manage pages in files on disk:
+- Heap file organization
+- Sequential or sorted file organization (ISAM)
+- Tree file organization
+- Hashing file organization
+
+A ==heap file== is a collection of pages with tuples that are stored in random order. A ==page directory== tracks the physical location of pages for a database file, and also records metadata about available space.
+
+Every page contains a header of metadata about the page's contents, including page size, checksum, DBMS version, transaction visibility, and compression information.
+
+One naive way to lay out tuples on a page is by directly placing them in a fixed array of slots. However, this requires that each tuple be a fixed size. It also makes deletions difficult.
+
+The most common layout scheme for a page is called ==slotted pages==. The slot array maps slots to the tuples' starting position offsets. The header keeps track of the number of used slots, and the offset of the last slot used. Each tuple has a fixed slot entry. 
+
+Some benefits of the slotted pages are:
+- During deletion, the slot array can be easily modified to hide the deletion 
+- Slots can be heterogeneous sizes
+- Compaction can be delayed.
+
+![Naive vs. slotted pages approach](/csci-1270/slotted-pages.png)
+
+The DBMS also needs a way to keep track of individual tuples. This is commonly the page id and the offset into the page.
+
+Tuples also have a header to specify things like the ==null value bitmap==. Having a null value bitmap allows us to save space, since we don't need to store the null value. For example, a tuple with the value `{101, 13, null}` would have the null value bitmap 001, allowing us to only allocate `101` and `13` on the disk.
+
+The schema is typically *not* stored in the tuple header.
+
+### Buffer Pool Manager
+
+The buffer pool is a region of RAM managed by the DBMS. It is organized as an array of fixed-sized pages, where each array entry is called a frame. When the DBMS requests a page to be loaded from disk, a copy of the page is placed in a frame.
+
+The database wants to carefully control when dirty pages are written back to disk. It wants to use the RAM as a ==write-back cache== for disk, not as a write-through cache.
+
+The page table keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
+
+The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
