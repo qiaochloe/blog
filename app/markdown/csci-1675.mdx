@@ -1,8 +1,8 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Performance • Measuring Performance"
+summary: "Performance • Measuring Performance • I/O"
 publishedAt: "2026-09-10"
-updatedAt: "2026-09-24"
+updatedAt: "2026-10-04"
 tags:
   - "notes"
 ---
@@ -151,8 +151,52 @@ If achieved load < offered load, the system is not in a constant state.
 
 ![Above capacity](/csci-1675/above-capacity.png)
 
+## Performance Engineering
+
 ### perf and flamegraphs
 
-During the execution of a program, `perf` will interrupt the program many times and take a snapshot of the stack at the time of execution. Because `perf` writes to a buffer, it is possible for `perf` to drop samples.
+During the execution of a program, `perf` will interrupt the program many times and take a snapshot of the stack at the time of execution. 
 
 [Flame graphs](https://www.brendangregg.com/flamegraphs.html) collects this data and shows frequent datapaths. My prefered profiling utility is [samply](https://github.com/mstange/samply).
+
+Because `perf` writes to a buffer, it is possible for `perf` to drop samples. Make sure to set the sample rate such that it does not drop samples.
+
+![Perf buffer](/csci-1675/perf-buffer.png)
+
+`perf` can also be used to cach the number of L1 cache misses. It can also be embedded directly in the running process with the `perf-event` Rust crate, which is a wrapper around the `perf_event_open` syscall.
+
+**References**:
+- [perf Wiki](https://perfwiki.github.io/main/)
+
+### Block I/O
+
+Note that `perf` can only interrupt the CPU and take a snapshot of the stack. Consider the latency of a single query, where the work mostly involves writing to the disk. 
+
+![Multiprocessing](/csci-1675/multiprocessing.png)
+
+From the client's perspective, the majority of the latency comes from block I/O. However, from the CPU's perspective, it can hand off work to the slow disk and concurrently run other processes. Thus, disk I/O will not be represented in the flame graph despite causing most of the latency. 
+
+![Perf block I/O](/csci-1675/perf-block-io.png)
+
+### Cache Locality
+
+An L1 cache can hold 32-128 KB of data per CPU core.
+
+Consider the following workloads:
+- Random reads to a hashmap
+- Reads to the same key in a hashmap
+- Reads to sequential keys in a hashmap
+
+Reads to the same key will be much faster than random reads because the key fits within the L1 cache.
+
+Reads to the sequential keys will be *faster* than random reads, but slower than reads to the same key. Because keys are hashed, the values are likely randomly dispersed in hashmap memory. However, if the values are heap allocated, it is likely that *those* have cache locality. 
+
+Consider sequential reads of a `HashMap<Arc<Vec<u8>>>`:
+
+![Sequential keys in a hashmap](/csci-1675/sequential-keys.png)
+
+`BTreeMap` supports very efficient range lookups. It achieves this by laying out the memory of the values sequentially.
+
+### The C10K Problem
+
+The C10K problem is where the synchronization overhead of threads starts dominating the application's performance.
