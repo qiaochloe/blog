@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-01"
+updatedAt: "2026-10-05"
 tags:
   - "notes"
 ---
@@ -491,6 +491,34 @@ $$
 x^2 + y^2 - 1 \leq 0,\, y \in \{-0.5, 0.5\}
 $$
 
+## Lighting
+
+Lighting is the simulation of how light interacts with objects. Because accurately simulating lighting is very hard, we usually used simplified lighting models.
+
+==Direct illumination== is light striking a surface directly from a light source. ==Indirect illumination== light bouncing off other objects toward the surface element. It is a much more difficult to simulate than direct illumination, but we can often approximate indirect illumination with direct illumination. 
+
+### Light Sources
+
+In graphics, there are three common models of light sources:
+
+| Type              | Description                                                              | Parameters                                       |
+|-------------------|--------------------------------------------------------------------------|--------------------------------------------------|
+| Point light       | A point that emits light equally in all directions                       | Position $p$ and light intensity $I$ |
+| Spot light        | A point that emits light in a finite cone of directions                  | Position $p$, light intesity $l$, light direction $d$, and cutoff angle $\theta$ |
+| Directional light | A light that shines in a particular direction; good for modeling the sun | Direction $d$ and light intensity $I$ |
+
+### Light Attenuation
+
+==Light attenuation== is the idea that the amount of light illuminating an object should decrease with the square of distance. Thus, to be physically correct, when lighting a point that is distance $d$ away from a light source with intensity $I$, we should attenuate the intensity as $I_\text{att} = \frac{I}{d^2}$. 
+
+The problem is that this produces a very harsh lighting effect because there is no indirect illumination. Instead, we can use this hack:
+
+$$
+I_\text{att} = f_\text{att} \cdot I = \min\left\{\frac{1}{c_1 + c_2d + c_3d^2}, 1\right\}I
+$$
+
+Where $c_1$, $c_2$, and $c_3$ are experimentally defined constants.
+
 ### Surface Normal Vectors
 
 For illumination, we want to find the normal vector at the point $(x, y, z)$. We can find this normal vector by taking the gradient at that point:
@@ -510,3 +538,82 @@ The right equation is $n_w = (M^t)^{-1}n_o$, unless the transformation includes 
 $$
 n_w = \text{sign}(\det(M))(M^t)^{-1}n_o
 $$
+
+### BRDFs
+
+Give a surface normal $n$, an incoming light direction $\omega_i$, and an outgoing light direction $\omega_o$, the bidirectional reflectance distribution function (BRDF) describes how much incoming light is scattered in that outgoing direction:
+
+$$
+f_r(\omega_i, \omega_o : \textbf{R}^3 \times \text{R}^3 \rightarrow [0, 1]
+$$
+
+Some common types of BRDFs are:
+- Lambertian (diffuse): light scatters equally in all directions
+- Specular (glossy): light scatters more tightly around one direction
+- Mirror
+
+The name of the ==Lambertian BRDF== comes from Lambert's cosinne law, which states that light intensity falls off with the cosine of the angle between $\omega_i$ and $n$: $\cos(\theta) = n \cdot \omega_i$. Given $k_d$ as an RGB color, this gives us the Lambertian BRDF:
+$$
+f_r(\omega_i, \omega_o) = k_d(n \cdot \omega_i)
+$$
+
+Most materials are not perfectly Lambertian; most BRDFs are viewer dependent. This is where specular BRDFs. One of the most common Specular BRDFs is ==Phong BRDF==:
+
+$$
+f(\omega_i, \omega_o) = k_s(\cos \delta)^n = k_s(r \cdot \omega_o)^n
+$$
+
+where:
+- $k_s$ is an RGB color
+- $\omega_o$ is the vector to the viewer
+- $r = 2(\omega_i \cdot n)n - \omega_i$
+- $\delta$ is the angle between $\omega_o$ and $r$
+- $n$ controls how tight the specular highlight is
+
+### Phong Illumination Model
+
+The ==Phong illumination model== combines what we know about modeling light sources and materials to define a way to light objects.
+
+First, it breaks lighting into three components: 1. Ambient stands in for the effect of indirect light; it affects all surfaces equally
+2. Diffuse is the effect of direct light on a surface with a dull or rough finish
+3. Specular is the effect of direct light on a shiny surface when the vector to the eye is closely aligned to the light's reflected rays
+
+![Phong Lighting Model](/csci-1230/phong-lighting-model.png)
+
+The Phong illumination model has three terms:
+
+$$
+\text{Color} = \text{Ambient} + \sum_{l \in \text{lights}} [\text{Diffuse} + \text{Specular}]
+$$
+
+The full equation is:
+
+$$
+I_\text{out} = k_a + \sum_{l \in L} f^{l}_\text{att} I^{l} k_d (n \cdot \omega^{l}_{i}) + \sum_{l \in L} f^{l}_\text{att} I^{l} k_s (r \cdot \omega_o)^n
+$$
+
+where:
+- $L$ is the set of all lights in the scene
+- $\omega^{l}_{i}$ is the direction of light $l$
+- $I^l$ is the RGB intensity of light $l$
+- $f^l_\text{att}$ is the attenuation factor for light $l$
+
+Note that the normal should point toward the viewer. You should check the dot product of normal with the view direction and flight the normal if it is negative.
+
+### Shading
+
+We have to compute color for every pixel in our output image, but we don't necessarily have to evaluate the full Phong illumination equation at every equation. 
+
+Graphics systems often make the distinction between:
+1. Lighting: what illumination model is evaluated and at what points
+2. Shading: how every pixel is colored based on the lighting evaluations
+
+This is mostly relevant for real-time graphics, with objects made out of polygons. With implicit objects, we usually just evaluate the exact equation at each pixel where an intersection occurs. 
+
+Common shaders include:
+- Flat shading: compute the normal (and lighting) once per face and apply that single color to all pixels in it
+- Gouraud shading: compute lighting at each vertex using the vertex normal, then linearly interpolate the resulting colors across the face
+- Phong shading: interpolate the normals themselves across the face, then run the lighting calculation per pixel using the interpolated normal
+
+References: 
+- [Phong Illumination Laboratory](https://sklardevelopment.com/webgl_graftext_labs/phong_illum/index.html)
