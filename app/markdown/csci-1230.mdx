@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-05"
+updatedAt: "2026-10-09"
 tags:
   - "notes"
 ---
@@ -43,11 +43,29 @@ In a RGBA image, each pixel has four distinct values, which each represents red,
 
 An RGB value of `(255, 0, 0)` gives us red, `(0, 255, 0)` gives us green, and `(0, 0, 255)` gives us blue. Surprisingly, an RGB value of `(255, 255, 255)` gives us pure white. This is because we are working with light from the computer screen rather than pigment from paint. This gives us [additive color](https://en.wikipedia.org/wiki/Additive_color) rather than [subtractive color](https://en.wikipedia.org/wiki/Subtractive_color). 
 
+<Extra title="Why use RGB?">
+
+Why do we approximate the entire visible spectrum with three values? 
+
+The human eye has three types of color receptors (cones) that are each sensitive to a different range of visible wavelengths. These are sometimes called red, blue, and green cones (or short, medium, and long cones). 
+
+Notice that the medium and long cones are pretty close to each other.
+
+![Color receptors](/csci-1230/color-receptors.png)
+
+</Extra>
+
 ### Datatypes and Memory
 
 Notice that intensity is represented with a `float64`, while color is represented with a `uint8`. The reason we use `uint8` for RGB images is that `float64` takes up a lot of storage. If we used floats for RGBA images, each pixel would require 16 bytes, and a 1000 x 1000 image would take up 16 MB of memory.
 
-Most displays today use [24-bit true color](https://en.wikipedia.org/wiki/Color_depth#True_color_(24-bit)), which is 8 bits per color channel. Since each color channel has $2^8 = 256$ distinct values, we generate $256^4 \approx 17$ million different RGB colors. The human eye can discriminate only around 10 million colors, so this is generally sufficient. However, humans are fairly good at noticing uneven changes in color in [color banding](https://en.wikipedia.org/wiki/Colour_banding), which can be undesirable.
+Most displays today use [24-bit true color](https://en.wikipedia.org/wiki/Color_depth#True_color_(24-bit)), which is 8 bits per color channel. Since each color channel has $2^8 = 256$ distinct values, we generate $256^4 \approx 17$ million different RGB colors. 
+
+<Extra title="Is this enough color?">
+
+The human eye can discriminate only around 10 million colors, so this is generally sufficient. However, humans are fairly good at noticing uneven changes in color in [color banding](https://en.wikipedia.org/wiki/Colour_banding), which can be undesirable.
+
+</Extra>
 
 There are multiple ways to store images in memory:
 - Array of structs (AoS), where each struct represents an RGB value
@@ -80,7 +98,7 @@ In each of the steps of this pipeline, there are many different coordinate syste
 <Extra title="Why use multiple coordinate systems?">
 We want to keep different layers modular, so we can modify each independently. For example, we may want to scale or rotate individual objects. If all objects are defined in terms of world space, then there may not be a linear matrix transformation to do this.
 
-Also, at higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We may have to later consider the resolution of the device (normalized device coordinates) and the viewport of the OS window that the application runs in (screen space).
+Also, at higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We may have to later consider the resolution of the device (normalized device coordinates) and the view plane of the OS window that the application runs in (screen space).
 </Extra>
 
 ## Transformations
@@ -363,6 +381,8 @@ Having a camera coordinate system allows us to change the orientation of the cam
 
 ![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
 
+### View Matrix
+
 The ==canonical camera space== is one where the camera sits at the origin, looks down at $-z$, and is oriented such that $y$ is up. The ==view matrix== transforms objects from world space into camera space.
 
 ![View matrix](/csci-1230/view-matrix.png)
@@ -434,14 +454,25 @@ A primary ray should take the form $P + td$, where $P$ is the origin of the ray 
 
 $P$ should be set to the camera's coordinates $(p_x, p_y, p_z)$ in world space. 
 
-To find the direction of the ray, we need to find the coordinates of a pixel on the view plane. If that coordinate is $(u, v, k)$, then $d$ is simply $(p_x, p_y, p_z) - (u, v, k)$.
+We can calculate $d$ in three steps: 
+1. Given a coordinate of a pixel $(i, j)$ on the view plane, convert it into the corresponding 3D point on the view plane in camera space.
+2. Transform this point into world space using the inverse view matrix. Call the result $(u, v, k)$.
+3. Then $d$ is simply $(p_x, p_y, p_z) - (u, v, k)$.
 
-Given a coordinate of a pixel $(i, j)$ on the view plane, we want to find the $(u, v, k)$ point corresponding to its center. This should be given by
+The first step is given by
 $$
-(i, j) \mapsto \left(\frac{i + 0.5}{W} - 0.5, \frac{j + 0.5}{H} - 0.5\right)
+(i, j) \mapsto \left(W_v \left[\frac{i + 0.5}{W} - 0.5\right], H_v \left[\frac{j + 0.5}{H} - 0.5\right]\right)
 $$
 
-Each coordinate is first shifted $0.5$ so that it is centered on the pixel. Then it is normalized by the dimensions of the scene plane so that it becomes a one-by-one grid. Finally, it is shifted by $(0.5)$ so that the center of the grid is at the origin $(0, 0)$.
+Each coordinate is first shifted $0.5$ so that it is centered on the pixel. Then it is normalized by the dimensions of the scene plane so that it becomes a one-by-one grid. Then it is shifted by $0.5$ so that the center of the grid is at the origin $(0, 0)$. 
+
+Finally, the $x$ and $y$ coordinates are scaled by the width or height of the view plane, $W_v$ or $H_v$. The height and width of the view plane is given by the equations $2k\tan(\theta/2)$, where $k$ is the distance from the camera to the view plane and $\theta$ is the height or width angle.
+
+![View plane height or width](/csci-1230/view-plane-height-width.png)
+
+Since the view plane sits at $z = -k$ in camera space, and $k$ is usually set to $1$, this gives us a full 3D point $(x, y, -1)$ in camera space.
+
+The inverse view matrix can be computed by taking the inverse of the view matrix, as described above in the [View Matrix](#view-matrix) section.
 
 ### Ray-Object Intersections
 
@@ -464,7 +495,7 @@ $$
 An infinite plane with a normal vector $(A, B, C)$ that is distance $D$ away from $(0, 0, 0)$ has the equation:
 
 $$
-Ax + By + Cz + D = 0
+Ax + By + Cz - D = 0
 $$
 
 A sphere of radius $R$ at the origin at the origin has the equation:
@@ -552,7 +583,11 @@ Some common types of BRDFs are:
 - Specular (glossy): light scatters more tightly around one direction
 - Mirror
 
-The name of the ==Lambertian BRDF== comes from Lambert's cosinne law, which states that light intensity falls off with the cosine of the angle between $\omega_i$ and $n$: $\cos(\theta) = n \cdot \omega_i$. Given $k_d$ as an RGB color, this gives us the Lambertian BRDF:
+The name of the ==Lambertian BRDF== comes from Lambert's cosine law, which states that light intensity falls off with the cosine of the angle between $\omega_i$ and $n$: $\cos(\theta) = n \cdot \omega_i$. 
+
+![Lambert's Cosine Law](/csci-1230/lamberts-cosine-law.png)
+
+Given $k_d$ as an RGB color, this gives us the Lambertian BRDF:
 $$
 f_r(\omega_i, \omega_o) = k_d(n \cdot \omega_i)
 $$
@@ -599,6 +634,10 @@ where:
 - $f^l_\text{att}$ is the attenuation factor for light $l$
 
 Note that the normal should point toward the viewer. You should check the dot product of normal with the view direction and flight the normal if it is negative.
+
+### Reflection
+
+We can extend the Phong illumination model by adding some other components to the image, such as mirror reflection. We can achieve reflection via recursive raytracing: at each intersection with a reflective surface, we can perform raytracing again from that intersection point in the reflected direction. We then add the color returned by that recursive call to the color of our intersection point, scaled by a reflective material parameter $k_r$.
 
 ### Shading
 
