@@ -179,9 +179,9 @@ A ==process descriptor==, also known as a process control block (PCB), is a data
 - A pointer to the process's stack
 - A pointer to its context
 
-A process table is just an array of process descriptors. 
+A process table is just an array of process descriptors. The kernel maintains a pointer to the descriptor of the current process running on the CPU.
 
-The kernel maintains a pointer to the descriptor of the current process running on the CPU.
+The idle process is always runnable and yields immediately. It is necessary to run the idle process when there is nothing else to schedule.
 
 ### Context-Switching
 
@@ -213,6 +213,45 @@ There are several components that are necessary for preemptive concurrency:
 3. Once the CPU is interrupted, it should be configured by the hardware manufacturer to jump straight to the trap table
 4. The trap table needs to be configured to jump to the asynchronous interrupt handler
 5. The asynchronous interrupt handler needs to detect which interrupt occurred and call the appropriate handler (in this case, the timer interrupt handler)
+
+### Scheduling
+
+The kernel needs to figure out which task to run next. The scheduler should be:
+1. Fair - no task should starve
+2. Fast - picking a task should be cheap
+3. Responsive - interactive tasks need low latency
+4. Scalable - work on hundreds of CPUs
+
+<Extra title="History of Linux Scheduler">
+**The original scheduler (1991-2001)**
+
+The original scheduler was O(n). To pick the next task, it scanned every runnable task and picked the one with the highest "goodness" score. This made it *slow*.
+
+**The O(1) scheduler (2003)**
+
+The O(1) scheduler kept two arrays for each CPU (`active` and `expired`). Each array element was a double-linked list of all runnable tasks at that priority. There was also a bitmap recording which buckets were non-empty. To pick the next task, the scheduler finds the highest priority non-empty list and takes the first element from that list. When a task finished its timeslice, it moved from `active` to `expired`. When `active` emptied, swap the pointers.
+
+**The Completely Fair Scheduler (2007)**
+
+CFS added the idea of ==virtual runtimes==. Each task has a `vruntime`, which is the amount of CPU time it has consumed, weighted by its priority. The scheduler always runs the task with the smallest `vruntime`. This is provably fair because over time, all tasks at the same priority converge on equal CPU share. 
+
+While CFS is fair, predictable, and good for most workloads, it was not great for real-time and latency-sensitive workloads (network I/O, audio,and gaming). A task that wakes up and needs to run quickly might have to wait behind tasks that technically have smaller vruntimes, even if those tasks have been running for a while.
+
+**Earliest Eligible Virtual Deadline First (2023)**
+
+EEVDF added the idea of ==virtual deadlines==. It schedules the task with the most urgent deadline, among those who are eligible to run. A task is eligible if its `vruntime` is at or behind the current virtual time of the queue. 
+
+Each task has:
+- `vruntime` - virtual time consumed
+- `deadline` - virtual time by which it must run
+- `slice` - requested time slice
+- `vlag` how far behind or ahead the task is relative to ideal fair share
+
+In most cases, the deadline is computed from the priority, but an application can also explicitly set it.
+
+**References**: [Linux Scheduler Evolution](https://kernel-internals.org/sched/scheduler-evolution/)
+
+</Extra>
 
 ## Display
 
@@ -274,6 +313,8 @@ In an `eret` instruction, the following things happen atomically:
 - The processor state is resotred from `SPSR_ELX`
 - The program counter is set from register `ELR_ELX`
 - The stack pointer is set to the value in `SP_ELX`
+
+`eret` needs to run atomically. If we set the `pc` first, then the CPU will immediately start executing the process's code, and we'll never set `PSTATE`. If we set `PSTATE` first, then kernel code will execute with the process's `PSTATE` (with less privilege or with interrupts enabled).
 
 ### ARM64 System Registers
 
