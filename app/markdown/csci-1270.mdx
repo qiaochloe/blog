@@ -1,8 +1,8 @@
 ---
 title: "Databases Notes"
-summary: "Relational Algebra • SQL • Schema Design • Storage System Design"
+summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods"
 publishedAt: "2026-09-13"
-updatedAt: "2026-10-01"
+updatedAt: "2026-10-11"
 tags:
   - "notes"
 ---
@@ -166,13 +166,25 @@ Many DBMSs *avoid* using memory-mapped files because they require fine-grained c
 
 However, most modern operating systems *do* use the file system API exposed by the operating system. Early DBMS systems used custom file systems on raw storage, but this had portability issues when switching to different hardware, and the performance benefit was minimal (5-10%).
 
-### File Organization
+## Buffer Pool Manager
+
+The buffer pool is a region of RAM managed by the DBMS. It is organized as an array of fixed-sized pages, where each array entry is called a frame. When the DBMS requests a page to be loaded from disk, a copy of the page is placed in a frame.
+
+The database wants to carefully control when dirty pages are written back to disk. It wants to use the RAM as a ==write-back cache== for disk, not as a write-through cache.
+
+The ==page table== keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
+
+The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
+
+## Access Methods
 
 There are several ways to manage pages in files on disk:
 - Heap file organization
 - Sequential or sorted file organization (ISAM)
 - Tree file organization
 - Hashing file organization
+
+### Heap Files
 
 A ==heap file== is a collection of pages with tuples that are stored in random order. A ==page directory== tracks the physical location of pages for a database file, and also records metadata about available space.
 
@@ -191,16 +203,12 @@ Some benefits of the slotted pages are:
 
 The DBMS also needs a way to keep track of individual tuples. This is commonly the page id and the offset into the page.
 
-Tuples also have a header to specify things like the ==null value bitmap==. Having a null value bitmap allows us to save space, since we don't need to store the null value. For example, a tuple with the value `{101, 13, null}` would have the null value bitmap 001, allowing us to only allocate `101` and `13` on the disk.
+Tuples may have a header to specify things like the ==null value bitmap==. Having a null value bitmap allows us to save space, since we don't need to store the null value. For example, a tuple with the value `{101, 13, null}` would have the null value bitmap 001, allowing us to only allocate `101` and `13` on the disk. The schema is typically *not* stored in the tuple header.
 
-The schema is typically *not* stored in the tuple header.
+### Hash Tables
 
-## Buffer Pool Manager
+A hash table is an array of values. For a given `key` and number of slots `n`, we can compute `hash(key) % n` to get an offset into the array.
 
-The buffer pool is a region of RAM managed by the DBMS. It is organized as an array of fixed-sized pages, where each array entry is called a frame. When the DBMS requests a page to be loaded from disk, a copy of the page is placed in a frame.
+For a database, we want a hash function that is fast and has a low collision rate. We do not want or need cryptographic properties, like one-way or random oracle. Examples of good database hash functions include CRC-64, MurmurHash, Google CityHash, Facebook XXHash, and GoogleFarmHash.
 
-The database wants to carefully control when dirty pages are written back to disk. It wants to use the RAM as a ==write-back cache== for disk, not as a write-through cache.
-
-The ==page table== keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
-
-The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
+For more information about different hashing schemes, see [Hash Tables](/data-structures-and-algorithms#hash-tables)
