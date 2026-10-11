@@ -1,11 +1,11 @@
 ---
 title: Data Structures and Algorithms Notes
 publishedAt: 07-16-25
-updatedAt: 08-24-26
-summary: "Arrays • Linked Lists • Stacks and Queues • Trees • Binary Trees • Hashmaps • Graphs • Union Find • Dynamic Programming • Backtracking"
+updatedAt: 10-11-26
+summary: "Arrays • Linked Lists • Stacks and Queues • Trees • Binary Trees • Hash Tables • Graphs • Union Find • Dynamic Programming • Backtracking"
 tags:
   - "notes"
-todo: "Add trie, Dijkstra's, Bellman-Ford, Floyd-Warshall, Minimum Spanning Tree, parallel algorithms"
+todo: "Add Floyd-Warshall, Hierholzer's algorithm, more details about prim's and kruskal's"
 ---
 
 ## Arrays
@@ -53,7 +53,7 @@ Sliding window is a technique used to find valid subarrays.
 
 ```python
 def f(arr):
-    output, l, curr = 0, 0
+    output, l, curr = 0, 0, 0
     for r in range(len(arr)):
         curr += arr[r]
         while curr > k:
@@ -157,7 +157,7 @@ def binary_search(arr) -> int:
     while l < r:
         m = (l + r) // 2
         if cond(m):
-            r = m
+            r = m # Keep the r on True
         else:
             l = m + 1
     return l
@@ -165,8 +165,7 @@ def binary_search(arr) -> int:
 
 This finds the first element that appears `True` after a sequence of `False`.
 
-**Problems**: [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/description).
-
+**Problems**: [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/description)  
 **References**: [Powerful Ultimate Binary Search Template](https://leetcode.com/discuss/post/786126/python-powerful-ultimate-binary-search-t-rwv8/)
 
 ### Multidimensional Array
@@ -189,7 +188,7 @@ In terms of time complexity:
 
 Use a **dummy node** to avoid checking for empty lists, in cases where the head of the list needs to be removed or modified.
 
-**Problems**: [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)), [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/), and [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements/).
+**Problems**: [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/), [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/), and [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements/).
 
 ### Reverse Linked List
 
@@ -209,7 +208,7 @@ def reverse(head):
     return prev
 ```
 
-**Problems**: [Palindrome Linked List](https://leetcode.com/problems/palindrome-linked-list/description/), [Reorder List](https://leetcode.com/problems/reorder-list), 
+**Problems**: [Palindrome Linked List](https://leetcode.com/problems/palindrome-linked-list/description/), [Reorder List](https://leetcode.com/problems/reorder-list).
 
 ### Fast and Slow Pointers
 
@@ -239,15 +238,16 @@ Problems: [Reorder List](https://leetcode.com/problems/reorder-list), [Delete th
 
 ## Stacks and Queues
 
-A **stack** supports two operations: push and pop. Elements are pushed and popped in a last-in, first-out (LIFO) order. If implemented with an array or linked list, all operations are O(1).
+A **stack** supports two operations: `push` and `pop`. Elements are pushed and popped in a last-in, first-out (LIFO) order. If implemented with an array or linked list, all operations are O(1).
 
-**Problems**: [Implement a Stack with Max API](https://leetcode.com/problems/max-stack/), [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/description/), [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/description/)
-
-A **queue** supports two operations: enqueue and dequeue. Elements are added (enqueued) and removed (dequeued) in first-in, first-out (FIFO) order. A *dequeue*, or a double-ended queue, is a doubly linked list in which all insertions and deletions are from one of the two ends of the list.  
+A **queue** supports two operations: `enqueue` and `dequeue`. Elements are added (enqueued) and removed (dequeued) in first-in, first-out (FIFO) order. A *dequeue*, or a double-ended queue, is a doubly linked list in which all insertions and deletions are from one of the two ends of the list.  
 
 Queues can be implemented using linked lists, arrays, and even stacks. The main idea behind the stack implementation is to use one stack for enqueues, and another stack for dequeues. 
 
 As you might have noticed, stacks and queues are ordered by time of insertion. They are different from priority queues (also know as [Heaps](#heaps)), which order by the value of the element.
+
+**Problems**: [Implement a Stack with Max API](https://leetcode.com/problems/max-stack/), [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation/description/), [Valid Parentheses](https://leetcode.com/problems/valid-parentheses/description/)
+
 
 ## Trees
 
@@ -441,9 +441,9 @@ In terms of time complexity:
 
 **Problems**: [Lowest Common Ancestor of a Binary Search Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree), 
 
-## Hashmaps
+## Hash Tables
 
-A **hashmap** stores information in key-value pairs. It uses a hash function to turn a key into an index, where the value is stored. 
+A hash table is an array of values. For a given `key` and number of slots `n`, we can compute `hash(key) % n` to get an offset into the array.
 
 In terms of time complexity, it supports:
 - O(1) insertion
@@ -451,9 +451,62 @@ In terms of time complexity, it supports:
 
 Because keys are hashed, there is no ordering in a hashmap. It's very important to make sure that keys hash to the same value, so one should avoid having mutable keys. 
 
-If two keys map to the same location, there will be a collision, which can be handled by:
-- Separate chaining 
-- Open addressing via linear probing
+There are two problems that we need to deal with:
+1. How do we grow the hash table when more keys are inserted?
+2. How do we deal with hashing collisions?
+
+### Static Hashing
+
+==Static hashing== involves a fixed size hash table which is resized from scratch as needed. This is typically done in RAM.
+
+Within static hashing, there are three approaches to handling collisions:
+1. Linear probing
+2. Robin hood hashing
+3. Cuckoo hashing
+
+In ==linear probing==, collisions are handled by hopping to the next available slot. On deletion, a tombstone must be placed to preserve the linear probe chain.
+
+![Linear probing](/data-structures-and-algorithms/linear-probing.png)
+
+One issue with linear probing is that it may contain very long hops. In ==robin hood hashing==, the offset from its ideal slot is also saved. When a new key collides, it steals the slot from an existing key if that existing key is closer to its own ideal slot than the new key is to its ideal slot. The poorer entry robs from the rich.
+
+Robin Hood hashing minimizes the variance of offsets, reducing the worst-case lookup latency.
+
+![Robin Hood hashing](/data-structures-and-algorithms/robin-hood-hashing.png)
+
+In ==cuckoo hashing==, there are multiple hash tables, each with a separate hashing scheme. If a new key collides on both hash schemes, it steals the slot from an existing key. That key then tries to insert itself into the table. 
+
+If table A has collision rate X%, and table B has collision rate Y%, a cuckoo hash produces a scheme with collision rate (X%)(Y%). 
+
+![Cuckoo hashing](/data-structures-and-algorithms/cuckoo-hashing.png)
+
+### Dynamic Hashing
+
+==Dynamic hashing== involves growing the table incrementally as more keys are inserted. There are generally two approaches:
+1. Hash chaining (or separate chaining)
+2. Extendible hashing
+
+In ==hash chaining==, keys are hashed into multiple buckets. Within each bucket, there is a linear search. In the worst-case, insertion and search is O(n).
+
+![Hash chaining](/data-structures-and-algorithms/hash-chaining.png)
+
+In extendible hashing, the first `global_depth` bits of the hash are used to find the correct bucket. 
+
+Each bucket also has its own `local_depth`, the number of bits that were used to decide a key belongs in that bucket. The `gloabl_depth` is always the maximum of the `local_depth` values. 
+
+If the bucket has room, the key-value pair is simply added. If the bucket is full, it must split:
+1. The full bucket's `local_depth` is incremented by one.
+2. If `local_depth` is now greater than `global_depth`, `global_depth` is also incremented, and the directory must double in size.
+3. The full bucket is split into two buckets, and the directory pointers that used to point to the old bucket are repointed based on the next bit of the hash
+5. The new key-value pair is reinserted
+
+For example, suppose we have the current scheme:
+
+![Extendible hashing 1](/data-structures-and-algorithms/extendible-hashing-1.png)
+
+In order to insert a new key, we need to increase the global depth and add a new bucket. 
+
+![Extendible hashing 2](/data-structures-and-algorithms/extendible-hashing-2.png)
 
 ## Graphs
 
@@ -461,26 +514,45 @@ A graph is a data structure with a set of nodes connected by edges.
 
 ### Shortest Path
 
-To find the shortest path from a source node `k` to all other nodes in a weighted graph, we can use Dijkstra's algorithm or the Bellman-Ford algorithm.
+To find the shortest path from a source node `k` to all other nodes in a weighted graph, we can use Dijkstra's algorithm or Bellman-Ford.
 
 Dijkstra's algorithm
 1. Create a set of all unvisited nodes
 2. Assign every node a distance from the starting node. For the starting node, it is 0, and for all other nodes, it is ∞
 3. Maintain a priority queue ordered by distance, initially containing only the starting node with distance 0
 4. Pop the node with the smallest distance from the priority queue. If it has already been visited, skip it; otherwise mark it as visited and remove it from the set of unvisited nodes
-5. For each unvisited neighbor, if the distance to the current node plus the edge weight to the neighbor is less than the neighbor's current distance, update the neighbor's distance and push it into the priority queue
+5. For each neighbor, if the distance to the current node plus the edge weight to the neighbor is less than the neighbor's current distance, update the neighbor's distance and push it into the priority queue
 6. Repeat until the priority queue is empty. Every node now holds its shortest distance from the starting node
 
 <DijkstraDemo />
 
 Bellman-Ford algorithm
 1. Assign every node a distance from the starting node. For the starting node, it is 0, and for all other nodes, it is ∞
-2. Repeat the following step `n - 1` times (once for each of the `n` nodes minus the starting node): for every edge `u -> v` with weight `w`, if the distance to `u` plus `w` is less than the distance to `v`, update the distance to `v`. This is called **relaxation**
+2. Repeat the following step `n - 1` times (once for each of the `n` nodes minus the starting node): for every edge `u -> v` with weight `w`, if the distance to `u` plus `w` is less than the distance to `v`, update the distance to `v`. This is called **relaxation**.
 3. After the `n - 1` passes, check all edges once more. If any relaxation is still possible, the graph contains a negative-weight cycle, and a shortest path does not exist
 
 Bellman-Ford works on graphs with negative edge weights (unlike Dijkstra's), at the cost of running in $O(VE)$ time instead of $O((V + E) \log V)$. The `n - 1` passes are enough because any acyclic shortest path uses at most `n - 1` edges.
 
 <BellmanFordDemo />
+
+### Minimum Spanning Trees
+
+Kruskal's algorithm is to select the smallest edge and check if it creates a cycle. If it doesn't, add it to the spanning tree. Continue until the tree contains V - 1 edges.
+
+Time complexity: O(E log E)  
+
+Prim's algorithm is pick a starting node, and mark it as visited. Look at all edges connecting the visited vertices to the unvisited vertices, and pick the minimum one. Add the vertex it connects to the visited set. Repeat until all vertices are included in the tree.
+
+Time complexity: O(V^2)
+
+### Eulerian Paths and Circuits
+
+A Eulerian path is a path through a graph that traverses all edges exactly once. A Eulerian circuit is a Eulerian path which starts and ends at the same vertex.
+
+|                  | Eulerian Path                                                                                                                                            | Eulerian Circuit                              |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| Undirected Graph | Either every vertex has even degree or exactly two vertices have odd degree                                                                              | Every vertex has an even degree               |
+| Directed Graph    | At most one vertex has outdegree - indegree = 1 and at most one vertex has indegree - outdegree = 1 and all other vertices have equal in and out degrees | Every vertex has equal indegree and outdegree |
 
 ### Topological Sort
 
