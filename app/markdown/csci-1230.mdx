@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-09"
+updatedAt: "2026-10-11"
 tags:
   - "notes"
 ---
@@ -635,10 +635,6 @@ where:
 
 Note that the normal should point toward the viewer. You should check the dot product of normal with the view direction and flight the normal if it is negative.
 
-### Reflection
-
-We can extend the Phong illumination model by adding some other components to the image, such as mirror reflection. We can achieve reflection via recursive raytracing: at each intersection with a reflective surface, we can perform raytracing again from that intersection point in the reflected direction. We then add the color returned by that recursive call to the color of our intersection point, scaled by a reflective material parameter $k_r$.
-
 ### Shading
 
 We have to compute color for every pixel in our output image, but we don't necessarily have to evaluate the full Phong illumination equation at every equation. 
@@ -656,3 +652,71 @@ Common shaders include:
 
 References: 
 - [Phong Illumination Laboratory](https://sklardevelopment.com/webgl_graftext_labs/phong_illum/index.html)
+
+## Whitted Raytracing
+
+There are some lighting effects that are not captured by Phong illumination, such as shadows, reflection, and refraction.[^1] Turner Whitted introduced a recursive ray-tracing algorithm to capture these elements using shadow rays, rays of reflection, and rays of refraction.
+
+![More rays](/csci-1230/more-rays.png)
+
+### Shadow Rays
+
+Each light in the scene contributes a specular and diffuse term to a surface element iff it can reach the object. Thus, we can just construct a shadow ray from the scene element to the light source, and check if it is blocked by any other element in the scene. (This will produce hard shadows; soft shadows are harder to compute.)
+
+![Shadow rays](/csci-1230/shadows-ray-tracing.png)
+
+Note that the shadow ray might intersect the starting surface at a `t` value close to 0. To avoid self-shadowing, we should add a small epsilon to the shadow ray's start position.
+
+### Rays of Reflection and Refraction
+
+At each intersection with a surface, we perform raytracing again from that intersection point. 
+- For a reflective surface, we trace the reflection ray about the normal vector at the surface intersection
+- For a refractive, we trace the refraction ray following Snell's law
+
+We then add the color returned by that recursive call to the color of our intersection point, scaled by a material parameter $k_s$ or $k_r$. We continue recursively spawning new rays until the contribution is negligible or maximum recursive depth is reached. 
+
+Note that this only captures specular indirect light, not diffusion. A further extension of Whitted ray tracing is path tracing, which also bounces light around according to Lambert's cosine law.
+
+### Transparency
+
+Transparent materials let light pass through, but they can do so in two ways:
+
+- **Non-refractive transparency**: the ray passes straight through the surface unchanged, just attenuated by the material's transmission coefficient $k_t$
+- **Refractive transparency**: the ray bends as it crosses the boundary between two media, following **Snell's law**:
+
+$$
+n_1 \sin\theta_1 = n_2 \sin\theta_2
+$$
+
+where $n_1, n_2$ are the refractive indices of the two media and $\theta_1, \theta_2$ are the angles of incidence and refraction, measured from the surface normal. A higher refractive index bends light more toward the normal.
+
+### Extended Illumination Equation
+
+Putting it together, this gives us the extended illumination equation:
+
+$$
+\begin{aligned}
+I_\text{out} = {} & k_a + \sum_{l \in L} V(l, p)(f^{l}_\text{att} I^{l} k_d (n \cdot \omega^{l}_{i}) + f^{l}_\text{att} I^{l} k_s (r \cdot \omega_o)^n) \\
+& + k_s I_\text{refl} + k_t I_\text{trans}
+\end{aligned}
+$$
+
+where:
+- $V(l, p)$ is $0$ if the light ray is blocked and $1$ if the light ray is not blocked
+- $I_\text{refl}$ is the color returned by tracing a recursive ray reflected about the surface normal
+- $I_\text{trans}$ is the color returned by tracing a transmitted ray through the surface
+- $k_t$ is the material transmission efficiency
+
+**References**: [An improved illumination model for shaded display](https://dl.acm.org/doi/10.1145/358876.358882) by Turner Whitted
+
+[^1]: Light changing speeds as it enters a medium
+
+## Accelerated Data Structures
+
+The native ray tracing algorithm has a time complexity of O(MN), where M is the number of pixels and N is the number of objects. To reduce the time complexity, let's look at the O(N) part.
+
+### Bounding Volumes
+
+A bounding volume is a data structure that encloses complex objects in simpler ones.If the bounding volume isn't hit, then neither is the object inside it.
+
+An axis aligned bounding box (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
