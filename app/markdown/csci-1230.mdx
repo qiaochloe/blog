@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Procedural Noise"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Texture Mapping"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-12"
+updatedAt: "2026-10-13"
 tags:
   - "notes"
 ---
@@ -721,11 +721,45 @@ A bounding volume is a data structure that encloses complex objects in simpler o
 
 An axis aligned bounding box (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
 
-## Procedural Noise
+## Texture Mapping
 
-Procedural noise is used to create randomized data. 
+Other than shading, we may also want to add texture to an object. One way to do this is with ==texture mapping==. 
 
-A few examples of noise functions include white noise, value noise, perlin noise, simplex noise, and worley noise.
+Pros of texture maps:
+- Can be stored once and reused
+- Can be easily compressed to reduce size
+- Can be rendered quickly
+- Fairly intuitive to work with for artists
+- Can be used for far-away objects (billboarding)
+
+Cons of texture maps:
+- Surfaces still look smooth because geometry is unchanged 
+
+Texture mapping has two subproblems:
+- Surface parameterization: mapping the 3D surface to a 2D plane by finding a function $f(x, y, z) = (u, v)$ which describes the surface. This is also called UV mapping.
+- Texturing: assigning a value to each point on the $(u, v)$ plane
+
+There are two main types of texturing:
+- Image texturing: use $(u, v)$ to index into an image
+- Procedural texturing: use $(u, v)$ as input to some function which computes the texture
+
+### Image Texturing
+
+In most cases, the image coordinates will be different from texture (UV) coordinates. Suppose that the image has a width $W$ and height $H$, and the UV plane is the unit plane. Then the mapping is:
+
+$$
+(u, v) \mapsto \left(\lfloor uW \rfloor, \lfloor (1 - v)H \rfloor\right)
+$$
+
+For periodic textures (like brick), a better option for filling a piece of geometry is to tile the texture. Suppose that we have an image with width $W$ and height $H$, and we want to repeat this image $m$ times horizontally and $n$ times vertically on the unit UV place. Then the mapping is:
+
+$$
+(u, v) \mapsto \left(\lfloor u m W \bmod W \rfloor\right), \lfloor (1 - v) n H \bmod H \rfloor
+$$
+
+### Procedural Texturing
+
+Procedural noise is used to create randomized data. A few examples of noise functions include white noise, value noise, perlin noise, simplex noise, and worley noise.
 
 ![Types of noise](/csci-1230/types-of-noise.png)
 
@@ -750,3 +784,42 @@ An easing function has the following properties:
 - `ease(x)` is continuous
 
 **References**: [CSCI 1230 Lab 5: Terrain](https://cs1230.graphics/labs/lab5-get-normals/)
+
+### Surface Parameterization
+
+Informally, a good parameterization is one that doesn't distort the texture too much when applied to the surface.
+
+Certain 3D shapes are naturally defined by a parametric function, such as cubes, cylinders, cones, and spheres.
+
+- For cylinders and cones, let $u \in [1, 0]$ be the distance around the perimeter of the circle, and let $v \in [1, 0]$ be the height of the point.
+
+    `atan` produces a $\theta$ in the range $[-\pi/2, \pi/2]$, which could map two perimeter positions to the same $\theta$ value. To fix that, use `atan2`, which produces a $\theta$ in the range $[-\pi, \pi]$. 
+
+    To map $\theta$ to $u \in [0, 1]$, we need to do the following:
+        - If $\theta < 0$, $u = -\theta/(2\pi)$
+        - If $\theta \geq 0$, $u = 1 - \theta/(2\pi)$
+
+- For spheres, at $v = 0$ or $v = 1$, there is a singularity where we should set $u$ to some predefined value.
+
+    $v$ is a function of the latitude of $\phi$ of the point. This is given by:
+    - $\phi = \sin^{-1}(p_y/r)$
+    - $v = \phi/\pi + 0.5$
+
+For an arbitrary polygonal object, there are several approaches we can do:
+- Texture each face independently
+- Planar, spherical, or cylindrical mapping
+- Manual UV mapping
+
+In manual UV mapping, the artist cut seams into the object to project them into UV space. Seams are placed on portions of the model that are less visible or sections that could have discontinuities.
+
+![Manual UV mapping](/csci-1230/manual-uv-mapping.png)
+
+If we can find the color on every vertex of the object, then we can find the color for any point on the surface. 
+
+First, let's consider interpolating between two values along a line. Given two colors $A$ and $B$, we can compute any value along the line by evaluating 
+
+$$
+C(t) = tA + (1 - t)B
+$$
+
+$t$ and $1 - t$ are the barycentric coordinates of the line segment. This technique can be generalized for triangles.
