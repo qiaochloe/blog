@@ -137,6 +137,8 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
   );
 
   if (variant === "mobile") {
+    const isLong = sections.length > 8;
+
     return (
       <nav
         className="toc toc-mobile mb-6 lg:hidden"
@@ -145,9 +147,13 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
         <p className="text-xs font-semibold text-neutral-900 tracking-tight mb-1.5">
           Contents
         </p>
-        <ul className="space-y-0.5 text-sm">
+        <ul
+          className={`space-y-0.5 text-sm ${
+            isLong ? "sm:columns-2 sm:gap-x-6 sm:space-y-0" : ""
+          }`}
+        >
           {sections.map(({ heading, children: subheadings }) => (
-            <li key={heading.id} className="leading-tight">
+            <li key={heading.id} className="leading-tight break-inside-avoid">
               <a
                 href={`#${heading.id}`}
                 className={`toc-link inline-block py-px text-neutral-600 hover:text-neutral-900 transition-colors break-words ${
