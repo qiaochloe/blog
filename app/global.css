@@ -505,6 +505,20 @@ tr:nth-child(odd) {
   text-wrap: balance;
 }
 
+/* KaTeX */
+
+/* Display math can be wider than the prose column; scroll instead of clipping */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+/* Inline math shouldn't force the line wider than the container */
+.katex {
+  max-width: 100%;
+}
+
 hr {
   border: none;
   border-top: 1px solid #dbdbdb;
