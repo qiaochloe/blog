@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Procedural Noise"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-11"
+updatedAt: "2026-10-12"
 tags:
   - "notes"
 ---
@@ -274,7 +274,7 @@ $$
 Note that the order of the transformations matters. The most widely used ordering is TRS, which means to scale, rotate, and then translate.
 
 References: 
-- [CSCI 1230 Lab 3](https://cs1230.graphics/labs/lab3#ordering-scale-rotation-and-translation)
+- [CSCI 1230 Lab 3: Transforms and Parsing](https://cs1230.graphics/labs/lab3#ordering-scale-rotation-and-translation)
 
 ### Non-Axis Aligned 3D Rotation
 
@@ -720,3 +720,33 @@ The native ray tracing algorithm has a time complexity of O(MN), where M is the 
 A bounding volume is a data structure that encloses complex objects in simpler ones.If the bounding volume isn't hit, then neither is the object inside it.
 
 An axis aligned bounding box (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
+
+## Procedural Noise
+
+Procedural noise is used to create randomized data. 
+
+A few examples of noise functions include white noise, value noise, perlin noise, simplex noise, and worley noise.
+
+![Types of noise](/csci-1230/types-of-noise.png)
+
+White noise:
+- Every pixel is given a random value independent of its neighbors
+- It is easy to implement and very fast 
+- It may be "too noisy" or too discontinuous for certain use cases
+
+Value noise:
+- Generate a grid of white noise values, then scale it up
+- It is fairly easy to implement, pretty fast, and locally continuous
+- The resulting noise is visibly aligned to the pixel grid
+
+Perlin noise:
+- Intensity is a function of a grid of vectors instead of a grid of values
+- It is locally continuous and looks more organic
+- It is more challenging to implement and can be very inefficient if implemented poorly
+
+An easing function has the following properties:
+- `ease(0)` is 0
+- `ease(1)` is 1
+- `ease(x)` is continuous
+
+**References**: [CSCI 1230 Lab 5: Terrain](https://cs1230.graphics/labs/lab5-get-normals/)
