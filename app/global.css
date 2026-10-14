@@ -313,6 +313,11 @@ pre code.hljs {
   @apply my-0 inline;
   display: inline;
 }
+/* Sidenotes render outside .prose/.prose-notes (a sibling grid column), so
+   they don't inherit the usual inline-code pill styling; repeat it here. */
+.sidenote code {
+  @apply px-1.5 py-0.5 rounded-md bg-neutral-100 font-mono text-xs;
+}
 
 /* Each enhancement hides the bottom list only via its own class, so
    Sidenotes (desktop) and MobileFootnotes (mobile) can't clobber each
@@ -328,6 +333,16 @@ pre code.hljs {
 }
 .footnote-inline-box {
   @apply block w-full bg-neutral-100 text-neutral-700 text-sm leading-snug rounded-md px-4 py-3 my-4;
+}
+/* Inline code loses its own bg-neutral-100 pill when sitting on a gray
+   background (it would otherwise blend in but keep its padding). Needs the
+   extra `.prose`/`.prose-notes` prefix to out-specificity the
+   `:not(pre) > code` rules above, which otherwise win regardless of order. */
+.prose .footnote-inline-box code,
+.prose-notes .footnote-inline-box code,
+.prose .extra-content code,
+.prose-notes .extra-content code {
+  @apply bg-white;
 }
 .footnote-inline-box .sidenote-number {
   @apply mr-1 text-neutral-400 font-medium align-super text-xs;

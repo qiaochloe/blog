@@ -10,7 +10,9 @@ export function Extra({
   return (
     <details className="my-4">
       <summary className="extra-summary">{title}</summary>
-      <div className="mt-2 bg-neutral-100 px-4 py-2">{children}</div>
+      <div className="extra-content mt-2 bg-neutral-100 px-4 py-2">
+        {children}
+      </div>
     </details>
   );
 }
