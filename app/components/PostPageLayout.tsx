@@ -5,6 +5,7 @@ import { BackToTopButton } from "app/components/BackToTopButton";
 
 const NARROW_PATHS = new Set(["writings", "now", "rss", "projects"]);
 const TOC_PORTAL_ID = "toc-portal";
+const SIDENOTES_PORTAL_ID = "sidenotes-portal";
 
 export function PostPageLayout({
   children,
@@ -30,7 +31,10 @@ export function PostPageLayout({
           aria-hidden
         />
         <div className="min-w-0">{children}</div>
-        <div className="hidden lg:block min-w-0" aria-hidden />
+        <div
+          id={SIDENOTES_PORTAL_ID}
+          className="hidden lg:block min-w-0 relative lg:-ml-10"
+        />
       </div>
     </>
   );

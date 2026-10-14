@@ -300,6 +300,43 @@ pre code.hljs {
   @apply ml-0.5 text-neutral-400 no-underline hover:underline;
 }
 
+/* Sidenotes (desktop margin notes, mirrors the hidden .footnotes list) */
+.sidenote {
+  @apply text-sm text-neutral-600 leading-snug;
+  width: 100%;
+  max-width: 16rem;
+}
+.sidenote .sidenote-number {
+  @apply mr-1 text-neutral-400 font-medium align-super text-xs;
+}
+.sidenote p {
+  @apply my-0 inline;
+  display: inline;
+}
+
+/* Each enhancement hides the bottom list only via its own class, so
+   Sidenotes (desktop) and MobileFootnotes (mobile) can't clobber each
+   other's visibility state on the shared .footnotes element. */
+.footnotes.sidenotes-hidden,
+.footnotes.mobile-footnotes-hidden {
+  display: none;
+}
+
+/* Mobile tap-to-expand footnotes */
+.footnote-ref-active a {
+  @apply text-neutral-900 font-semibold;
+}
+.footnote-inline-box {
+  @apply block w-full bg-neutral-100 text-neutral-700 text-sm leading-snug rounded-md px-4 py-3 my-4;
+}
+.footnote-inline-box .sidenote-number {
+  @apply mr-1 text-neutral-400 font-medium align-super text-xs;
+}
+.footnote-inline-box p {
+  @apply my-0 inline;
+  display: inline;
+}
+
 /* Prose notes */
 
 .prose-notes {

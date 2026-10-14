@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { CustomMDX } from "app/components/mdx";
 import { TableOfContents } from "app/components/TableOfContents";
 import { TocPortal } from "app/components/TocPortal";
+import { Sidenotes } from "app/components/Sidenotes";
+import { MobileFootnotes } from "app/components/MobileFootnotes";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { preprocessGfmTables } from "app/utils/gfm-tables";
@@ -73,6 +75,7 @@ export default async function Page({
   const title = post.data.title ?? post.slug ?? "Untitled";
   const headings = extractHeadings(post.content);
   const showToc = headings.length >= 1;
+  const hasFootnotes = /\[\^[^\]]+\]/.test(post.content);
   const processedContent = preprocessFootnotes(
     preprocessHighlightMarker(preprocessGfmTables(post.content)),
   );
@@ -133,6 +136,8 @@ export default async function Page({
         }}
       />
       {showToc && <TocPortal headings={headings} />}
+      {hasFootnotes && <Sidenotes />}
+      {hasFootnotes && <MobileFootnotes />}
       <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
         <div className={isNotes ? "prose-notes" : undefined}>
           {headerContent}
