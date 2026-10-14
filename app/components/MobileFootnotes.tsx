@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { getFootnoteBodyHtml } from "app/utils/footnote-dom";
 
 const NARROW_QUERY = "(max-width: 1023.98px)";
-const BLOCK_SELECTOR = "p, li, blockquote, h1, h2, h3, h4, h5, h6";
+const BLOCK_SELECTOR = "p, li, blockquote, h1, h2, h3, h4, h5, h6, td, th";
 
 export function MobileFootnotes() {
   useEffect(() => {
@@ -37,8 +37,13 @@ export function MobileFootnotes() {
       }
 
       const item = article.querySelector<HTMLElement>(`#fn-${num}`);
-      const block = ref.closest<HTMLElement>(BLOCK_SELECTOR);
+      let block = ref.closest<HTMLElement>(BLOCK_SELECTOR);
       if (!item || !block) return;
+
+      // A div can't be a child of <tr>, so anchor table refs to the table itself.
+      if (block.tagName === "TD" || block.tagName === "TH") {
+        block = block.closest<HTMLElement>("table") ?? block;
+      }
 
       const box = document.createElement("div");
       box.className = "footnote-inline-box";
