@@ -126,9 +126,9 @@ There are two primary means of communication:
 
 With memory-mapped I/O, the physical address space now contains more than just RAM. On bare metal, the physical address space comprises of:
 1. RAM regions used by running programs
-2. Reserved regions wired directly to hardware devices (like console)
+2. Reserved regions wired directly to hardware devices (like console)[^mmio-region]
 
-Note that this device MMIO region is fixed by the hardware, not by the operating system.
+[^mmio-region]: Note that this device MMIO region is fixed by the hardware, not by the operating system.
 
 ![Physical address space](/csci-1670/physical-address-space.png)
 
@@ -279,11 +279,33 @@ In most cases, the deadline is computed from the priority, but an application ca
 
 Preemption also allows the OS to respond to devices quickly. When a network packet arrives or when there is a disk read, the data is stored in a limited memory region.The OS needs to respond before that memory region is overwritten by other data. 
 
-To achive this, peripheral devices make an interrupt request. This triggers the interrupt handler, which quickly takes the bytes out of the hardware FIO and puts them into a buffer in memory. Then it terminates and gives control back to the running process. Later, a process consumes the bytes in the buffer.
+To achieve this, peripheral devices make an interrupt request. This triggers the interrupt handler, which quickly takes the bytes out of the hardware FIO and puts them into a buffer in memory. Then it terminates and gives control back to the running process. Later, a process consumes the bytes in the buffer.
 
-While processes are waiting for a device, they are in a `BLOCKED` state. Usually, there is a ==wait channel== that allows the blocked process to be associated with some event, such as the address to some kernel data struction. The interrupt handler will wake up every process blocked on the same address by marking them as `RUNNABLE` for the scheduler.
+While processes are waiting for a device, they are in a `BLOCKED` state. Usually, there is a ==wait channel== that allows the blocked process to be associated with some event, such as the address to some kernel data structure. The interrupt handler will wake up every process blocked on the same address by marking them as `RUNNABLE` for the scheduler.
 
-A ==framebuffer== is a region of memory that the hardware continuously reads and then renders on the display. While the screen can be shared across multiple processes, the input keyboard has to go to *some* process. Most windowing systems handle this by setting a *foreground* process or window. 
+### Screen and Framebuffer
+
+A screen is composed of pixels. Each pixel is composed of multiple bits which describe the alpha, red, green, and blue channels.
+
+![Screen](/csci-1670/screen.png)
+
+A ==framebuffer== is a region of memory[^framebuffer] that the hardware continuously reads and then renders on the display.
+
+User programs can read the `FB_INFO_BASE` to find the address of the framebuffer, and then they can write directly into this framebuffer to render things on the screen.
+
+![Framebuffer](/csci-1670/framebuffer.png)
+
+[^framebuffer]: On the Raspberry Pi, this region of memory is given to the CPU by the GPU.
+
+While the screen can be shared across multiple processes, the input keyboard has to go to *some* process. Most windowing systems handle this by setting a *foreground* process or window. 
+
+<Extra title="How are fonts rendered on screen?">
+
+Fonts also need to be encoded in terms of bits. The most basic font encoding is a bitmap, which encodes the appearance of each letter instead of 8x8 pixels. 
+
+Modern font encodings usually use vector encodings because they scale better.
+
+</Extra>
 
 ## Appendix
 
@@ -350,7 +372,9 @@ In ARM64, many system registers have distinct instances per exception level. `EL
 | `FAR_ELX`   | Fault address register            | Contains The address that caused the memory fault                                                                                                              |
 | `VBAR_EL1`  | Vector base address register      | Contains the address of the exception vector table                                                                                                             |
 | `SCTLR_EL1` | System control register           | Contains information about MMU, caches, endianness, and alignment                                                                                              |
-| `DAIF`      | Debug, Abort, IRQ, FIQ            | The interrupt-mask bits in `PSTATE`. Note that the bit positions in the `DAIF` register view, in the `DAIFSET` selection, and in `SPSR_ELX` are all different. |
+| `DAIF`      | Debug, Abort, IRQ, FIQ            | The interrupt-mask bits in `PSTATE`[^bit-positions] |
+
+[^bit-positions]: Note that the bit positions in the `daif` register view, in the `daifset` selection, and in `spsr_elx` are all different. 
 
 ### ARM64 Exception Handling
 
