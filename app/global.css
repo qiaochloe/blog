@@ -318,6 +318,9 @@ pre code.hljs {
 .sidenote code {
   @apply px-1.5 py-0.5 rounded-md bg-neutral-100 font-mono text-xs;
 }
+.sidenote a {
+  @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
+}
 
 /* Each enhancement hides the bottom list only via its own class, so
    Sidenotes (desktop) and MobileFootnotes (mobile) can't clobber each
