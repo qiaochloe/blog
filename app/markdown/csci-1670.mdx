@@ -2,10 +2,10 @@
 title: "Operating Systems Notes"
 summary: "Booting • I/O Devices • Processes • Display"
 publishedAt: 2026-09-16
-updatedAt: 2026-10-01
+updatedAt: 2026-10-14
 tags:
 - notes
-todo: add notes about ARM64 instructions, interrupt types
+todo: add notes about ARM64 instructions, SPSR layout (https://csci1670.github.io/notes/l06/)
 ---
 
 ## Booting
@@ -176,8 +176,11 @@ First, we need to be able to load multiple processes into memory. We also need a
 A ==process descriptor==, also known as a process control block (PCB), is a data structure that stores information about a single process. It contains:
 - The state of the process (`UNUSED`, `USED`, `RUNNABLE`, `RUNNING`)
 - The process ID (PID), so that programs can refer to a process without having a pointer into kernel memory 
-- A pointer to the process's stack
-- A pointer to its context
+- A pointer to the stack[^pointer-to-stack]
+- A pointer to the context[^pointer-to-context]
+
+[^pointer-to-stack]: It's possible to store either the lowest address (base) or the highest address of the stack. If we store the base, we know where to free the memory later, but we'll have to initialize `sp` as `stack_ptr + STACK_SIZE`.
+[^pointer-to-context]: The context is also stored on the stack.
 
 A process table is just an array of process descriptors. The kernel maintains a pointer to the descriptor of the current process running on the CPU.
 
@@ -188,24 +191,43 @@ The idle process is always runnable and yields immediately. It is necessary to r
 From the CPU's point of view, a running process is just defined by:
 1. The general-purpose registers (`x0`-`x30`) which hold the program's live values, base pointer (in `x29`), and return address (in `x30`)
 2. The stack pointer (`sp`) which points to the top of the stack
-3. The program counter (`pc`) or instruction pointer which contains the address of the next instruction to run
+3. The program counter (`pc`) which contains the address of the next instruction to run
 4. The processor state, which includes condition flags (N/Z/C/V) that a following conditional branch depends on, the current exception level, which stack pointer is in use, and which interrupts are masked
 
 To change the process that the CPU is working on, we must save the running process's context and load another process's context. This is called a ==context switch==. 
 
-The mechanism for a context switch usually involves a function to `save_context` and `restore_context`. These functions are usually written in assembly because we need to directly modify registers.
+The mechanism for a context switch usually involves a function to `save_context` and `restore_context`. 
+- `save_context` stores the context of the process on the process's stack, allowing the kernel to switch to a different process[^save_context]
+- `restore_context` finds the saved context on the process's stack (using the metadata in the process descriptor) and restores the registers
+
+[^save_context]: Note that `save_context` may differ depending on whether we are saving the context after a `yield()` syscall or handling an interrupt. If we are handling a `yield()`, we need to mimic everything that the hardware does for us during an interrupt.
+
+<Extra title="Why do we store the context on the process's stack?">
 
 There are two obvious places where we can store the context:
-1. Inside the process descriptor. This means that the stack pointer needs to be saved and restored explicitly. It does not generalize well to interrupts. 
-2. On the process's own stack. Just before saving, subtract the size of a context from the stack pointer to make room, and then write the registers into that space. The process descriptor stores only a pointer to it.
+1. Inside the process descriptor
+2. On the process's own stack
+
+Design (1) does not generalize well to nested interrupts. Suppose that an interrupt occurs when we are partway through handling another interrupt or syscall. Each nested interrupt should have its own slot for saved registers. If we merely store a context struct inside of the process descriptor, we cannot represent this linear structure.
+
+</Extra>
 
 ### Concurrency
 
 In order to do a context switch, the OS needs the ability to stop the CPU from running some process. However, the OS is *itself* a process that needs to run on the CPU. 
 
-There are two ways the OS can get the CPU back from a running process. In ==cooperative concurrency==, the process gives it up voluntarily by calling into the kernel directly (via `yield()`). `yield()` should mimic the behavior of the hardware during an interrupt. 
+There are two ways the OS can get the CPU back from a running process: (1) cooperative concurrency and (2) preemptive concurrency. 
 
-The problem with cooperative concurrency is that it depends on the process being polite. To get the kernel to forcibly take back the CPU, we need ==preemptive concurrency==. The kernel takes the CPU back by arranging a hardware timer to interrupt the CPU periodically. When the timer fires, the CPU stops executing and jumps into the kernel, where it can schedule another process. 
+In ==cooperative concurrency==[^cc-example], the process gives it up voluntarily by calling into the kernel directly via `yield()`. `yield` should:
+1. Save the process's context
+2. Record where the context is in the process descriptor
+3. Change the process's state
+4. Decide which process to run next
+5. Resume that process by restoring its context
+
+[^cc-example]: For a concrete example of cooperative concurrency, see the section on [ARM 64 Context Switches](#arm64-context-switches).
+
+The problem with cooperative concurrency is that it depends on the process being polite. To allow the kernel to forcibly take back the CPU, we need ==preemptive concurrency==. The kernel takes the CPU back by arranging a hardware timer to interrupt the CPU periodically. When the timer fires, the CPU stops executing and jumps into the kernel, where it can schedule another process.
 
 There are several components that are necessary for preemptive concurrency:
 1. A timer device needs to periodically create interrupts
@@ -309,12 +331,12 @@ The only way to move from a lower EL to a higher EL is to trigger a hardware exc
 
 The only way to move from a higher EL to a lower EL is by running the instruction `eret` (exception return). `eret` is necessary for context-switching between the process and the kernel.
 
-In an `eret` instruction, the following things happen atomically:
-- The processor state is resotred from `SPSR_ELX`
-- The program counter is set from register `ELR_ELX`
-- The stack pointer is set to the value in `SP_ELX`
+In an `eret` instruction, the following things happen atomically[^atomic]:
+- `PSTATE` is restored from `SPSR_ELX`
+- `pc` is set from register `ELR_ELX`
+- `sp` is set to the value in `SP_ELX`
 
-`eret` needs to run atomically. If we set the `pc` first, then the CPU will immediately start executing the process's code, and we'll never set `PSTATE`. If we set `PSTATE` first, then kernel code will execute with the process's `PSTATE` (with less privilege or with interrupts enabled).
+[^atomic]: There are several reasons why `eret` needs to be atomic. If we set the `pc` first, then the CPU will immediately start executing the process's code, and we'll never set `PSTATE`. If we set `PSTATE` first, then kernel code will execute with the process's `PSTATE` (with less privilege or with interrupts enabled).
 
 ### ARM64 System Registers
 
@@ -329,6 +351,99 @@ In ARM64, many system registers have distinct instances per exception level. `EL
 | `VBAR_EL1`  | Vector base address register      | Contains the address of the exception vector table                                                                                                             |
 | `SCTLR_EL1` | System control register           | Contains information about MMU, caches, endianness, and alignment                                                                                              |
 | `DAIF`      | Debug, Abort, IRQ, FIQ            | The interrupt-mask bits in `PSTATE`. Note that the bit positions in the `DAIF` register view, in the `DAIFSET` selection, and in `SPSR_ELX` are all different. |
+
+### ARM64 Exception Handling
+
+ARM64 has 4 different exception types:
+1. Synchronous exception: caused by the instruction the CPU is executing (page fault, illegal instructinos, system calls)
+2. Interrupt requests (IRQs): caused by something outside of the CPU
+3. Fast interrupts (FIQs): high-priority interrupts
+4. System errors (SErrors): casued by the hardware itself
+
+When an interrupt occurs, the CPU will:
+1. Finish the current instruction
+2. Save `pc` into `ELR_EL1`[^save-pc]
+3. Save `PSTATE` into `SPSR_EL1`[^save-pstate]
+4. Disable interrupts by setting `DAIF` in `PSTATE`
+5. Switch to EL1 and select `SP_EL1`  as the stack pointer
+6. Jump to `VBAR_EL1` plus the offset for the exception type and origin
+
+[^save-pc]: Jumping into the vector table will change `pc`, which is why the hardware needs to save it first.
+[^save-pstate]: Disabling interrupts and switching exception levels will change `PSTATE`, which is why the hardware needs to save it first.
+
+Note that the hardware does not save any general-purpose registers. For context switches, the handler inside of the exception vector table should save the context before using any of those registers. This is done with `save_context`.
+
+### ARM64 Context Switches
+
+To implement `yield()`, we want to mimic everything the hardware does for us during an interrupt.
+
+The `yield_entry` should:
+1. Mask IRQs
+2. Store the link register in `ELR_ELX`[^store-lr]
+3. Store `PSTATE` in `SPSR_ELX`[^store-pstate]
+4. Make room for the context on the stack
+5. Store `fp` and `lr` because `bl` will clobber `lr`
+6. Save everything else with `save_context`
+7. Move the return value from `save_context`, which is a pointer to the saved context, to `sp`
+8. `bl` to `handle_yield`
+
+The `handle_yield` function should then:
+1. Record where the context is in the process descriptor
+2. Change the process's state
+3. Decide which process to run next by calling the scheduler
+4. Resume that process by restoring its context[^resume-process]
+
+[^store-lr]: `eret` will restore `pc` with `ELR_ELX`. Thus, we should store the link register, which contains the return address of the callee of yield, in `ELR_ELX`.
+
+[^store-pstate]: Because we know what the processor state a process should resume it, it can just set it to a default `#SPSR_PROC`. Also, we can use `x9` as a scratch register because under ARM64 calling convention, `x9` to `x15` are temporary registers that should be saved by the caller during a function call.
+
+[^resume-process]: Note that `handle_yield` never returns, since it switches to running the next process. However, its stack frame is initialized on the yielding process's stack frame, after the saved context. This is okay because when the yielding process is scheduled again, it will pop the `saved_context`, resume at the original top of the stack, and clobber the old stack frame from `handle_yield`. 
+
+```assembly
+yield_entry:
+     msr DAIFSET, #2
+     msr ELR_EL1, x30 
+     mov x9, #SPSR_PROC
+     msr SPSR_EL1, x9
+     sub sp, sp, 272
+     stp fp, lr, [sp]
+     bl save_context
+     mov x0, sp
+     bl handle_yield
+     b . // unreachable
+```
+
+The `save_context` code is shared by both cooperative and preemptive concurrency. It assumes that the caller has already:
+- Subtracted from `sp`, making room for context
+- Saved `fp` and `lr`
+- Set `ELR_EL1` and `SPSR_EL1`
+
+```
+save_context:
+     // Store registers x0-x28 inside of this space
+     stp x0, x1, [sp, #16]
+     stp x2, x3, [sp, #32]
+     stp x4, x5, [sp, #48]
+     stp x6, x7, [sp, #64]
+     stp x8, x9, [sp, #80]
+     stp x10, x11, [sp, #96]
+     stp x12, x13, [sp, #112]
+     stp x14, x15, [sp, #128]
+     stp x16, x17, [sp, #144]
+     stp x18, x19, [sp, #160]
+     stp x20, x21, [sp, #176]
+     stp x22, x23, [sp, #192]
+     stp x24, x25, [sp, #208]
+     stp x26, x27, [sp, #224]
+
+     mrs x0, SP_EL0
+     mrs x1, ELR_EL1
+     mrs x2, SPSR_EL1
+
+     stp x28, x0, [sp, #240]
+     stp x1, x2, [sp, #256]
+     ret
+```
 
 ### Raspberry Pi Display Hardware
 
