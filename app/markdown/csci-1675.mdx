@@ -1,8 +1,8 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Performance • Measuring Performance • I/O"
+summary: "Measuring Performance • Performance Engineering • Network I/O"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-04"
+updatedAt: "2026-10-06"
 tags:
   - "notes"
 ---
@@ -197,6 +197,161 @@ Consider sequential reads of a `HashMap<Arc<Vec<u8>>>`:
 
 `BTreeMap` supports very efficient range lookups. It achieves this by laying out the memory of the values sequentially.
 
-### The C10K Problem
+## Network I/O
 
-The C10K problem is where the synchronization overhead of threads starts dominating the application's performance.
+### NICs
+
+Network interface controllers (NICs) manage incoming and outgoing packets through ring buffers. Each slot in the ring buffer contains the length and physical address of another buffer (where packets can be stored). The NIC also has device registers to indicate to the CPU which portions of the ring buffer is available for reading and writing.
+
+When the NIC receives a packet, the packet is stored in the next available buffer. The CPU is notified of this event with device interrupts. 
+
+The OS also fills the buffers with data to be sent, and then notifies the NIC to transmit the packet using device registers.
+
+![Packet processing](/csci-1675/packet-processing.png)
+
+### NIC Optimizations
+
+Many NICs can automatically segment large packets with their own IP/TCP header. This is called TCP segmentation offload.
+
+![TCP segmentation offload](/csci-1675/tcp-segmentation-offload.png)
+
+At high packet rates, **interrupt processing** can be expensive and can lead to a "receive livelock," or an inability to perform useful work above some load. To avoid this issue, some NICs have implemented polling device drivers and hardware interrupt mitigation. Some NICs also support multiple ring buffers, which helps spread the load on multiple CPU cores.
+
+
+**References**: [netmap: a novel framework for fast packet I/O](https://www.usenix.org/system/files/conference/atc12/atc12-final186.pdf)
+
+
+### Introduction to the C10K Problem
+
+The C10K problem is the problem of scaling to tens of thousands of clients. 
+
+If there is one thread per connection, the scheduling overhead of threads starts dominating the application's performance.
+
+First, consider what the server is doing in each connection:
+
+```rs
+loop {
+    // send request
+    write()
+    // wait for response
+    read()
+    // handle either Ok(n) or Err(e)
+}
+```
+
+`write` and the `read` are blocking operations on the socket transmit and receive buffers. When a blocking syscall ocurrs, the operating system parks the thread and schedules another thread on the CPU. 
+
+To avoid the context switch, we can instead make `read` and `write` non-blocking. Instead of just erroring on network errors, the `read` and `write` would also return `EWOULDBLOCK` if the operation would need to block.
+
+Now we can iterate through the connections in a loop, trying to do the `read` and `write` operations. Note that we need to save a buffer for partial reads and writes.
+
+```rs
+enum State {
+    Read { buf: [u8], n: usize }
+    Write { buf: [u8], n: usize }
+}
+
+let conns: Vec<(Conn, State)> = ...
+loop {
+    for (conn, state) in &mut conns {
+        match state {
+            Read { buf, n } => {
+                let k = conn.try_read(&mut buf[*n..])
+                *n += k
+                // if full message is in, flip to writing the response
+                *state = Write { buf: ... , n: 0 }
+            }
+            Write { buf, n } => {
+                let k = conn.try_write(&buf[*n..])
+                *n += k
+                // if response fully sent, go back to reading
+                *state = Read { buf: [0u8; BUF_SIZE], n: 0 }
+
+            }
+        } 
+    }
+}
+```
+
+This scheme is also a bit slow because the state of a connection only changes after iterating through all other connections. The solution to this is to have the operating system notify the service whenever there is a change to the receive and transmit socket buffers.
+
+The `poll` system call watches multiple file descriptors (fds) to see if you can read or write to them. It returns the number of fds that are active. The successor to `poll` is `epoll`. Unlike `poll`, `epoll_wait` returns a list of ready fds. 
+
+Tokio is a thin wrapper around asynchronous I/O APIs. It calls `epoll` on Linux, `kqueue` on BSD or macOS, and IOCP on Windows. 
+
+### Netmap
+
+`netmap` is a framework to reduce the cost of moving traffic between the hardware and the network stack. 
+
+There are three main packet processing costs:
+1. Per-packet dynamic memory allocations
+2. System call overheads
+3. Memory copies
+
+`netmap` solves these problems by preallocating resources, amortizing system call overheads through batching, and eliminating memory copies by sharing buffers and metadata between kernel and userspace.
+
+In the framework, the NIC is disconnected from the host protocol stack. Instead netmap creates *netmap rings*, which are replicas of the ring buffer implemented by the NIC. These *netmap* rings allow the application to have shared packet buffers with the NIC. 
+
+To avoid ownership issues, the *netmap ring* is owned by the userspace program, except during the execution of a system call, when it is updated by kernel code running in the context of the user process. The packet buffers that can be read from or written into are owned by the userspace program, while the rest are owned by the NIC. The boundary is updated during system calls.
+
+`netmap` still uses `select()` and `poll()` for synchronization.
+
+Some strengths of netmaps over other frameworks are that (1) it does not depend on specific hardware, (2) has been integrated in FreeBSD and Linux, and (3) supports unmodified libpcap clients (through a compatibility library).
+
+**References**: [netmap: a novel framework for fast packet I/O](https://www.usenix.org/system/files/conference/atc12/atc12-final186.pdf)
+
+### Related Work
+
+Here are some other work to improve packet processing speeds:
+- Berkeley Packet Filter (BPF) gives the program direct access to raw packet data. It can tap into the datapath of the device driver and dispatch a copy of each packet to a file descriptor, from which a userspace process can read or write. 
+- Packet filter hooks like Netfilter intercept traffic from/to the driver and pass it to processing modules without additional data copies.
+- Click supports constructing packet-processing chains (through modules) that run directly within the kernel.
+- Userspace networking libraries like DPDK allows running the full networking stack in userspace. This requires custom device drivers.
+- Some hardware has been designed specifically to support high-speed packet handling with special features (such as filtering or forwarding). This has often been done with FPGAs or programmable NICs.
+
+### Approaches to the C10K Problem
+
+| Approach                                                      | Mechanism                                   | Tradeoffs                                                |
+| ------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
+| One thread with nonblocking I/O and level-triggered readiness | `select`, `poll`, `/dev/poll`, `kqueue`     | Need to scan thousands of mostly-idle fds                |
+| One thread with nonblocking I/O and edge-triggered readiness  | `epoll`, `kqueue`                           | Avoids rescanning                                        |
+| One thread with asynchronous I/O | `aio` | Avoids rescanning |                                              
+| OS threads (1:1) or userspace threads (M:N) | Costs memory per thread; M:N has higher perf but complex |
+
+Approach 1 is the solution we discussed above. The kernel tells us whether a file descriptor (fd) is ready.[^fd-ready] 
+
+[^fd-ready]: Note that this is merely a hint; the fd may not be ready anymore when you try to read from it. This is why it's important to use nonblocking mode when using a readiness notification. 
+
+In approach 2, when the descriptor transitions from *not ready* to *ready*, the kernel notifies us.
+
+In approach 3, Asynchronous I/O (AIO) is provided by the `aio` interface, which associates a signal and value with each I/O operation. Signals and their values are queued and delivered to the user process. AIO is normally used with a edge-triggered completion notification, so that a signal is queued when the operation is done.
+
+Approach 3 has the disadvantage of using a whole stack frame for each client, which costs memory. Many operating systems also have trouble handling more than a few hundred threads. You can work around this by minimizing the size of the stack. When implementing a threading library, one can either put all the threading support in the kernel (1:1 model) or move a fair bit of it into userspace (M:N). While M:N was thought to be higher performance, it's very complex and hard to get right.
+
+Other approaches discussed below including build the server code into the kernel (eBPF) or bringing the TCP stack into userspace, via `netmap`.
+
+### Vectored I/O
+
+![Vectored I/O](/csci-1675/vectored-io.png)
+
+### Kernel Bypass
+
+![Kernel bypass](/csci-1675/kernel-bypass.png)
+
+Kernel bypass like DPDK
+
+1. DPDK: move OS to app
+2. RDMA: move TCP to NIC
+3. Move app to OS
+
+ ==RDMA== allows the NIC to make remote memory reads and writes without CPU involvement on either side. One problem we have is: how do we guarantee reliable delivery? We can either try to put the TCP stack on the NIC (IWARP), or we can just make a reliable network (RoCE). RoCE avoids congestion loss with PAUSE and RESUME frames, and avoids corruption loss with NACKs. 
+
+ RDMA is widely used in databases. See: [CSCI 2690 Notes](/csci-2690#remote-direct-memory-access).
+
+A "smart NIC" is a NIC with a CPU in it.
+
+### io_uring
+
+What are the benefits of io_uring?
+- Batching syscalls
+- Concurrency
