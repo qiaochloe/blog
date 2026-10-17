@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Texture Mapping"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-13"
+updatedAt: "2026-10-17"
 tags:
   - "notes"
 ---
@@ -355,13 +355,13 @@ The parameters of the view volume are:
 - Aspect ratio
 - View angle
 
-A view angle determines the amount of perspective distortion in the picture. It is equivalent to a photographer choosing a specific type of lens (e.g. wide-angle or telephoto lens). In a frustrum, there is both a height angle and a width angle.
+A view angle[^view-angle] determines the amount of perspective distortion in the picture. It is equivalent to a photographer choosing a specific type of lens (e.g. wide-angle or telephoto lens). In a frustrum, there is both a height angle and a width angle.
 
-![View angle](/csci-1230/view-angle.png)
+[^view-angle]: ![View angle](/csci-1230/view-angle.png)
 
 ### Camera Space
 
-The position, look vector, and up vector are enough to define the camera coordinate system. The equivalent of $x$, $y$, and $z$ world coordinate axes in camera space are unit vectors $u$, $v$, and $w$.
+The position, look vector, and up vector are enough to define the camera coordinate system.[^camera-vectors] The equivalent of $x$, $y$, and $z$ world coordinate axes in camera space are unit vectors $u$, $v$, and $w$.
 - $w$ is in the opposite direction of the look vector
 - $v$ is the component of the up vector that is perpendicular to the look vector
 - $u$ is the vector perpendicular to both $w$ and $v$
@@ -372,14 +372,14 @@ v = \frac{up - (up \cdot w)w}{\|up - (up \cdot w) w\|} \qquad
 u = v \times w
 $$
 
-![Camera vector and axes](/csci-1230/camera-vectors-and-axes.png)
+[^camera-vectors]: ![Camera vector and axes](/csci-1230/camera-vectors-and-axes.png)
 
-Having a camera coordinate system allows us to change the orientation of the camera:
+Having a camera coordinate system allows us to change the orientation[^ryp] of the camera:
 - Roll: rotate camera around look
 - Yaw: rotate camera around $v$
 - Pitch: rotate camera around $u$
 
-![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
+[^ryp]: ![Roll, yaw, and pitch](/csci-1230/roll-yaw-pitch.png)
 
 ### View Matrix
 
@@ -823,3 +823,51 @@ C(t) = tA + (1 - t)B
 $$
 
 $t$ and $1 - t$ are the barycentric coordinates of the line segment. This technique can be generalized for triangles.
+
+## Sampling, Reconstruction, and Antialiasing
+
+Digital image processing is the processing of images through algorithms in order to modify them or extract useful information from them. Their applications include noise removal, feature extraction, image compression, and image enhancement.
+
+<Extra title="Signal Processing">
+
+Digital image processing is really just a form of **signal processing**. A digital image can be viewed as a discrete 2D signal which maps a 2D coordinate to a pixel value.
+
+In this light, there are two ways to represent images. In the **spatial domain**, the function $f(x, y)$ represents the value at each coordinate $(x, y)$. 
+
+We can use the Fourier transform to transform $f$ into $F$, the image's **frequency domain** representation. $F(u, v)$ describes the amplitude and phase of each 2D sinusoid needed to reconstruct the image.
+
+</Extra>
+
+### Convolution
+
+Discrete 2D convolution takes in an image and kernel[^kernel], and produces an image.
+
+[^kernel]: A kernel is simply a 2D matrix of values. The type definition of image and kernel is the same.
+
+To do convolution:
+1. Flip the kernel[^flip][^correlation]
+2. Allocate space for an output image
+3. For each $(i, j)$ on the output image:
+    a. Do element-wise multiplication between the rotated kernel and the region of the image centered on $(i, j)$
+    b. Then compute the sum of the elements of the resulting matrix
+    c. Finally, set the value of the output image at $(i, j)$
+
+[^flip]: The flipped kernel should be rotated 180 degrees, like this:
+
+    ![Flipped kernel](/csci-1230/flipped-kernel.png)
+
+    Instead of actually flipping our kernel, we can also cleverly index into the kernel "backwards" in a way that effectively flips it.
+
+[^correlation]: If we didn't flip the kernel, we would technically be implementing correlation.
+
+For some intuition, consider what a few simple kernels do:
+- The **identity kernel** has a single `1` at the center and `0`s elsewhere.
+- The **right shift kernel** has a `1` one position to the right of center.
+- The **left shift kernel** has a `1` one position to the left of center.
+$$
+\begin{bmatrix} 0 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+\qquad
+\begin{bmatrix} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{bmatrix}
+\qquad
+\begin{bmatrix} 0 & 0 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+$$
