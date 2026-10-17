@@ -1,8 +1,8 @@
 ---
 title: "Databases Notes"
-summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods"
+summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods • Sorting"
 publishedAt: "2026-09-13"
-updatedAt: "2026-10-11"
+updatedAt: "2026-10-17"
 tags:
   - "notes"
 ---
@@ -201,13 +201,11 @@ There are several ways to manage pages in files on disk, which determine how the
 - Tree file organization
 - Hashing file organization
 
-### Heap File Organization
+### File Organization
 
 A ==heap file== is a collection of pages with tuples that are stored in random order. A ==page directory== tracks the physical location of pages for a database file, and also records metadata about available space.
 
-### Hashing File Organization
-
-Unlike a heap file organization, a hashing file organization groups tuples by a hash of some attribute, so the underlying data structure is a hash table rather than a directory.
+Unlike a heap file organization, a ==hashing file== organization groups tuples by a hash of some attribute, so the underlying data structure is a hash table rather than a directory.
 
 A hash table is an array of values. For a given `key` and number of slots `n`, we can compute `hash(key) % n` to get an offset into the array. For a database, we want a hash function that is fast and has a low collision rate. We do not want or need cryptographic properties, like one-way or random oracle. Examples of good database hash functions include CRC-64, MurmurHash, Google CityHash, Facebook XXHash, and GoogleFarmHash.
 
@@ -219,7 +217,21 @@ The file organizations above describe how the base table itself is stored. A tab
 
 It is the job of the DBMS to:
 - Ensure that the table and index are synchronized
-- Figure out the best index to use during query execution 
+- Figure out the best index to use during query execution[^which-index]
+
+[^which-index]: For example, consider the query below:
+
+    ```
+    SELECT * FROM students
+    WHERE age < 30
+    AND dept = 'cs'
+    ```
+
+    If there is an index on `age` and an index on `dept`, one way to run the query is to use the indices to fetch records where `age < 30` and records where `dept = 'cs'`, and then take their intersection.
+
+    We could also instead only use the `age` index and manually filter the `dept` condition. Or vice-versa. Or use neither indices.
+
+    Set intersection can be done with bitmaps, hash tables, or Bloom filters.
 
 ### B+ Trees
 
@@ -253,3 +265,30 @@ To perform insertion, find the leaf node and insert the entry in sorted order. I
 To split an inner node, redistribute entries evenly and push up the middle key. This can propagate up to the root.
 
 To perform deletion, find the leaf node and remove the entry. If the leaf node is no longer at least half-full, try to redistribute by borrowing from adjacent siblings. If redistribution fails, merge the leaf node with a sibling. If a merge occurred, we must delete the entry from the parent of the leaf node.
+
+## Sorting
+
+We may want tuples to be sorted in a particular way to implement:
+- `ORDER BY`
+- `DISTINCT`
+- `GROUP BY`
+- Merge joins
+- Bulk loading sorted tuples into a B+ tree index is faster
+
+If the data fits in memory, then we can use a standard in-place sorting algorithm. If the data does not fit in memory, then we need to do some kind of ==external sorting==. 
+
+One algorithm for external sorting is divide-and-conquer:
+1. Sort chunks of data that fit in memory into sorted chunks (runs)
+2. Combine runs into longer runs
+
+Suppose we have $N$ pages of data to sort, but only $B$ buffer pages to work with at any time.
+1. In the first pass, we repeatedly load $B$ pages, sort them in memory, and write them back out as a sorted run of size $B$. After this pass, we have $\lceil N / B \rceil$  sorted runs, each of size $B$. 
+
+2. In subsequent passes, we need to merge sorted runs together. To merge $k$ runs simultaneously, we need $k$ input buffers plus $1$ output buffer to write the merged result. Because we only have $B$ buffers total, we can merge at most $B - 1$ runs at a time. 
+
+Each merge pass reduces the number of runs by a factor of $B - 1$, since every $B - 1$ run gets merged into $1$. Thus, the total number of passes is given by 
+$$
+1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil
+$$
+
+At each pass, we read and write each page once, so the total number of I/O operations is $2N \cdot (\text{\# runs})$.
