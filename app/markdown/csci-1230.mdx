@@ -1,6 +1,6 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Accelerated Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
+summary: "Raster Graphics • Vector Graphics • Transformation • Views • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
 updatedAt: "2026-10-17"
 tags:
@@ -96,9 +96,11 @@ In each of the steps of this pipeline, there are many different coordinate syste
 3. ==Camera space== is the coordinate system defined by the camera through which the scene is viewed 
 
 <Extra title="Why use multiple coordinate systems?">
+
 We want to keep different layers modular, so we can modify each independently. For example, we may want to scale or rotate individual objects. If all objects are defined in terms of world space, then there may not be a linear matrix transformation to do this.
 
 Also, at higher levels of abstraction, we don't want to think about specific device coordinates to draw to. We may have to later consider the resolution of the device (normalized device coordinates) and the view plane of the OS window that the application runs in (screen space).
+
 </Extra>
 
 ## Transformations
@@ -711,15 +713,74 @@ where:
 
 [^1]: Light changing speeds as it enters a medium
 
-## Accelerated Data Structures
+## Spatial Data Structures
 
 The native ray tracing algorithm has a time complexity of O(MN), where M is the number of pixels and N is the number of objects. To reduce the time complexity, let's look at the O(N) part.
 
-### Bounding Volumes
+### Bounding Volume Hierarchies
 
-A bounding volume is a data structure that encloses complex objects in simpler ones.If the bounding volume isn't hit, then neither is the object inside it.
+A **bounding volume** is a data structure that encloses complex objects in simpler ones. If the bounding volume isn't hit, then neither is the object inside it.
 
-An axis aligned bounding box (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
+An **axis aligned bounding box** (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
+
+A ==bounding volume hierarchy== (BVH) arranges the bounding volumes in a hierarchical structure. There are two main approaches[^bvh] to building BVHs:
+1. Find nearby objects, group them under one bounding volume. Repeat until the entire scene is under one bounding volume.
+2. Start with all objects in the scene, and split them into subsets using some kind of heuristic.
+
+[^bvh]: The former produces very tight bounds, but it is slow to construct because it is hard to "find nearby objects". The latter is easy to implement and efficient to run, but the trees it produces are generally not as good.
+
+![BVH](/csci-1230/bvh.png)
+
+### Spatial Subdivisions
+
+We can also break up space into uniform cells, and trace the ray through each cell. Compared to BVH, it takes more traversal time[^traversal-time] but less construction time. 
+
+[^traversal-time]: BVH is O(log n). Uniform cells is O(n) in the worst case, since all the objects could be lined up.
+
+We can also construct nonuniform, hierarchical cells called ==octrees==. In an octant, each node is a AABB.
+
+To construct an octree:
+1. Find the bounding box of the entire scene
+2. At each iteraction, partition the current node into 8 octants 
+3. Split the primitives at the current node into the octants. If a primitive spans both octants, put it in both.
+4. Recurse on the octants.
+5. Terminate on some maximum depth or maximum objects per octant
+
+To traverse an octree:
+1. Begin at the root node
+2. If the node is a leaf node, test interaction with all of its primitives[^prim-opt]
+3. Otherwise iterate through the node's children[^child-opt] and compute intersection between ray and each child's bounding box. If it intersects, recurse on the child again.
+
+[^prim-opt]: If an object is in two nodes, it may be helpful to cache the result of calculating the intersection on this object. This is known as mailboxing.
+
+[^child-opt]: This can be optimized by picking the child that will be hit by the child first ("frontside child"). If there is an intersection in the frontside child that is earlier than the intersection to the backside child's bounding box, there is no need to traverse the backside child.
+
+![Octrees](/csci-1230/octrees.png)
+
+A ==kd-tree== is a k-dimensional, axis-aligned binary tree. The benefit of a kd-tree over an octree is that we can be smarter about determining the size of nodes in the tree.[^con-kd-tree]
+
+[^con-kd-tree]: The cons of a kd-tree is that insertions and deletions are costly due to having to rebalance the tree...
+
+The main challenge is to decide on a split axis and split plane along the axis. Ideally, we'd like to balance the cost of entering a node (# of intersection tests) with the probability of entering the node. 
+
+This is an NP-complete problem, but a nice heuristic is the surface area heuristic:
+1. For each split position,[^split-pos] calculate the cost `cost = weight_l * cost_l + weight_r * cost_r`[^cost]
+2. Use the split plane that minimizes this cost
+
+[^split-pos]: We should only consider splits at the edges of primitives and edges of the bounding space.
+
+[^cost]: If we assume that rays will be distributed evenly throughout the space, we can let `weight_c` be the ratio of the child's surface area to the parent's surface area. For simplicitly, we can also let `cost_child` be the number of primitives contained in the child.
+
+The naive cost of constructing the kd-tree is $O(n^2 \log n)$ because for each of $O(n)$ split planes, we need to check $O(n)$ primitives to determine which side they are on. But if we sort the primitives along the split axis, we can achieve more of a $O(n \log^2 n)$.
+
+### Summary
+
+| Structure | Build time | Traversal time | Good for dynamic scenes | Good for nonuniform density |
+|-----------|------------|-----------------|--------------------------|-------------------------------|
+| BVH | Slow, $O(n \log n)$ | $O(\log n)$ | Good, it is a trie structure | Good, can adapt to clusters |
+| Uniform grid | Fast, $O(n)$ | $O(n)$ but typically faster | Great, cheap to rebuild since cells are fixed | Not good, empty or overcrowded cells waste work |
+| Octree | Moderate, $O(n \log n)$ | $O(\log n)$ | Less good, objects can move between octants | Not good, can't adapt to clusters |
+| Kd-tree | Slow, $O(n^2 \log n)$ naive, $O(n \log^2 n)$ with sorting | $O(\log n)$ | Terrible, need to rebalance trees | Good, split planes can balance primitives |
 
 ## Texture Mapping
 
