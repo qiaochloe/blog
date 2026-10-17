@@ -288,8 +288,19 @@ pre code.hljs {
   @apply my-1;
 }
 .prose .footnotes .footnote-item p {
-  @apply my-0 inline;
+  @apply my-0;
   display: inline;
+}
+/* Only the first paragraph flows inline; later paragraphs (and any code
+   block) break onto their own line within the flex row. */
+.prose .footnotes .footnote-item p:not(:first-child),
+.prose .footnotes .footnote-item pre {
+  display: block;
+  flex-basis: 100%;
+  margin-top: 0.4em;
+}
+.prose .footnotes .footnote-item pre:first-child {
+  margin-top: 0;
 }
 .prose .footnotes .footnote-item .footnote-back {
   @apply ml-0.5 text-neutral-400 no-underline hover:underline;
@@ -310,16 +321,35 @@ pre code.hljs {
   @apply mr-1 text-neutral-400 font-medium align-super text-xs;
 }
 .sidenote p {
-  @apply my-0 inline;
+  @apply my-0;
   display: inline;
+}
+/* Only the first paragraph flows inline next to the number; later
+   paragraphs break onto their own line. */
+.sidenote p:not(:first-child) {
+  display: block;
+  margin-top: 0.4em;
 }
 /* Sidenotes render outside .prose/.prose-notes (a sibling grid column), so
    they don't inherit the usual inline-code pill styling; repeat it here. */
-.sidenote code {
+.sidenote :not(pre) > code {
   @apply px-1.5 py-0.5 rounded-md bg-neutral-100 font-mono text-xs;
+}
+.sidenote pre {
+  @apply text-xs bg-neutral-100 px-3 py-2 overflow-x-auto my-2 rounded-sm font-mono leading-normal block;
+  border: initial;
+  white-space: pre;
 }
 .sidenote a {
   @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
+}
+.sidenote mark {
+  @apply font-normal text-inherit;
+  background-color: var(--color-tuscan-sun-100);
+  padding: 0.05em 0.2em;
+  border-radius: 0.25em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* Each enhancement hides the bottom list only via its own class, so
@@ -341,18 +371,26 @@ pre code.hljs {
    background (it would otherwise blend in but keep its padding). Needs the
    extra `.prose`/`.prose-notes` prefix to out-specificity the
    `:not(pre) > code` rules above, which otherwise win regardless of order. */
-.prose .footnote-inline-box code,
-.prose-notes .footnote-inline-box code,
+.prose .footnote-inline-box :not(pre) > code,
+.prose-notes .footnote-inline-box :not(pre) > code,
 .prose .extra-content code,
 .prose-notes .extra-content code {
+  @apply bg-white;
+}
+.prose .footnote-inline-box pre,
+.prose-notes .footnote-inline-box pre {
   @apply bg-white;
 }
 .footnote-inline-box .sidenote-number {
   @apply mr-1 text-neutral-400 font-medium align-super text-xs;
 }
 .footnote-inline-box p {
-  @apply my-0 inline;
+  @apply my-0;
   display: inline;
+}
+.footnote-inline-box p:not(:first-child) {
+  display: block;
+  margin-top: 0.4em;
 }
 
 /* Prose notes */
@@ -474,8 +512,17 @@ pre code.hljs {
   @apply text-sm text-neutral-600 border-t border-neutral-200 pt-4 mt-8;
 }
 .prose-notes .footnotes .footnote-item p {
-  @apply my-0 inline;
+  @apply my-0;
   display: inline;
+}
+.prose-notes .footnotes .footnote-item p:not(:first-child),
+.prose-notes .footnotes .footnote-item pre {
+  display: block;
+  flex-basis: 100%;
+  margin-top: 0.4em;
+}
+.prose-notes .footnotes .footnote-item pre:first-child {
+  margin-top: 0;
 }
 .prose-notes .footnotes .footnote-item .footnote-back {
   display: inline;

@@ -72,8 +72,11 @@ function extractDefinitions(
       i++;
       while (i < lines.length) {
         const next = lines[i];
-        if (next.startsWith("    ") || next.startsWith("\t")) {
-          body += "\n" + next;
+        if (next.startsWith("    ")) {
+          body += "\n" + next.slice(4);
+          i++;
+        } else if (next.startsWith("\t")) {
+          body += "\n" + next.slice(1);
           i++;
         } else if (next.trim() === "" && i + 1 < lines.length && (lines[i + 1].startsWith("    ") || lines[i + 1].startsWith("\t"))) {
           body += "\n" + next;
@@ -91,6 +94,29 @@ function extractDefinitions(
   }
 
   return { content: result.join("\n"), definitions };
+}
+
+/**
+ * Route local footnote images through the Next.js image optimizer so they go
+ * through the same sharp re-encode (and resulting color-profile normalization)
+ * as `next/image` elsewhere in the post. Without this, a sidenote image loads
+ * the raw file directly and can render with visibly different color than the
+ * same image shown via next/image in the main text.
+ */
+function optimizeFootnoteImages(html: string): string {
+  return html.replace(
+    /<img ([^>]*?)src="(\/[^"]+)"([^>]*)>/g,
+    (_, before, src, after) =>
+      `<img ${before}src="/_next/image?url=${encodeURIComponent(src)}&w=256&q=75"${after}>`,
+  );
+}
+
+/** Collapse newlines to spaces, except inside <pre>...</pre> where they matter for code formatting. */
+function flattenOutsidePre(html: string): string {
+  return html
+    .split(/(<pre[\s\S]*?<\/pre>)/)
+    .map((chunk, i) => (i % 2 === 0 ? chunk.replace(/\n/g, " ") : chunk))
+    .join("");
 }
 
 /** Replace [^id] with superscript link; refOrder gives id -> display number. */
@@ -115,13 +141,14 @@ export function preprocessFootnotes(content: string): string {
   const { content: contentWithoutDefs, definitions } = extractDefinitions(content);
   let out = replaceRefs(contentWithoutDefs, refOrder);
 
-  const md = new MarkdownIt();
+  // xhtmlOut self-closes void tags like <img>, which the MDX/JSX parser requires.
+  const md = new MarkdownIt({ html: true, xhtmlOut: true });
   const cornerDownLeftSvg =
     '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 4v7a4 4 0 0 1-4 4H4"/><path d="m9 10-5 5 5 5"/></svg>';
   const footnoteItems = refOrder.map((id, idx) => {
     const num = idx + 1;
     const body = definitions.get(id) ?? "(missing definition)";
-    const html = md.render(body).replace(/\n/g, " ");
+    const html = optimizeFootnoteImages(flattenOutsidePre(md.render(body)));
     return `<li id="fn-${num}" className="footnote-item"><div className="flex flex-wrap items-baseline">${html}<a href="#ref-${num}" className="footnote-back shrink-0" aria-label="Back to reference">${cornerDownLeftSvg}</a></div></li>`;
   });
 
