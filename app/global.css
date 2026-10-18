@@ -317,6 +317,21 @@ pre code.hljs {
   width: 100%;
   max-width: 16rem;
 }
+@media (min-width: 1280px) {
+  .sidenote {
+    max-width: 20rem;
+  }
+}
+@media (min-width: 1536px) {
+  .sidenote {
+    max-width: 24rem;
+  }
+}
+.sidenote img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 .sidenote .sidenote-number {
   @apply mr-1 text-neutral-400 font-medium align-super text-xs;
 }

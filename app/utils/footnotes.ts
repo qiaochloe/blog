@@ -107,7 +107,7 @@ function optimizeFootnoteImages(html: string): string {
   return html.replace(
     /<img ([^>]*?)src="(\/[^"]+)"([^>]*)>/g,
     (_, before, src, after) =>
-      `<img ${before}src="/_next/image?url=${encodeURIComponent(src)}&w=256&q=75"${after}>`,
+      `<img ${before}src="/_next/image?url=${encodeURIComponent(src)}&w=640&q=75"${after}>`,
   );
 }
 
