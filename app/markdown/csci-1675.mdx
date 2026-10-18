@@ -2,7 +2,7 @@
 title: High-Performance Network Systems Notes
 summary: "Measuring Performance • Performance Engineering • Network I/O"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-06"
+updatedAt: "2026-10-18"
 tags:
   - "notes"
 ---
@@ -217,11 +217,7 @@ Many NICs can automatically segment large packets with their own IP/TCP header. 
 
 At high packet rates, **interrupt processing** can be expensive and can lead to a "receive livelock," or an inability to perform useful work above some load. To avoid this issue, some NICs have implemented polling device drivers and hardware interrupt mitigation. Some NICs also support multiple ring buffers, which helps spread the load on multiple CPU cores.
 
-
-**References**: [netmap: a novel framework for fast packet I/O](https://www.usenix.org/system/files/conference/atc12/atc12-final186.pdf)
-
-
-### Introduction to the C10K Problem
+### The C10K Problem
 
 The C10K problem is the problem of scaling to tens of thousands of clients. 
 
@@ -275,9 +271,26 @@ loop {
 
 This scheme is also a bit slow because the state of a connection only changes after iterating through all other connections. The solution to this is to have the operating system notify the service whenever there is a change to the receive and transmit socket buffers.
 
-The `poll` system call watches multiple file descriptors (fds) to see if you can read or write to them. It returns the number of fds that are active. The successor to `poll` is `epoll`. Unlike `poll`, `epoll_wait` returns a list of ready fds. 
+The `poll` system call watches multiple file descriptors (fds) to see if you can read or write to them. It returns the number of fds that are active. The successor to `poll` is `epoll`. Unlike `poll`, `epoll_wait` returns a list of ready fds. The kernel tells us whether a file descriptor (fd) is ready.[^fd-ready]
+
+[^fd-ready]: Note that this is merely a hint; the fd may not be ready anymore when you try to read from it. This is why it's important to use nonblocking mode when using a readiness notification. 
 
 Tokio is a thin wrapper around asynchronous I/O APIs. It calls `epoll` on Linux, `kqueue` on BSD or macOS, and IOCP on Windows. 
+
+More broadly, there are four approaches to the C10K problem:
+
+| Approach                                                      | Mechanism                                   | Tradeoffs                                                |
+| ------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
+| One thread with nonblocking I/O and level-triggered readiness | `select`, `poll`, `/dev/poll`, `kqueue`     | Need to scan thousands of mostly-idle fds                |
+| One thread with nonblocking I/O and edge-triggered readiness  | `epoll`, `kqueue`                           | Avoids rescanning                                        |
+| One thread with asynchronous I/O | `aio` | Avoids rescanning |
+| Multiple threads | OS threads (1:1) or userspace threads (M:N) | Costs memory per thread; M:N has higher perf but complex |
+
+The first two approaches are the `poll`/`epoll` solution discussed above. Asynchronous I/O (AIO) is provided by the `aio` interface, which associates a signal and value with each I/O operation. Signals and their values are queued and delivered to the user process. AIO is normally used with a edge-triggered completion notification, so that a signal is queued when the operation is done. However, it has the disadvantage of using a whole stack frame for each client, which costs memory.
+
+Many operating systems also have trouble handling more than a few hundred threads. You can work around this by minimizing the size of the stack. When implementing a threading library, one can either put all the threading support in the kernel (1:1 model) or move a fair bit of it into userspace (M:N). While M:N was thought to be higher performance, it's very complex and hard to get right.
+
+Other approaches discussed below including build the server code into the kernel (eBPF) or bringing the TCP stack into userspace, via `netmap`.
 
 ### Netmap
 
@@ -300,58 +313,47 @@ Some strengths of netmaps over other frameworks are that (1) it does not depend 
 
 **References**: [netmap: a novel framework for fast packet I/O](https://www.usenix.org/system/files/conference/atc12/atc12-final186.pdf)
 
-### Related Work
+### Reducing Packet-Processing Overhead
 
-Here are some other work to improve packet processing speeds:
-- Berkeley Packet Filter (BPF) gives the program direct access to raw packet data. It can tap into the datapath of the device driver and dispatch a copy of each packet to a file descriptor, from which a userspace process can read or write. 
-- Packet filter hooks like Netfilter intercept traffic from/to the driver and pass it to processing modules without additional data copies.
-- Click supports constructing packet-processing chains (through modules) that run directly within the kernel.
-- Userspace networking libraries like DPDK allows running the full networking stack in userspace. This requires custom device drivers.
-- Some hardware has been designed specifically to support high-speed packet handling with special features (such as filtering or forwarding). This has often been done with FPGAs or programmable NICs.
-
-### Approaches to the C10K Problem
-
-| Approach                                                      | Mechanism                                   | Tradeoffs                                                |
-| ------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
-| One thread with nonblocking I/O and level-triggered readiness | `select`, `poll`, `/dev/poll`, `kqueue`     | Need to scan thousands of mostly-idle fds                |
-| One thread with nonblocking I/O and edge-triggered readiness  | `epoll`, `kqueue`                           | Avoids rescanning                                        |
-| One thread with asynchronous I/O | `aio` | Avoids rescanning |                                              
-| OS threads (1:1) or userspace threads (M:N) | Costs memory per thread; M:N has higher perf but complex |
-
-Approach 1 is the solution we discussed above. The kernel tells us whether a file descriptor (fd) is ready.[^fd-ready] 
-
-[^fd-ready]: Note that this is merely a hint; the fd may not be ready anymore when you try to read from it. This is why it's important to use nonblocking mode when using a readiness notification. 
-
-In approach 2, when the descriptor transitions from *not ready* to *ready*, the kernel notifies us.
-
-In approach 3, Asynchronous I/O (AIO) is provided by the `aio` interface, which associates a signal and value with each I/O operation. Signals and their values are queued and delivered to the user process. AIO is normally used with a edge-triggered completion notification, so that a signal is queued when the operation is done.
-
-Approach 3 has the disadvantage of using a whole stack frame for each client, which costs memory. Many operating systems also have trouble handling more than a few hundred threads. You can work around this by minimizing the size of the stack. When implementing a threading library, one can either put all the threading support in the kernel (1:1 model) or move a fair bit of it into userspace (M:N). While M:N was thought to be higher performance, it's very complex and hard to get right.
-
-Other approaches discussed below including build the server code into the kernel (eBPF) or bringing the TCP stack into userspace, via `netmap`.
-
-### Vectored I/O
+Besides netmap, there are several other approaches to reducing packet-processing overhead:
+- ==Vectored I/O== batches reads/writes across multiple buffers in a single syscall:
 
 ![Vectored I/O](/csci-1675/vectored-io.png)
 
-### Kernel Bypass
+- Userspace networking libraries like ==DPDK== allow running the full networking stack in userspace. This requires custom device drivers, and moves work from the OS into the application (as opposed to RDMA, which moves TCP onto the NIC).
 
 ![Kernel bypass](/csci-1675/kernel-bypass.png)
 
-Kernel bypass like DPDK
+- ==RDMA==[^rdma] (remote direct memory access) allows the NIC to make remote memory reads and writes without CPU involvement on either side. One problem we have is: how do we guarantee reliable delivery? We can either try to put the TCP stack on the NIC (IWARP), or we can just make a reliable network (RoCE). RoCE avoids congestion loss with PAUSE and RESUME frames, and avoids corruption loss with NACKs. 
 
-1. DPDK: move OS to app
-2. RDMA: move TCP to NIC
-3. Move app to OS
+[^rdma]: RDMA is widely used in databases. See: [CSCI 2690 Notes](/csci-2690#remote-direct-memory-access).
 
- ==RDMA== allows the NIC to make remote memory reads and writes without CPU involvement on either side. One problem we have is: how do we guarantee reliable delivery? We can either try to put the TCP stack on the NIC (IWARP), or we can just make a reliable network (RoCE). RoCE avoids congestion loss with PAUSE and RESUME frames, and avoids corruption loss with NACKs. 
+- ==eBPF== (Extended Berkeley Packet Filter) allows users to write programs[^ebpf-nop] that are triggered on hooks in the kernel.
 
- RDMA is widely used in databases. See: [CSCI 2690 Notes](/csci-2690#remote-direct-memory-access).
+![eBPF](/csci-1675/ebpf.png)
 
-A "smart NIC" is a NIC with a CPU in it.
+    ==XDP== (eXpress Data Path) is a hook that runs eBPF programs directly in the device driver, before the kernel allocates an `sk_buff` or the packet enters the network stack. Because it runs this early, XDP can drop or redirect packets (via an `AF_XDP` socket) with very little overhead. This is earlier than the `TC` (traffic control) qdisc hook, which runs after `sk_buff` allocation and is reached over `AF_RAW` sockets as raw Ethernet frames.
+
+    An **eBPF map** lets userspace (the control plane) share state with an in-kernel eBPF program without reloading the program. For example, the control plane can write "drop packet X" into the map, and the eBPF program attached at the XDP hook reads the map on each packet to decide whether to drop it.
+
+[^ebpf-nop]: eBPF allows users to insert programs into the kernel with a trampoline. To add an eBPF program, it simply overwrites the `nop`s with a jump to the program.
+
+    ![eBPF nop](/csci-1675/ebpf-nop.png)
+
+    Instead of the trampoline, it is also possible to arrange interrupts or recompile the entire kernel with the eBPF program.
+
+- Packet filter hooks like Netfilter intercept traffic from/to the driver and pass it to processing modules without additional data copies.
+
+- Click supports constructing packet-processing chains (through modules) that run directly within the kernel.
+
+- Some hardware has been designed specifically to support high-speed packet handling with special features (such as filtering or forwarding). This has often been done with FPGAs or programmable NICs ("smart NICs," which are NICs with a CPU in them).
 
 ### io_uring
 
-What are the benefits of io_uring?
-- Batching syscalls
-- Concurrency
+One issue we now face is that we have too many interfaces to the operating system for syscalls, vectored I/O, `epoll`, and AIO.
+
+![Too many interfaces](/csci-1675/too-many-interfaces.png)
+
+`io_uring` exposes one interface with a submission queue and a completion queue.
+
+![io_uring](/csci-1675/io_uring.png)
