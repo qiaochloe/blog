@@ -84,7 +84,7 @@ It is also common to store 2D arrays of data in 1D data structures. There are tw
 
 ### Pipeline
 
-To create a 2D vector graphic:
+To create a vector graphic:
 1. Define object geometry
 2. Transform object (translate, rotate, scale)
 3. Define "window" on the world
@@ -190,7 +190,9 @@ Graphics applications typically represent scenes with a DAG which stores:
 - Attributes (color, texture)
 - Transformations
 
-To get the ==cumulative transformation matrix== of an object, simply multiple the transforms along the path from the object node to the root. For example, to transform Object 1 to world space, first apply transformation A then C.
+To get the ==cumulative transformation matrix== of an object, simply multiply the transforms along the path from the object node to the root. For example, to transform Object 1 to world space, first apply transformation A then C. 
+
+Note that the equivalent CTM would be $CA$. Thus, it is fine to traverse down from the root node to the object nodes, keeping a running CTM by multiplying the current CTM with the node's CTM.
 
 ![Scene graph example](/csci-1230/scene-graph-example.png)
 
@@ -219,9 +221,9 @@ A primary ray should take the form $P + td$, where $P$ is the origin of the ray 
 $P$ should be set to the camera's coordinates $(p_x, p_y, p_z)$ in world space. 
 
 We can calculate $d$ in three steps: 
-1. Given a coordinate of a pixel $(i, j)$ on the view plane, convert it into the corresponding 3D point on the view plane in camera space.
-2. Transform this point into world space using the inverse view matrix. Call the result $(u, v, k)$.
-3. Then $d$ is simply $(p_x, p_y, p_z) - (u, v, k)$.
+1. Given a coordinate of a pixel $(i, j)$ on the view plane, convert it into the corresponding 3D point $(u, v, k)$ on the view plane in camera space.
+2. Transform $(u, v, k)$ into world space using the inverse view matrix, creating $(q_x, q_y, q_z)$.
+3. Then $d$ is simply $(p_x, p_y, p_z) - (q_x, q_y, q_z)$.
 
 The first step is given by
 $$
@@ -230,61 +232,175 @@ $$
 
 Each coordinate is first shifted $0.5$ so that it is centered on the pixel. Then it is normalized by the dimensions of the scene plane so that it becomes a one-by-one grid. Then it is shifted by $0.5$ so that the center of the grid is at the origin $(0, 0)$. 
 
-Finally, the $x$ and $y$ coordinates are scaled by the width or height of the view plane, $W_v$ or $H_v$. The height and width of the view plane is given by the equations $2k\tan(\theta/2)$, where $k$ is the distance from the camera to the view plane and $\theta$ is the height or width angle.
+Finally, the $u$ and $v$ coordinates are scaled by the width or height of the view plane, $W_v$ or $H_v$. The height and width of the view plane is given by the equations $2k\tan(\theta/2)$, where $k$ is the distance from the camera to the view plane and $\theta$ is the height or width angle.
 
 ![View plane height or width](/csci-1230/view-plane-height-width.png)
 
-Since the view plane sits at $z = -k$ in camera space, and $k$ is usually set to $1$, this gives us a full 3D point $(x, y, -1)$ in camera space.
+Since the view plane sits at $z = -k$ in camera space, and $k$ is usually set to $1$, this gives us a full 3D point $(u, v, -1)$ in camera space.
 
 The inverse view matrix can be computed by taking the inverse of the view matrix, as described above in the [View Matrix](#view-matrix) section.
 
 ### Ray-Object Intersections
 
-Most production raytracers model shapes using triangles, but this is fairly complicated. 
+Ray-object intersections can easily be calculated with implicit objects.[^triangle-mesh] An ==implicit object== is an object that can be definited by a function $f$, where $f(Q) = 0$ iff $Q$ is a point on the service. 
 
-Ray-object intersections are easier to calculate with implicit objects. An ==implicit object== is an object that can be definited by a function $f$, where $f(Q) = 0$ iff $Q$ is a point on the service. 
+[^triangle-mesh]: Most production raytracers model shapes using triangles, but this is fairly complicated. 
 
-To find where a ray $P + td$, we intersects an object, we just need to solve for the values of $t$ such that $f(P + td) = 0$. There may be multiple values of $t$ that satisfies the equation, but we just care about the smallest, nonnegative value of $t$.
+To find where a ray $P + td$ intersects an object, we just need to solve[^spaces] for the values of $t$[^t-value] such that $f(P + td) = 0$. 
 
-Note that these objects are usually sitting in world space, but the implicit equations are defined in terms of object space. When solving for ray-object intersections, it is much easier to transform the ray into object space rather than transform the equation into world space.
+[^t-value]: There may be multiple values of $t$ that satisfies the equation, but we just care about the smallest, nonnegative value of $t$.
 
-### Implicit Object Equations
+[^spaces]: Note that these objects are usually sitting in world space, but the implicit equations are defined in terms of object space. When solving for ray-object intersections, it is much easier to transform the ray into object space rather than transform the equation into world space.
 
-A 2D circle of radius $R$ at the origin at the origin has the equation:
+#### Cubes
 
-$$
-x^2 + y^2 - R^2 = 0
-$$
+Consider a unit cube of side length $0$ sitting at the origin $(0, 0, 0)$.
 
-An infinite plane with a normal vector $(A, B, C)$ that is distance $D$ away from $(0, 0, 0)$ has the equation:
+To determine whether a ray intersects with this cube, we should check whether it intercepts with any of its six faces:
+1. If the ray is parallel to the face's plane, then there is no intersection
+2. If there exists some point that intersects with one of the infinite planes, then there may be an intersection
+3. If that point also lands within the bounds of the face, then it actually intercepts with the cube
+
+<Extra title="Cube Intersection Calculations">
+
+An infinite plane with a normal vector $(A, B, C)$ that is distance $D$ away from $(0, 0, 0)$ is defined by all points $(x, y, z)$ satisfying:
 
 $$
 Ax + By + Cz - D = 0
 $$
 
-A sphere of radius $R$ at the origin at the origin has the equation:
+A unit cube can be described as six bounded planes whose normals are the unit vectors along each axis, pointing outward:
+
+$$(A, B, C) \in {(\pm1, 0, 0),\ (0, \pm1, 0),\ (0, 0, \pm1)}$$
+
+To check for ray-plane parallelism, we should check whether the normal is perpendicular to the direction vector, i.e. that $N \cdot d = 0$.
+
+To check for ray-plane intersection, we want to find some $t$ such that $p + dt = (x, y, z)$ satisfies the plane equation $Ax + By + Cz = 0.5$. 
+
+By definition, this is equivalent to $N \cdot (p + dt) = 0.5$.
+
+The dot product is distributive, so we can derive:
+$t = (0.5 - N \cdot p)/(N \cdot d)$.
+
+Finally, we need to check that the point falls within $[-0.5, 0.5]$ on all axes.
+
+</Extra>
+
+#### Cylinders
+
+Consider a cylinder of radius $0.5$, spanning $y$ from $[-0.5, 0.5]$. A cylinder can be conceptualized as a circle in the xz plane that is stretched along the y-axis.
+
+To check if a ray intersects with a cylinder, we should check whether it intersects with the side of the cylinder or with either of the two end caps:
+1. For the side, solve a quadratic for $t$, then discard roots where $t < 0$ or where the hit's $y$ falls outside $[-0.5, 0.5]$
+2. For each cap, intersect the ray with the plane $y = 0.5$ or $y = -0.5$, then check that the hit point falls within the cylinder's radius
+
+<Extra title="Cylinder Intersection Calculations">
+
+The side of the cylinder is the set of points satisfying:
+
+$$
+x^2 + z^2 = 0.25, \quad y \in [-0.5, 0.5]
+$$
+
+Substituting the ray $p + td$ for $(x, z)$ and collecting terms by power of $t$ gives a quadratic $at^2 + bt + c = 0$, where:
+- $a = d_x^2 + d_z^2$
+- $b = 2(p_xd_x + p_zd_z)$
+- $c = p_x^2 + p_z^2 - 0.25$
+
+The quadratic formula gives up to two roots for $t$. For each root, we discard it if $t < 0$ or if the resulting $y$ falls outside $[-0.5, 0.5]$, since that means the hit lands above or below the finite cylinder.
+
+The surface normal at a hit point is the gradient of $x^2 + z^2 - 0.25$, which is $(2x, 0, 2z)$. This normalizes to the same direction as $(x, 0, z)$, so we can use the hit point directly, with its $y$ coordinate zeroed out.
+
+For each cap, we find where the ray intersects with the plane $y = y_\text{cap}$, which is given by $p_y + d_yt = y_\text{cap}$, or $t = (y_\text{cap} - p_y)/d_y$.
+
+We then check that the hit point at time $t$ lands within the disk $x^2 + z^2 \leq 0.25$.
+
+The normal is $(0, 1, 0)$ for the top cap at $y = 0.5$, and $(0, -1, 0)$ for the bottom cap at $y = -0.5$.
+
+</Extra>
+
+#### Cones
+
+Consider a cone with an apex at $(0, 0.5, 0)$ and a base radius of $0.5$ at $y = -0.5$.
+
+To check if a ray intersects with a cone, we should check whether it intersects with the side of the cone or with the base disk:
+1. For the side, solve a quadratic for $t$, then discard roots where $t < 0$ or where the hit's $y$ falls outside $[-0.5, 0.5]$
+2. For the base, intersect the ray with the plane $y = -0.5$, then check that the hit point falls within the base's radius
+
+<Extra title="Cone Intersection Calculations">
+
+The cone's radius shrinks linearly from $0.5$ to $0$ from the base at $y = -0.5$ to the apex at $y = 0.5$. The radius at height $y$ is thus 
+
+$$
+r(y) = (0.5 - y)/2
+$$
+
+The side of the cone is the set of points satisfying:
+
+$$
+x^2 + z^2 = \left(\frac{0.5 - y}{2}\right)^2, \quad y \in [-0.5, 0.5]
+$$
+
+Expanding the right side and moving everything to one side gives the implicit function:
+
+$$
+f(x, y, z) = x^2 + z^2 - 0.25y^2 + 0.25y - 0.0625 = 0
+$$
+
+Substituting the ray $p + td$ for $(x, y, z)$ and collecting terms by power of $t$ gives a quadratic $at^2 + bt + c = 0$, where:
+- $a = d_x^2 + d_z^2 - 0.25d_y^2$
+- $b = 2p_xd_x + 2p_zd_z - 0.5p_yd_y + 0.25d_y$
+- $c = p_x^2 + p_z^2 - 0.25p_y^2 + 0.25p_y - 0.0625$
+
+The quadratic formula gives up to two roots for $t$. For each root, we discard it if $t < 0$ or if the resulting $y$ falls outside $[-0.5, 0.5]$, since that means the hit lands above or below the finite cone.
+
+The surface normal at a hit point is the gradient of $f$:
+
+$$
+\nabla f = (2x,\ 0.5(0.5 - y),\ 2z)
+$$
+
+which points in the same direction as the halved vector $(x,\ 0.25(0.5 - y),\ z)$, so we can normalize that instead.
+
+For the base, we find where the ray intersects with the plane $y = -0.5$, which is given by $p_y + d_yt = -0.5$, or $t = (-0.5 - p_y)/d_yt$.
+
+We then check that the hit point at time $t$ lands within the disk $x^2 + z^2 \leq 0.25$. 
+
+The normal there is always $(0, -1, 0)$, pointing straight down.
+
+</Extra>
+
+#### Spheres
+
+Consider a sphere of radius $0.5$ at the origin. A sphere of radius $R$ at the origin has the equation:
 
 $$
 x^2 + y^2 + z^2 - R^2 = 0
 $$
 
-An infinite cylinder of unit radius running along the y-axis has the equation:
+To check if a ray intersects with a sphere, we solve a quadratic for $t$, then take the smallest non-negative root. Unlike the cube, cylinder, and cone, there are no bounds to check and no separate cap surfaces, since the sphere's implicit equation already describes a closed surface.
+
+<Extra title="Sphere Intersection Calculations">
+
+Substituting the ray $p + td$ for $(x, y, z)$ gives:
 
 $$
-x^2 + z^2 - 1 = 0
+(p + td) \cdot (p + td) - 0.25 = 0
 $$
 
-Usually, it's more useful to work with a finite object, and define bounds on the truncated unit cylinder:
+Distributing the dot product and collecting terms by power of $t$ gives a quadratic $at^2 + bt + c = 0$, where:
+- $a = d \cdot d$
+- $b = 2(p \cdot d)$
+- $c = p \cdot p - 0.25$
 
-$$
-x^2 + z^2 - 1 = 0,\, -0.5 \leq y \leq 0.5
-$$
+The quadratic formula gives up to two roots, $t_0 \leq t_1$. We want the smallest non-negative root, since that is the closest intersection in front of the ray origin:
+- If $t_0 \geq 0$, use $t_0$
+- Otherwise, if $t_1 \geq 0$, use $t_1$
+- Otherwise, both roots are behind the ray origin, so there is no intersection
 
-We should also define the implicit equations for the top and the bottom circles making up the cylinder:
+The surface normal at a hit point is the gradient of $x^2 + y^2 + z^2 - 0.25$, which is $2(x, y, z)$. This normalizes to the same direction as the hit point itself, so we can just normalize the hit point directly.
 
-$$
-x^2 + y^2 - 1 \leq 0,\, y \in \{-0.5, 0.5\}
-$$
+</Extra>
 
 ## Lighting
 
@@ -319,27 +435,27 @@ Where $c_1$, $c_2$, and $c_3$ are experimentally defined constants.
 For illumination, we want to find the normal vector at the point $(x, y, z)$. We can find this normal vector by taking the gradient at that point:
 
 $$
-n = \nabla(x, y, z) = \left( \frac{\partial f}{\partial x}(x, y, z), 
+\hat{n} = \nabla(x, y, z) = \left( \frac{\partial f}{\partial x}(x, y, z), 
 \frac{\partial f}{\partial y}(x, y, z),
 \frac{\partial f}{\partial z}(x, y, z) \right)
 $$
 
 Once we have calculated the normal vector in object space, we need to transform the normal vector into world space. 
 
-Note that we cannot just apply the transformation matrix $M$ because $ Mn_o \neq n_w$ when there is scaling. Scaling distorts the normal in exactly the opposite sense of scale applied to a surface. For example, scaling $y$ by a factor of $2$ causes the normal to scale by $0.5$.
+Note that we cannot just apply the transformation matrix $M$ because $M\hat{n}_o \neq \hat{n}_w$ when there is scaling. Scaling distorts the normal in exactly the opposite sense of scale applied to a surface. For example, scaling $y$ by a factor of $2$ causes the normal to scale by $0.5$.
 
-The right equation is $n_w = (M^t)^{-1}n_o$, unless the transformation includes a reflection (i.e. $\det(M) < 1$). The most foolproof equation is 
+The right equation is $\hat{n}_w = (M^t)^{-1}\hat{n}_o$, unless the transformation includes a reflection (i.e. $\det(M) < 1$). The most foolproof equation is 
 
 $$
-n_w = \text{sign}(\det(M))(M^t)^{-1}n_o
+\hat{n}_w = \text{sign}(\det(M))(M^t)^{-1}\hat{n}_o
 $$
 
 ### BRDFs
 
-Give a surface normal $n$, an incoming light direction $\omega_i$, and an outgoing light direction $\omega_o$, the bidirectional reflectance distribution function (BRDF) describes how much incoming light is scattered in that outgoing direction:
+Give a surface normal $\hat{n}$, an incoming light direction $\hat{\omega}_i$, and an outgoing light direction $\hat{\omega}_o$, the bidirectional reflectance distribution function (BRDF) describes how much incoming light is scattered in that outgoing direction:
 
 $$
-f_r(\omega_i, \omega_o : \textbf{R}^3 \times \text{R}^3 \rightarrow [0, 1]
+f_r(\hat{\omega}_i, \hat{\omega}_o) : \mathbb{R}^3 \times \mathbb{R}^3 \rightarrow [0, 1]
 $$
 
 Some common types of BRDFs are:
@@ -347,33 +463,34 @@ Some common types of BRDFs are:
 - Specular (glossy): light scatters more tightly around one direction
 - Mirror
 
-The name of the ==Lambertian BRDF== comes from Lambert's cosine law, which states that light intensity falls off with the cosine of the angle between $\omega_i$ and $n$: $\cos(\theta) = n \cdot \omega_i$. 
+The name of the ==Lambertian BRDF== comes from Lambert's cosine law, which states that light intensity falls off with the cosine of the angle between $\hat{\omega}_i$ and $\hat{n}$: $\cos(\theta) = \hat{n} \cdot \hat{\omega}_i$. 
 
 ![Lambert's Cosine Law](/csci-1230/lamberts-cosine-law.png)
 
 Given $k_d$ as an RGB color, this gives us the Lambertian BRDF:
 $$
-f_r(\omega_i, \omega_o) = k_d(n \cdot \omega_i)
+f_r(\hat{\omega}_i, \hat{\omega}_o) = k_d(\hat{n} \cdot \hat{\omega}_i)
 $$
 
 Most materials are not perfectly Lambertian; most BRDFs are viewer dependent. This is where specular BRDFs. One of the most common Specular BRDFs is ==Phong BRDF==:
 
 $$
-f(\omega_i, \omega_o) = k_s(\cos \delta)^n = k_s(r \cdot \omega_o)^n
+f(\hat{\omega}_i, \hat{\omega}_o) = k_s(\cos \delta)^n = k_s(\hat{r} \cdot \hat{\omega}_o)^n
 $$
 
 where:
 - $k_s$ is an RGB color
-- $\omega_o$ is the vector to the viewer
-- $r = 2(\omega_i \cdot n)n - \omega_i$
-- $\delta$ is the angle between $\omega_o$ and $r$
+- $\hat{\omega}_o$ is the vector to the viewer
+- $\hat{r} = 2(\hat{\omega}_i \cdot \hat{n})\hat{n} - \hat{\omega}_i$
+- $\delta$ is the angle between $\hat{\omega}_o$ and $\hat{r}$
 - $n$ controls how tight the specular highlight is
 
 ### Phong Illumination Model
 
 The ==Phong illumination model== combines what we know about modeling light sources and materials to define a way to light objects.
 
-First, it breaks lighting into three components: 1. Ambient stands in for the effect of indirect light; it affects all surfaces equally
+First, it breaks lighting into three components: 
+1. Ambient stands in for the effect of indirect light; it affects all surfaces equally
 2. Diffuse is the effect of direct light on a surface with a dull or rough finish
 3. Specular is the effect of direct light on a shiny surface when the vector to the eye is closely aligned to the light's reflected rays
 
@@ -385,19 +502,34 @@ $$
 \text{Color} = \text{Ambient} + \sum_{l \in \text{lights}} [\text{Diffuse} + \text{Specular}]
 $$
 
-The full equation is:
+Putting together the [BRDFs](#brdfs) for diffuse and specular reflection with [light attenuation](#light-attenuation), the full equation, evaluated separately for each color channel $\lambda \in \{\text{red}, \text{green}, \text{blue}\}$, is:
 
 $$
-I_\text{out} = k_a + \sum_{l \in L} f^{l}_\text{att} I^{l} k_d (n \cdot \omega^{l}_{i}) + \sum_{l \in L} f^{l}_\text{att} I^{l} k_s (r \cdot \omega_o)^n
+I_\lambda = \textcolor{#d97706}{k_a O_{a\lambda}} + \sum_{i=1}^{m} \textcolor{#e11d48}{f_\text{att}} \; \textcolor{#6b7280}{I_{\lambda,i}} \left[ \textcolor{#2563eb}{k_d O_{d\lambda} (\hat{N} \cdot \hat{L}_i)} + \textcolor{#059669}{k_s O_{s\lambda} (\hat{R}_i \cdot \hat{V})^n} \right]
 $$
 
 where:
-- $L$ is the set of all lights in the scene
-- $\omega^{l}_{i}$ is the direction of light $l$
-- $I^l$ is the RGB intensity of light $l$
-- $f^l_\text{att}$ is the attenuation factor for light $l$
+- $\textcolor{#d97706}{k_a O_{a\lambda}}$ is the ambient term
+- $\textcolor{#e11d48}{f_\text{att}}$ is the attenuation factor[^att]
+- $\textcolor{#6b7280}{I_{\lambda,i}}$ is the intensity of light
+- $\textcolor{#2563eb}{k_d O_{d\lambda} (\hat{N} \cdot \hat{L}_i)}$ is the diffuse term created by the Lambertian BRDF[^lamb-brdf]
+- $\textcolor{#059669}{k_s O_{s\lambda} (\hat{R}_i \cdot \hat{V})^n}$ is the **specular** term created by the the Phong BRDF[^phong-brdf]
 
-Note that the normal should point toward the viewer. You should check the dot product of normal with the view direction and flight the normal if it is negative.
+[^att]: See [Light Attenuation](#light-attenuation)
+[^lamb-brdf]: Lambertian BRDF measures the cosine similarity between the surface normal and the direction to the light. See [BRDFs](#brdfs).
+[^phong-brdf]: Phong BRDF meaures how closely the reflected ray $\hat{R}_i$ aligns with the unit direction $\hat{V}$ to the viewer. See [BRDFs](#brdfs).
+
+Here is a list of coefficients:
+- $k$ is a model parameter
+- $O$ is a material property
+- $\hat{L}_i$ is the unit direction from the point to the light
+- $\hat{R}_i = 2(\hat{N} \cdot \hat{L}_i)\hat{N} - \hat{L}_i$ is the reflection of $\hat{L}_i$ about $\hat{N}$
+- $\hat{V}$ is the unit direction from the point to the camera
+- $n$ is the shininess, a material property controlling how tight the specular highlight is
+
+Note that the attenuation factor only multiplies the diffuse and specular terms, not the ambient term, since ambient light isn't coming from any particular light source's position. Directional lights have no position and therefore no attenuation (see [Light Sources](#light-sources)).
+
+Note that the normal should point toward the viewer. You should check the dot product of normal with the view direction and flip the normal if it is negative.
 
 ### Shading
 
@@ -416,6 +548,7 @@ Common shaders include:
 
 References: 
 - [Phong Illumination Laboratory](https://sklardevelopment.com/webgl_graftext_labs/phong_illum/index.html)
+- [CS1230 Illuminate handout: Adding Attenuation to Phong Lighting](https://cs1230.graphics/projects/ray/2#adding-attenuation-to-phong-lighting)
 
 ## Whitted Raytracing
 
@@ -425,11 +558,15 @@ There are some lighting effects that are not captured by Phong illumination, suc
 
 ### Shadow Rays
 
-Each light in the scene contributes a specular and diffuse term to a surface element iff it can reach the object. Thus, we can just construct a shadow ray from the scene element to the light source, and check if it is blocked by any other element in the scene. (This will produce hard shadows; soft shadows are harder to compute.)
+To create shadows, we should shoot a "shadow ray" from the scene element[^shadow-ray-start] to the light source, and check if it is blocked by any other element in the scene. 
+
+If it is blocked, then do not allow the light to contribute a specular and diffuse term.[^hard-shadows]
+
+[^hard-shadows]: This will produce hard shadows; soft shadows are harder to compute.
+
+[^shadow-ray-start]: Note that the shadow ray might intersect the starting surface at a `t` value close to 0. To avoid self-shadowing, we should add a small epsilon to the shadow ray's start position along the normal.
 
 ![Shadow rays](/csci-1230/shadows-ray-tracing.png)
-
-Note that the shadow ray might intersect the starting surface at a `t` value close to 0. To avoid self-shadowing, we should add a small epsilon to the shadow ray's start position.
 
 ### Rays of Reflection and Refraction
 
@@ -460,7 +597,7 @@ Putting it together, this gives us the extended illumination equation:
 
 $$
 \begin{aligned}
-I_\text{out} = {} & k_a + \sum_{l \in L} V(l, p)(f^{l}_\text{att} I^{l} k_d (n \cdot \omega^{l}_{i}) + f^{l}_\text{att} I^{l} k_s (r \cdot \omega_o)^n) \\
+I_\text{out} = {} & k_a + \sum_{l \in L} V(l, p)(f^{l}_\text{att} I^{l} k_d (\hat{n} \cdot \hat{\omega}^{l}_{i}) + f^{l}_\text{att} I^{l} k_s (\hat{r}^l \cdot \hat{\omega}_o)^n) \\
 & + k_s I_\text{refl} + k_t I_\text{trans}
 \end{aligned}
 $$
@@ -559,12 +696,149 @@ Cons of texture maps:
 - Surfaces still look smooth because geometry is unchanged 
 
 Texture mapping has two subproblems:
-- Surface parameterization: mapping the 3D surface to a 2D plane by finding a function $f(x, y, z) = (u, v)$ which describes the surface. This is also called UV mapping.
-- Texturing: assigning a value to each point on the $(u, v)$ plane
+- Surface parameterization: mapping the 3D surface to a 2D plane (UV plane)
+- Texturing: assigning a value to each point on the UV plane
 
 There are two main types of texturing:
 - Image texturing: use $(u, v)$ to index into an image
 - Procedural texturing: use $(u, v)$ as input to some function which computes the texture
+
+### Surface Parameterization
+
+The goal of surface parameterization is to find[^uv-mapping] a function $f(x, y, z) = (u, v)$ which describes the surface. 
+
+[^uv-mapping]: Finding a good parameterization is an active area of study in graphics. Informally, a good parameterization is one that doesn't distort the texture too much when applied to the surface.
+
+Certain 3D shapes are naturally defined by a parametric function, such as cubes, cylinders, cones, and spheres. In each case, we want a function that takes a point[^uv-point] $p = (p_x, p_y, p_z)$ on the surface and returns $(u, v) \in [0, 1]^2$.
+
+[^uv-point]: This point is usually in object space.
+
+#### Cubes
+
+Consider a unit cube spanning $[-0.5, 0.5]^3$.
+
+To find the UV coordinate of a point $p$ on a cube, given its normal $n$:
+1. Use the sign of each component of $n$ to determine which of the six faces $p$ lies on
+2. Map the two coordinates of $p$ that aren't fixed by $n$ linearly into $[0, 1]$, negating one where needed to keep the texture consistently oriented across faces
+
+<Extra title="Cube UV Mapping Calculations">
+
+Consider a point $p$ on the face whose normal points along $+z$ (i.e. $p_z = 0.5$). The other two coordinates, $p_x$ and $p_y$, each range over $[-0.5, 0.5]$ and map directly and linearly into $[0, 1]$:
+
+$$
+u = p_x + 0.5, \qquad v = p_y + 0.5
+$$
+
+Each coordinate is shifted by $0.5$ to map it from $[-0.5, 0.5]$ into $[0, 1]$. Some coordinates are also negated before shifting to keep the texture's orientation consistent across faces.
+
+</Extra>
+
+#### Cylinders
+
+Consider a unit cylinder of radius $0.5$, spanning $y \in [-0.5, 0.5]$.
+
+To find the UV coordinate of a point $p$ on a cylinder, given its normal $n$:
+1. If $n_y \neq 0$, $p$ is on a cap. Map $p$'s $x$ and $z$ coordinates directly onto $[0, 1]$.
+2. Otherwise, $p$ is on the side. Find the angle $\theta$ around the circle and map it to $u$, then normalize the height to get $v$.
+
+![Cylinder UV mapping](/csci-1230/cylinder-uv-mapping.png)
+
+<Extra title="Cylinder UV Mapping Calculations">
+
+For the top cap ($n_y > 0$):
+
+$$
+(u, v) = (p_x + 0.5,\ -p_z + 0.5)
+$$
+
+For the bottom cap ($n_y < 0$):
+
+$$
+(u, v) = (p_x + 0.5,\ p_z + 0.5)
+$$
+
+For the side, `atan` produces a $\theta$ in the range $[-\pi/2, \pi/2]$, which could map two perimeter positions to the same $\theta$ value. To fix that, use `atan2`, which produces a $\theta$ in the range $[-\pi, \pi]$:
+
+$$
+\theta = \text{atan2}(p_z, p_x)
+$$
+
+To map $\theta$ to $u \in [0, 1]$:
+- If $\theta < 0$, $u = -\theta/(2\pi)$
+- If $\theta \geq 0$, $u = 1 - \theta/(2\pi)$
+
+Since the cylinder spans $y \in [-0.5, 0.5]$, the height maps directly into $[0, 1]$ by shifting:
+
+$$
+v = p_y + 0.5
+$$
+
+</Extra>
+
+#### Cones
+
+Consider a unit cone with apex at $(0, 0.5, 0)$ and base radius $0.5$ at $y = -0.5$. Unlike the cylinder, the cone's side doesn't have a single normal direction, so the normal alone can't distinguish the base from the apex. Instead, we check the normal for the base, and the point's height for the apex.
+
+To find the UV coordinate of a point $p$ on a cone, given its normal $n$:
+1. If $n_y = -1$, $p$ is on the base. Map $p$'s $x$ and $z$ coordinates into $[0, 1]$, the same way as the cylinder's bottom cap.
+2. Otherwise, if $p_y = 0.5$, $p$ is at the apex. Every value of $\theta$ maps to the same point there, so $(u, v)$ defaults to a fixed value, $(0.5, 0.5)$.
+3. Otherwise, $p$ is on the side. Find $\theta$ and $u$ the same way as a [cylinder](#cylinders), and let $v = p_y + 0.5$.
+
+![Cone UV mapping](/csci-1230/cone-uv-mapping.png)
+
+#### Spheres
+
+Consider a unit sphere of radius $0.5$ at the origin.
+
+To find the UV coordinate of a point $p$ on a sphere:
+1. Find the latitude angle $\phi$ of $p$, then normalize it into $v$
+2. If $v \in \{0, 1\}$, $p$ is at a pole, where every value of $\theta$ maps to the same point, so $u$ defaults to $0.5$
+3. Otherwise, find $\theta$ the same way as a [cylinder](#cylinders) to get $u$
+
+![Sphere UV mapping](/csci-1230/sphere-uv-mapping.png)
+
+<Extra title="Sphere UV Mapping Calculations">
+
+The latitude angle $\phi$ of a point at height $p_y$ on a sphere of radius $r$ is:
+
+$$
+\phi = \sin^{-1}(p_y/r), \quad \phi \in [-\pi/2, \pi/2]
+$$
+
+This maps to $v$ by:
+
+$$
+v = \phi/\pi + 0.5
+$$
+
+At $v = 0$ (south pole) and $v = 1$ (north pole), $\theta$ is undefined, so $u$ defaults to $0.5$ there instead of being computed.
+
+</Extra>
+
+#### Meshes
+
+An arbitrary polygonal mesh has no closed-form parametric function, so UV coordinates must instead be assigned explicitly, as a $(u, v)$ pair stored at each vertex alongside its position and normal. There are several approaches to choosing these values:
+- Texture each face independently
+- Planar, spherical, or cylindrical mapping
+- Manual UV mapping
+
+In manual UV mapping, the artist cuts seams into the object to unfold it into UV space. Seams are placed on portions of the model that are less visible or sections that could have discontinuities.
+
+![Manual UV mapping](/csci-1230/manual-uv-mapping.png)
+
+Once each vertex of a triangle has a $(u, v)$ value, the $(u, v)$ for any point inside the triangle is found by interpolating the three vertex values, using the same barycentric-coordinate technique used to interpolate colors below. This is what lets a texture stretch smoothly across a triangle instead of being constant per-face.
+
+![Triangle UV mapping](/csci-1230/triangle-uv-mapping.png)
+
+If we can find the color on every vertex of the object, then we can find the color for any point on the surface. 
+
+First, let's consider interpolating between two values along a line. Given two colors $A$ and $B$, we can compute any value along the line by evaluating 
+
+$$
+C(t) = tA + (1 - t)B
+$$
+
+$t$ and $1 - t$ are the barycentric coordinates of the line segment. This technique can be generalized for triangles.
 
 ### Image Texturing
 
@@ -577,7 +851,7 @@ $$
 For periodic textures (like brick), a better option for filling a piece of geometry is to tile the texture. Suppose that we have an image with width $W$ and height $H$, and we want to repeat this image $m$ times horizontally and $n$ times vertically on the unit UV place. Then the mapping is:
 
 $$
-(u, v) \mapsto \left(\lfloor u m W \bmod W \rfloor\right), \lfloor (1 - v) n H \bmod H \rfloor
+(u, v) \mapsto \left(\lfloor umW \rfloor \bmod W,\ \lfloor (1 - v)nH \rfloor \bmod H\right)
 $$
 
 ### Procedural Texturing
@@ -607,45 +881,6 @@ An easing function has the following properties:
 - `ease(x)` is continuous
 
 **References**: [CSCI 1230 Lab 5: Terrain](https://cs1230.graphics/labs/lab5-get-normals/)
-
-### Surface Parameterization
-
-Informally, a good parameterization is one that doesn't distort the texture too much when applied to the surface.
-
-Certain 3D shapes are naturally defined by a parametric function, such as cubes, cylinders, cones, and spheres.
-
-- For cylinders and cones, let $u \in [1, 0]$ be the distance around the perimeter of the circle, and let $v \in [1, 0]$ be the height of the point.
-
-    `atan` produces a $\theta$ in the range $[-\pi/2, \pi/2]$, which could map two perimeter positions to the same $\theta$ value. To fix that, use `atan2`, which produces a $\theta$ in the range $[-\pi, \pi]$. 
-
-    To map $\theta$ to $u \in [0, 1]$, we need to do the following:
-        - If $\theta < 0$, $u = -\theta/(2\pi)$
-        - If $\theta \geq 0$, $u = 1 - \theta/(2\pi)$
-
-- For spheres, at $v = 0$ or $v = 1$, there is a singularity where we should set $u$ to some predefined value.
-
-    $v$ is a function of the latitude of $\phi$ of the point. This is given by:
-    - $\phi = \sin^{-1}(p_y/r)$
-    - $v = \phi/\pi + 0.5$
-
-For an arbitrary polygonal object, there are several approaches we can do:
-- Texture each face independently
-- Planar, spherical, or cylindrical mapping
-- Manual UV mapping
-
-In manual UV mapping, the artist cut seams into the object to project them into UV space. Seams are placed on portions of the model that are less visible or sections that could have discontinuities.
-
-![Manual UV mapping](/csci-1230/manual-uv-mapping.png)
-
-If we can find the color on every vertex of the object, then we can find the color for any point on the surface. 
-
-First, let's consider interpolating between two values along a line. Given two colors $A$ and $B$, we can compute any value along the line by evaluating 
-
-$$
-C(t) = tA + (1 - t)B
-$$
-
-$t$ and $1 - t$ are the barycentric coordinates of the line segment. This technique can be generalized for triangles.
 
 ## Sampling, Reconstruction, and Antialiasing
 
