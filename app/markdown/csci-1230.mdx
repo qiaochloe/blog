@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-17"
+updatedAt: "2026-10-20"
 tags:
   - "notes"
 ---
@@ -175,13 +175,13 @@ w_x & w_y & w_z & 0 \\
 \end{bmatrix}
 $$
 
-By putting the rotation and translation together, we get one matrix for transforming other objects into the camera's coordinate system.
+By putting the rotation and translation together, we get one matrix for transforming other objects into the camera's coordinate system.[^rt-tr]
 
 $$
 M_{\text{view}} = M_{\text{rotate}}M_{\text{translate}}
 $$
 
-Note that the view matrix does translation first and then rotation. This is because the matrix that transforms the camera to world space is composed of a rotation first and then a translation. The view matrix is the inverse of this matrix, so we must reverse the order of multiplication.
+[^rt-tr]: Note that the view matrix does translation first and then rotation. This is because the matrix that transforms the camera to world space is composed of a rotation first and then a translation. The view matrix is the inverse of this matrix, so we must reverse the order of multiplication.
 
 ### Scenes
 
@@ -611,6 +611,12 @@ where:
 **References**: [An improved illumination model for shaded display](https://dl.acm.org/doi/10.1145/358876.358882) by Turner Whitted
 
 [^1]: Light changing speeds as it enters a medium
+
+### Raytracing Pipeline
+
+The full raytracing pipeline is as follows:
+
+![Ray tracing pipeline](/csci-1230/raytracing-pipeline.png)
 
 ## Spatial Data Structures
 
