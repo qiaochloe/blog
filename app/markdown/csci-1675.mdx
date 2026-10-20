@@ -354,6 +354,35 @@ One issue we now face is that we have too many interfaces to the operating syste
 
 ![Too many interfaces](/csci-1675/too-many-interfaces.png)
 
-`io_uring` exposes one interface with a submission queue and a completion queue.
+`io_uring` exposes one interface with a submission queue (SQ) and a completion queue (CQ).
+
+The benefits of `io_uring` is that it:
+- Uses ring buffers shared between userspace and the kernel, requiring no syscalls for operations
+- Provides async support across files, sockets, and more
+- Batches requests and completions, amortizing the cost of context switches and syscalls
 
 ![io_uring](/csci-1675/io_uring.png)
+
+## Concurrency
+
+### Threads
+
+A thread is the smallest unit of execution with a program counter and stack. The OS is responsible for scheduling threads on the CPU and managing its lifecycle.
+
+A kernel thread is responsible for executing kernel logic, such as handling context switches and system call. Every userspace thread must have a kernel thread associated with it. 
+
+There are three ways to do this:
+
+1. M uthread : 1 kthread 
+2. 1 uthread : 1 kthread
+3. M uthread : N kthread
+
+![Threading types](/csci-1675/threading-types.png)
+
+One issue with 1:1 threading is the additionanl overhead of context switches:
+
+![Context switch](/csci-1675/context-switch.png)
+
+Because M:N is difficult to implement in the kernel, many runtimes implement it themselves in userspace.
+
+![M:N threading](/csci-1675/m-to-n-threading.png)
