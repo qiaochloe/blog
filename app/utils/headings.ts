@@ -21,15 +21,16 @@ function stripInlineMarkdown(text: string): string {
 }
 
 /**
- * Extract h2–h6 headings from raw markdown content. Uses the same slug logic as
+ * Extract h2–h3 headings from raw markdown content. Uses the same slug logic as
  * MDX createHeading so TOC anchor links match the rendered heading ids.
+ * h4 and below are intentionally excluded from the table of contents.
  */
 export function extractHeadings(content: string): TocHeading[] {
   const headings: TocHeading[] = [];
   const lines = content.split("\n");
 
   for (const line of lines) {
-    const match = line.match(/^(#{2,6})\s+(.+)$/);
+    const match = line.match(/^(#{2,3})\s+(.+)$/);
     if (!match) continue;
 
     const level = match[1].length;

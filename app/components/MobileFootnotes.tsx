@@ -47,7 +47,7 @@ export function MobileFootnotes() {
 
       const box = document.createElement("div");
       box.className = "footnote-inline-box";
-      box.innerHTML = `<span class="sidenote-number">${num}</span>${getFootnoteBodyHtml(item)}`;
+      box.innerHTML = `<span class="sidenote-number">${num}</span><div class="footnote-inline-body">${getFootnoteBodyHtml(item)}</div>`;
       block.insertAdjacentElement("afterend", box);
 
       openBoxes.set(num, box);

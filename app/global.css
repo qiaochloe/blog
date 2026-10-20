@@ -380,7 +380,10 @@ pre code.hljs {
   @apply text-neutral-900 font-semibold;
 }
 .footnote-inline-box {
-  @apply block w-full bg-neutral-100 text-neutral-700 text-sm leading-snug rounded-md px-4 py-3 my-4;
+  @apply flex items-start gap-1 w-full bg-neutral-100 text-neutral-700 text-sm leading-snug rounded-md px-4 py-3 my-4;
+}
+.footnote-inline-box .footnote-inline-body {
+  @apply min-w-0 flex-1;
 }
 /* Inline code loses its own bg-neutral-100 pill when sitting on a gray
    background (it would otherwise blend in but keep its padding). Needs the
@@ -397,14 +400,12 @@ pre code.hljs {
   @apply bg-white;
 }
 .footnote-inline-box .sidenote-number {
-  @apply mr-1 text-neutral-400 font-medium align-super text-xs;
+  @apply flex-none text-neutral-400 font-medium text-xs;
 }
 .footnote-inline-box p {
   @apply my-0;
-  display: inline;
 }
 .footnote-inline-box p:not(:first-child) {
-  display: block;
   margin-top: 0.4em;
 }
 
@@ -477,8 +478,21 @@ pre code.hljs {
   text-align: left;
 }
 
+.prose-notes h4 {
+  @apply mt-4 mb-1 text-base font-semibold scroll-mt-24;
+  color: var(--color-blue-slate-500);
+  font-family:
+    var(--font-figtree),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
 .prose-notes h2 .anchor,
-.prose-notes h3 .anchor {
+.prose-notes h3 .anchor,
+.prose-notes h4 .anchor {
   @apply absolute invisible no-underline hover:no-underline;
   margin-left: -1em;
   padding-right: 0.5em;
@@ -488,12 +502,14 @@ pre code.hljs {
 }
 
 .prose-notes h2:hover > .anchor,
-.prose-notes h3:hover > .anchor {
+.prose-notes h3:hover > .anchor,
+.prose-notes h4:hover > .anchor {
   @apply visible;
 }
 
 .prose-notes h2 .anchor:after,
-.prose-notes h3 .anchor:after {
+.prose-notes h3 .anchor:after,
+.prose-notes h4 .anchor:after {
   @apply text-neutral-300;
   content: "#";
 }
