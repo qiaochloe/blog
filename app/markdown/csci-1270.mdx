@@ -1,8 +1,8 @@
 ---
 title: "Databases Notes"
-summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods • Sorting"
+summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning"
 publishedAt: "2026-09-13"
-updatedAt: "2026-10-17"
+updatedAt: "2026-10-20"
 tags:
   - "notes"
 ---
@@ -217,21 +217,7 @@ The file organizations above describe how the base table itself is stored. A tab
 
 It is the job of the DBMS to:
 - Ensure that the table and index are synchronized
-- Figure out the best index to use during query execution[^which-index]
-
-[^which-index]: For example, consider the query below:
-
-    ```
-    SELECT * FROM students
-    WHERE age < 30
-    AND dept = 'cs'
-    ```
-
-    If there is an index on `age` and an index on `dept`, one way to run the query is to use the indices to fetch records where `age < 30` and records where `dept = 'cs'`, and then take their intersection.
-
-    We could also instead only use the `age` index and manually filter the `dept` condition. Or vice-versa. Or use neither indices.
-
-    Set intersection can be done with bitmaps, hash tables, or Bloom filters.
+- Figure out the best index to use during query execution
 
 ### B+ Trees
 
@@ -266,7 +252,37 @@ To split an inner node, redistribute entries evenly and push up the middle key. 
 
 To perform deletion, find the leaf node and remove the entry. If the leaf node is no longer at least half-full, try to redistribute by borrowing from adjacent siblings. If redistribution fails, merge the leaf node with a sibling. If a merge occurred, we must delete the entry from the parent of the leaf node.
 
-## Sorting
+## Operator Execution 
+
+Just as we cannot assume that a table fits entirely in memory, a disk-oriented DBMS cannot assume that a query result fits in memory. We will use the buffer pool to implement algorithms that need to spill to disk. We are also going to prefer algorithms that decrease the total amount of I/O. 
+
+A few common operators are scans, sorts, aggregations, and joins.
+
+### Scans
+
+As we have seen above, an access method is the way that the DBMS accesses the data stored in a table. There are two basic approaches: (1) sequential table scan and (2) index scan.
+
+To perform a table scan, for each page in the table:
+1. Retrieve it from the buffer pool
+2. Iterate over each tuple and check whether to include it
+
+The DBMS maintains an internal cursor that tracks the last page and slot it examined.
+
+To perform an index scan, the DBMS uses the index to find the tuples that the query needs. In a multi-index scan, the DBMS needs to choose the indices it uses,[^which-index] and it may have to perform set intersection. Set intersection can be done with bitmaps, hash tables, or Bloom filters.
+
+[^which-index]: For example, consider the query below:
+
+    ```
+    SELECT * FROM students
+    WHERE age < 30
+    AND dept = 'cs'
+    ```
+
+    If there is an index on `age` and an index on `dept`, one way to run the query is to use the indices to fetch records where `age < 30` and records where `dept = 'cs'`, and then take their intersection.
+
+    We could also instead only use the `age` index and manually filter the `dept` condition. Or vice-versa. Or use neither indices.
+
+### Sorting
 
 We may want tuples to be sorted in a particular way to implement:
 - `ORDER BY`
@@ -292,3 +308,125 @@ $$
 $$
 
 At each pass, we read and write each page once, so the total number of I/O operations is $2N \cdot (\text{\# runs})$.
+
+### Aggregations
+
+The DBMS needs a way to quickly find tuples with the same distinguishing attributes for grouping.
+
+There are typically two implementations of aggregations: sorting and hashing. Sorting aggregates is useful to fulfill `ORDER BY` and `DISTINCT` conditions. But if we do not need the data to be ordered, such as in `GROUP BY` or `DISTINCT`, then hashing is usually a better alternative. 
+
+To perform hashing, we create a temporary hash table as the DBMS scans the table. For each record, we check whether there is already an entry in the hash table. For `DISTINCT`, we discard duplicates. For `GROUP BY` we perform the aggregate computation. 
+
+Some aggregations can be done incrementally as each tuple is seen. We store pairs of the form `(group_key, val)`. If we find a matching `group_key`, we just update the `val`. Otherwise, we insert a new `(group_key, val)` pair. Aggregations where we can just maintain a running value include `SUM`, `COUNT`, `AVG`, `MIN`, and `MAX`. 
+
+Using hashing for aggregation only works if everything fits in memory. Otherwise, we need to use an ==external hashing aggregate==.
+
+Here is the divide-and-conquer algorithm:
+1. Divide tuples into partitions based on the grouping key and write them out to disk when memory gets full
+2. Read in each partition, build an in-memory hash table for each partition, and compute the aggregation
+
+Suppose we have $B$ buffers. We will use $B - 1$ buffers for the partitions and $1$ buffer for the input data. We will use a hash function $h_1$ to split tuples into these partitions on the disk, and we will we flush the partition onto disk when the buffer page fills up.
+
+After we do this, for each partition on disk, we will read it into memory and build a second hash function $h_2$. Then we'll go through each bucket of this hash table to bring together matching tuples. This assumes that each partition fits in memory.
+
+Assuming we have $N$ total pages, we will need $2N$ operations to partition the initial data and $N$ operations to rehash it. This gives us a total of $3N$, plus whatever needs to be done to the aggregation results. 
+
+### Joins
+
+In this section, we will focus on binary equijoin algorithms. Suppose we want to join $R$ and $S$. $R$ has $M$ pages with $m$ tuples, and $S$ has $N$ pages with $n$ tuples.
+
+There are several join algorithms, including nested loop join, hash join, and sort-merge join. 
+
+#### Nested Loop Joins
+
+There are simple, block, and index nested loop joins.
+
+In a simple nested join loop, we perform:
+
+```python
+for r in R: # tuple r
+    for s in S: # tuple s
+        if match(r, s):
+            emit()
+```
+
+For each tuple in $R$, we will scan through $S$ once, costing us $M + mN$ I/O operations. Thus, in general, we want the smaller table to be the outer table.
+
+In a block nested loop join, we perform:
+
+```python
+for page_r in R: # The pages are blocks
+    for page_s in S:
+        for r in page_r:
+            for s in page_s:
+                if match(r, s):
+                    emit()
+```
+
+For each block in $R$, we scan $S$ once, costing us $M + (MN)$ I/O operations. This performs fewer disk accesses.
+
+If we have $B$ buffers available, then we have $B - 2$ buffers for scanning the outer table, 1 buffer for the inner table, and 1 buffer for storing output. This will give us a cost of $M + \left(\lceil M / (B - 2) \rceil \cdot N \right)$. If the outer relation completely fits in memory, then the cost is just $M + N$. 
+
+The basic nested loop join is inefficient because we need to do a sequential search over the inner table to check a match. Instead of doing a sequential search, we can use an index to find inner table matches.
+
+```python
+for r in R:
+    for s in index("r = s"):
+        if match(r, s):
+            emit()
+```
+
+Assume that the cost of each index probe is some $C$ per tuple. Then the cost is $M + (mC)$.
+
+#### Hash Joins
+
+For a hash join, the general algorithm is:
+1. Scan the outer table and populate a hash table using the hash function $h_1$ on the join attributes
+2. Scan the inner table and use $h_1$ on each tuple to jump to a location in the hash table and find a matching tuple
+
+We can optimize this by creating a Bloom filter during the build phase. We can use this in the probe phase to decide if an actual probe is needed.
+
+A Bloom filter is a probabilistic data structure that determines set membership. False negatives never occurs, but false positives can occur. On `insert`, we use `k` hash functions to set bits in the filter to 1. On `lookup`, we check whether the bits are 1 for each hash function. 
+
+If we do not have enough memory to fit the entire hash table, then we need to perform an external hash join. One algorithm is called a partitioned hash join, or a grace join.
+
+First, we hash $R$ and $S$ into some number of buckets with a hash function $h_1$. We then perform a regular hash join on each pair of matching buckets between $R$ and $S$ using another hash function $h_2$. 
+
+If the buckets do not fit in memory, then use recursive partitioning to split the table into chunks that will fit. We need to build another hash table for the bucket (with a separate hash function $h_3$) and probe that bucket for each tuple of the other table's bucket. 
+
+In a partitioned hash join, the partitioning phase will take $2(M + n)$ operations, and the probing phase will take $M + N$ operations, for a total of $3(M + N)$ operations. 
+
+#### Sort-Merge Join
+
+In a sort merge-join, we:
+1. Sort both tables on the join keys using an external merge sort
+2. Step through the two sorted tables with cursors and emit matching tuples
+
+This has a cost of:
+- Sort cost for $R$: $2M \left( 1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil \right)$
+- Sort cost for $S$: $2N \left( 1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil \right)$
+- Merge cost: $M + N$
+
+Sort-merge join is useful when the input tables are already sorted, if the output must be sorted on the join key, or if the relation doesn't fit in main memory. 
+
+#### Summary
+
+| Algorithm               | I/O Cost    |
+|-------------------------|-------------|
+| Simple Nested Loop Join | $M + mN$    |
+| Block Nested Loop Join  | $M + MN$    |
+| Index Nested Loop Join  | $M + mC$    |
+| Sort-Merge Join         | $M + N + S$ |
+| Hash Join               | $3(M + N)$  |
+
+## Query Planning
+
+A DBMS converts a query into a plan comprised of logical operators. Data flows from the leaves up toward the root, which is the result of the query. 
+
+A DBMS's ==processing model== defines how the system executes a query plan. 
+
+### Iterator Model
+
+In the iterator model, each query plan operator implements three functions: `open()`, `next()`, and `close()`. The operator implements a loop that calls `next()` on its children to retrieve their tuples and then process them. On each invocation, the operator returns either a single tuple or a `null`. 
+
+The iterator model allows for tuple pipelining. However, some operators like hash joins and `ORDER BY` must block until their child emit all their tuples.
