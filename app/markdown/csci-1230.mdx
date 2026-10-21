@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-20"
+updatedAt: "2026-10-21"
 tags:
   - "notes"
 ---
@@ -727,6 +727,10 @@ To find the UV coordinate of a point $p$ on a cube, given its normal $n$:
 1. Use the sign of each component of $n$ to determine which of the six faces $p$ lies on
 2. Map the two coordinates of $p$ that aren't fixed by $n$ linearly into $[0, 1]$, negating one where needed to keep the texture consistently oriented across faces
 
+Drag the point around the shape below to see where it lands in the UV square. The checkerboard is the texture, drawn on the surface through the parameterization itself.
+
+<UVMappingDemo shape="cube" />
+
 <Extra title="Cube UV Mapping Calculations">
 
 Consider a point $p$ on the face whose normal points along $+z$ (i.e. $p_z = 0.5$). The other two coordinates, $p_x$ and $p_y$, each range over $[-0.5, 0.5]$ and map directly and linearly into $[0, 1]$:
@@ -747,7 +751,7 @@ To find the UV coordinate of a point $p$ on a cylinder, given its normal $n$:
 1. If $n_y \neq 0$, $p$ is on a cap. Map $p$'s $x$ and $z$ coordinates directly onto $[0, 1]$.
 2. Otherwise, $p$ is on the side. Find the angle $\theta$ around the circle and map it to $u$, then normalize the height to get $v$.
 
-![Cylinder UV mapping](/csci-1230/cylinder-uv-mapping.png)
+<UVMappingDemo shape="cylinder" />
 
 <Extra title="Cylinder UV Mapping Calculations">
 
@@ -773,6 +777,8 @@ To map $\theta$ to $u \in [0, 1]$:
 - If $\theta < 0$, $u = -\theta/(2\pi)$
 - If $\theta \geq 0$, $u = 1 - \theta/(2\pi)$
 
+These two cases agree at $\theta = \pm\pi$, where both give $u = 0.5$, and disagree at $\theta = 0$, where $u$ wraps from $1$ back to $0$. So the seam lands on the $+x$ meridian.
+
 Since the cylinder spans $y \in [-0.5, 0.5]$, the height maps directly into $[0, 1]$ by shifting:
 
 $$
@@ -790,7 +796,7 @@ To find the UV coordinate of a point $p$ on a cone, given its normal $n$:
 2. Otherwise, if $p_y = 0.5$, $p$ is at the apex. Every value of $\theta$ maps to the same point there, so $(u, v)$ defaults to a fixed value, $(0.5, 0.5)$.
 3. Otherwise, $p$ is on the side. Find $\theta$ and $u$ the same way as a [cylinder](#cylinders), and let $v = p_y + 0.5$.
 
-![Cone UV mapping](/csci-1230/cone-uv-mapping.png)
+<UVMappingDemo shape="cone" />
 
 #### Spheres
 
@@ -801,7 +807,7 @@ To find the UV coordinate of a point $p$ on a sphere:
 2. If $v \in \{0, 1\}$, $p$ is at a pole, where every value of $\theta$ maps to the same point, so $u$ defaults to $0.5$
 3. Otherwise, find $\theta$ the same way as a [cylinder](#cylinders) to get $u$
 
-![Sphere UV mapping](/csci-1230/sphere-uv-mapping.png)
+<UVMappingDemo shape="sphere" />
 
 <Extra title="Sphere UV Mapping Calculations">
 
