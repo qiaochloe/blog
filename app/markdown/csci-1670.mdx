@@ -2,7 +2,7 @@
 title: "Operating Systems Notes"
 summary: "Booting • I/O Devices • Processes • Display"
 publishedAt: 2026-09-16
-updatedAt: 2026-10-14
+updatedAt: 2026-10-21
 tags:
 - notes
 todo: add notes about ARM64 instructions, SPSR layout (https://csci1670.github.io/notes/l06/)
@@ -289,7 +289,7 @@ A screen is composed of pixels. Each pixel is composed of multiple bits which de
 
 ![Screen](/csci-1670/screen.png)
 
-A ==framebuffer== is a region of memory[^framebuffer] that the hardware continuously reads and then renders on the display.
+A ==framebuffer== is a region of memory[^framebuffer] that the hardware continuously reads and then renders on the display. 
 
 User programs can read the `FB_INFO_BASE` to find the address of the framebuffer, and then they can write directly into this framebuffer to render things on the screen.
 
@@ -306,6 +306,52 @@ Fonts also need to be encoded in terms of bits. The most basic font encoding is 
 Modern font encodings usually use vector encodings because they scale better.
 
 </Extra>
+
+The compositor[^compositor] is responsible for copying the contents of the process' canvases into the framebuffer. This allows us to implement a tiling window manager and a floating tiling manager.
+
+![Compositor](/csci-1670/compositor.png)
+
+### Tearing
+
+If the compositor (CPU)[^compositor-cpu] and the GPU both access the framebuffer at the same time, we can get a race condition. This can result in screen glitches called **tearing**. 
+
+[^compositor-cpu]: In most modern computers, compositing can also happen in the GPU. But here we describe it as part of the operating system.
+
+![Compositor race condition](/csci-1670/compositor-race-condition.png)
+
+### Double-Buffering
+
+A race condition is defined as when two entities access the same memory location at the same time, and at least one operation is a write. To avoid a race condition, we can instead read and write from *different* framebuffers using a technique called **double buffering**.[^avoid-race-condition]
+
+[^avoid-race-condition]: A mutex on the framebuffer is also possible, but that would be too slow.
+
+![Double buffering](/csci-1670/double-buffering.png)
+
+### Damage-Tracking
+
+Furthermore, we need to make sure that the compositor runs fast enough to update its framebuffer 30-60x a second. For example, we may want to do **damage-tracking** to check which process' canvases actually changed since our last read.[^damange-tracking-granularity]
+
+[^damange-tracking-granularity]: It is possible to do damage-tracking on different levels of granularity, such as per-pixel, per-row, or per-canvas. Modern systems track damage as rectangles.
+
+![Damage tracking](/csci-1670/damage-tracking.png)
+
+### Wait for Vsync
+
+Recall that the process is writing to its canvas and the compositor is copying those contents to the framebuffer. It is possible for the process to be interrupted before it is finished writing to its canvas. 
+
+We thus need to make sure that the process itself and the compositor are synchronized. One solution to this is "**wait for vertical sync**," which tells the compositor to wait for the process to finish writing.[^wait-for-vsync-alt]
+
+![Wait-for-vsync](/csci-1670/wait-for-vsync.png)
+
+[^wait-for-vsync-alt]: Double buffering again is also possible. 
+
+## Privilege Separation
+
+On a system call, the hardware will:
+1. Save the current `pc` and `PSTATE`
+2. Set `pc` to a fixed location in the exception vector table
+3. Switch to the kernel stack
+4. Mask interrupts
 
 ## Appendix
 
@@ -348,6 +394,11 @@ ARM64 has several exception levels which control hardware access permissions.
 - EL2 ("hypervisor")
 - EL1 ("kernel")
 - EL0 ("userspace")
+
+The ARM architecture allows privileged exception levels (EL1, EL2, EL3) to use either their own dedicated stack pointer or the stack pointer of EL0 (user space). This is designated with the ELX_h (handler) or ELX_t (thread) suffixes:
+
+- The handler suffix means that the processor should use the privileged `SP_ELX`. The OS typically uses `EL1_h` to execute code with stack pointer `SP_EL1`.
+- The thread suffix means that the processor should use `SP_EL0` (unprivileged). This is used in early boot or trap handlers.
 
 The only way to move from a lower EL to a higher EL is to trigger a hardware exception, such as via supervisor calls (`SVC`), hypervisor calls (`HVC`), or secure monitor calls (`SMC`).
 
@@ -474,3 +525,5 @@ save_context:
 The Raspberry Pi is really a Broadcom VideoCore graphics processor that happens to have 4 ARM cores attached to it. This means that the display hardware belongs to the GPU, not to the CPU.
 
 The CPU can request access to the display by sending a message through the **mailbox**. The CPU writes the address of a request buffer into one register; the GPU reads it, acts on it, writes results back into the buffer, and posts a reply.
+
+[^]: The Mythical Man Month was written by Fred Books, who worked on the Multics project.
