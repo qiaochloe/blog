@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-21"
+updatedAt: "2026-10-22"
 tags:
   - "notes"
 ---
@@ -628,11 +628,12 @@ A **bounding volume** is a data structure that encloses complex objects in simpl
 
 An **axis aligned bounding box** (AABB) is a cuboid where each edge is parallel to either the x, y, or z axis. This is convenient because we can uniquely represent the cuboid as its min and max values of x, y, and z.
 
-A ==bounding volume hierarchy== (BVH) arranges the bounding volumes in a hierarchical structure. There are two main approaches[^bvh] to building BVHs:
-1. Find nearby objects, group them under one bounding volume. Repeat until the entire scene is under one bounding volume.
-2. Start with all objects in the scene, and split them into subsets using some kind of heuristic.
+A ==bounding volume hierarchy== (BVH) arranges the bounding volumes in a hierarchical structure. There are two main approaches to building BVHs:
+1. Find nearby objects, group them under one bounding volume. Repeat until the entire scene is under one bounding volume.[^bottom-up-bvh]
+2. Start with all objects in the scene, and split them into subsets using some kind of heuristic.[^top-down-bvh]
 
-[^bvh]: The former produces very tight bounds, but it is slow to construct because it is hard to "find nearby objects". The latter is easy to implement and efficient to run, but the trees it produces are generally not as good.
+[^bottom-up-bvh]: The bottom-up approach produces very tight bounds, but it is slow to construct because it is hard to "find nearby objects". 
+[^top-down-bvh]: The top-down is easy to implement and efficient to run, but the trees it produces are generally not as good.
 
 ![BVH](/csci-1230/bvh.png)
 
@@ -895,6 +896,53 @@ An easing function has the following properties:
 **References**: [CSCI 1230 Lab 5: Terrain](https://cs1230.graphics/labs/lab5-get-normals/)
 
 ## Sampling, Reconstruction, and Antialiasing
+
+All images begin as a continuous signal. When a photograph is taken, this continuous signal is turned into a discrete signal in a process called ==sampling==. Values stored in discrete image pixels are point samples of the original continuous signal.[^little-squares] Later on, the discrete signal can be ==reconstructed== into a continuous signal. 
+
+[^little-squares]: ["A Pixel is Not A Little Square"](https://alvyray.com/Memos/CG/Microsoft/6_pixel.pdf)
+
+When we undersample a high-frequency signal, leading to an incorrect reconstruction with a low-frequency signal, this is called ==aliasing==. Aliasing can cause issues like jaggies and crawlies. ==Anti-aliasing== smooths out pixel values around by averaging nearby values.
+
+### Supersampling
+
+One way to combat aliasing caused by undersampling is to ==supersample==. In supersampling, we sample at multiple places per pixel,[^spp] and then we combine these samples to get one final color for the pixel.
+
+[^spp]: Most raytracing renderers will expose a "samples per pixel" (spp) parameter.
+
+How should we distribute our samples for a pixel? 
+- Regular grid sampling can still produce the stair-stepping artifacts (jaggies)
+- Random sampling can produce noisy artifacts 
+- Stratified random sampling tries to combine the best of both worlds
+
+![Supersampling types](/csci-1230/supersampling.png)
+
+How many samples per pixel should we use?
+- Adaptive sampling schemes send out a small number of rays to check how much variation in color there is and check if more rays is warranted
+
+How should we combine the samples to get the final color for the pixel?
+- Average the values of the samples
+
+### Distributed Raytracing
+
+Distributed raytracing[^dist-ray-tracing] is a rendering technique that distributes ray samples across multiple domains.
+- To achieve supersampling and aliasing, mutliple rays are shot through a single pixel into the scene.
+- To achieve motion blur, multiple rays are shot across time.
+- To achieve depth of field and defocus blur, multiple rays are shot through an area of the lens instead of just a point.
+- To achieve soft shadows,[^soft-shadows] glossy reflections, and translucency, multiple rays are shot across an area.
+
+[^dist-ray-tracing]: ["Distributed ray tracing"](https://dl.acm.org/doi/10.1145/964965.808590) by Cook, Porter, and Carpenter
+
+[^soft-shadows]: To implement soft shadows, we can model point lights as an area light instead. Then we can send multiple shadow rays across the area of the light, record the percentage that is blocked, and create a shadow gradient. 
+
+### Prefiltering
+
+Aliasing will not happen if we sample greater than twice the highest frequency in the sample (Nyquist limit]). Unfortunately, discontinuous signals[^discont-signal] have an infinite frequency, which means that we would theoretically need infinite sampling to avoid aliasing.
+
+[^discont-signals]: This shows up everywhere, from object textures to shadow boundaries.
+
+One solution to this is to just get rid of frequencies that are too high for our sampling process. This is called a low-pass filter. Unfortunately, we usually don't have access to the original signal, so the most we can do is run the filter on a reconstructed signal.
+
+### Digital Image Processing
 
 Digital image processing is the processing of images through algorithms in order to modify them or extract useful information from them. Their applications include noise removal, feature extraction, image compression, and image enhancement.
 
@@ -1177,4 +1225,3 @@ The formula for the cross product can be represented as a matrix, so this entire
 ==Quaternions== are the only rotation method that can correctly do linear interpolation. A quaternion represents a rotation as a point on the surface of a 4D hypersphere. Because we are moving along the sphere, we get shortest path and constant angular velocity.
 
 **References**: [Visualizing quaternions](https://eater.net/quaternions)
-
