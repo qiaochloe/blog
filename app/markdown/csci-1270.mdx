@@ -1,13 +1,13 @@
 ---
 title: "Databases Notes"
-summary: "Relational Algebra • SQL • Schema Design • Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning"
+summary: "Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning"
 publishedAt: "2026-09-13"
-updatedAt: "2026-10-20"
+updatedAt: "2026-10-22"
 tags:
   - "notes"
 ---
 
-## Introduction
+## Database Management System
 
 The database symbol is a cylinder because databases were originally stored on a hard disk of stacked plates.
 
@@ -32,7 +32,7 @@ DBMS design principles:
 3. Data independence; applications should not need to understand how data is stored
 4. Declarative programming
 
-## Relational Algebra
+### Relational Algebra
 
 Early database applications tightly coupled logical and physical layers, which made it difficult to make any changes to the program. To deal with the maintenance overhead, Ted Codd wrote [A relational model of data for large shared data banks](https://dl.acm.org/doi/10.1145/362384.362685), which later became the basis of the relational data model.
 
@@ -69,7 +69,7 @@ Relational algebra is based on set algebra. That means that it represents relati
 | $R \times S$                     | Generate the Cartesian product of the two relations                            |
 | $R \bowtie S$                    | Perform a natural join; only return tuples which have common attributes        |
 
-## SQL
+### SQL
 
 Unlike in relational algebra, SQL assumes that data is stored in a bag, not a set. This means that there can be duplicated rows. This is for efficiency reasons—if we do a union on two very large tables, it is expensive to deduplicate the output.
 
@@ -106,7 +106,7 @@ A ==view== is a (virtual) table that is the result of a SQL query. Typically, us
 
 Because views may be accessed frequently, it may be impractical to run the query every time. We may want to maintain a ==materialized view==, a cache of the view that is refreshed on updates or periodically.
 
-## Schema Design
+### Schema Design
 
 A good database schema ensures data integrity and has good performance. These goals are typically in conflict with each other. 
 
@@ -134,44 +134,55 @@ There are multiple levels of normalization:
 | Second Normal Form (2NF) | A table should not contain any partial dependencies where a column depends on part of a composite primary key |
 | Third Normal Form (3NF)  | A table should not contain any transitive dependencies where a column depends on another column                |
 
+### Layers of a DBMS
+
+1. The **storage manager** handles reading and writing raw pages to and from the physical disk
+2. The **buffer pool manager** manages an in-memory cache of pages
+3. The **access methods** determines how data is organized and accessed on disk
+4. The **operator execution** describes how relational operators consume and produce tuples
+5. The **query planner** parses, optimizes, and compiles a query into a plan of operators to execute
+
 ## Storage Manager
 
-Layers of a DBMS:
-1. Storage manager: handles reading and writing raw pages to and from the physical disk
-2. Buffer pool manager: manages an in-memory cache of pages
-3. Access methods: organize and access data on disk 
-4. Operator execution: implements relational operators that consume and produce tuples via the access methods
-5. Query planning: parses, optimizes, and compiles a query into a plan of operators to execute
+### Files and Pages
+
+The DBMS stores the database as **files** on the disk.[^file] Files are organized as a collection of **pages** (or blocks).[^page] The ==storage manager== is responsible for reading and writing fixed-sized pages to and from the disk. 
+
+[^file]: Typically in a proprietary binary format
+
+[^page]: There are actually three different notions of pages in a DBMS:
+    1. Hardware page, the atomic unit of I/O to a disk (4 KB)
+    2. OS page, the software abstraction of a hardware page (4 KB)
+    3. Database page, set by the DBMS (4-16 KB)
+
+    Large database pages are good for large sequential writes, but it is more complicated to ensure atomicity. Additionally, more data needs to be loaded into RAM for small reads and writes. 
+
+![File layout](/csci-1270/file-layout.png)
 
 DBMSs try to ensure that consecutive pages are stored on consecutive disk blocks. On magnetic hard disks, doing random access costs seek time and rotational latency. While this is less significant for SSDs, there may be I/O controller overheads.
 
-### Files, Pages, and Tuples
+### Page and Tuple Layout
 
-The DBMS stores the database in a ==file== on disk, typically in a proprietary binary format. The ==storage manager== is responsible for managing a database's files. It organizes the files as a collection of ==pages==, which is a fixed-size block of data with an offset into the file. Each page contains data such as ==tuples==.
+Every database page contains a header with metadata[^page-metadata] about the page's contents as well, as the actual **tuples**.
 
-There are three different notions of pages in a DBMS:
-1. Hardware page, the atomic unit of I/O to a disk (4 KB)
-2. OS page, the software abstraction of a hardware page (4 KB)
-3. Database page, set by the DBMS (4-16 KB)
-
-Large database pages are good for large sequential writes, but it is more complicated to ensure atomicity. Additionally, more data needs to be loaded into RAM for small reads and writes. 
-
-Every page contains a header of metadata about the page's contents, including page size, checksum, DBMS version, transaction visibility, and compression information.
+[^page-metadata]: Page metadata includes page size, checksum, DBMS version, transaction visibility, and compression information.
 
 One naive way to lay out tuples on a page is by directly placing them in a fixed array of slots. However, this requires that each tuple be a fixed size. It also makes deletions difficult.
 
-The most common layout scheme for a page is called ==slotted pages==. The slot array maps slots to the tuples' starting position offsets. The header keeps track of the number of used slots, and the offset of the last slot used. Each tuple has a fixed slot entry. 
+The most common layout scheme for a page is called ==slotted pages==. The slotted page adds another layer of indirection called the slot array, which maps slots to the tuple offsets. The header keeps track of the number of used slots and the offset of the last slot used.
 
 Some benefits of the slotted pages are:
 - During deletion, the slot array can be easily modified to hide the deletion 
 - Slots can be heterogeneous sizes
-- Compaction can be delayed.
+- Compaction of the actual data can be delayed
 
 ![Naive vs. slotted pages approach](/csci-1270/slotted-pages.png)
 
-The DBMS also needs a way to keep track of individual tuples. This is commonly the page id and the offset into the page.
+The DBMS also needs a way to keep track of individual tuples. The tuple's identifier (also called record ID) is typically the page ID and the slot number. 
 
-Tuples may have a header to specify things like the ==null value bitmap==. Having a null value bitmap allows us to save space, since we don't need to store the null value. For example, a tuple with the value `{101, 13, null}` would have the null value bitmap 001, allowing us to only allocate `101` and `13` on the disk. The schema is typically *not* stored in the tuple header.
+Tuples may have a header to specify things like the ==null value bitmap==. Having a null value bitmap allows us to save space, since we don't need to store the null value.[^null-value-bitmap-example] 
+
+[^null-value-bitmap-example]: For example, a tuple with the value `{101, 13, null}` would have the null value bitmap 001, allowing us to only allocate `101` and `13` on the disk.
 
 ### The Operating System
 
@@ -185,35 +196,41 @@ However, most modern operating systems *do* use the file system API exposed by t
 
 ## Buffer Pool Manager
 
-The buffer pool is a region of RAM managed by the DBMS. It is organized as an array of fixed-sized pages, where each array entry is called a frame. When the DBMS requests a page to be loaded from disk, a copy of the page is placed in a frame.
+The buffer pool manager sits directly on top of the storage manager. It manages an in-memory cache of pages so that the DBMS does not need to hit the disk on every access. The cache is called a **buffer pool** and each page is called a **frame**.
 
-The database wants to carefully control when dirty pages are written back to disk. It wants to use the RAM as a ==write-back cache== for disk, not as a write-through cache.
+The buffer pool manager handles:
+- Fetching a page (from the buffer pool if cached, else asking the storage manager to read it from disk)
+- Pinning and unpinning pages
+- Deciding which page to evict when the pool is fool
+- Marking pages as dirty and flusing them back via the storage manager
 
-The ==page table== keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty.
+The ==page table== keeps track of pages that are currently in memory, and it also keeps additional metadata about the dirty flag and the reference count. The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
 
-The page table is usually a fixed-sized map protected with latches to ensure thread-safe access.
+The DBMS *cannot* evict pages from the buffer pool if the reference count is non-zero. The DBMS should probably also write back the page to disk before eviction if the page is dirty. But the database wants to carefully control *when* dirty pages are written back to disk. It wants to use the RAM as a **write-back cache** for disk, not as a write-through cache.
 
 ## Access Methods
 
-There are several ways to manage pages in files on disk, which determine how the base table's tuples are physically laid out:
-- Heap file organization
-- Sequential or sorted file organization (ISAM)
-- Tree file organization
-- Hashing file organization
+Access methods sit on top of the buffer pool manager. To find, insert, or delete a record, an access method uses a record ID to locate it. It then asks the buffer pool manager for the page by page ID, and then uses the page's slotted layout to find the tuple at the given slot number.
 
 ### File Organization
 
+Here are some data structures for file organization:
+- Heap file organization
+- Hashing file organization
+- Sequential or sorted file organization (ISAM)
+- Tree file organization
+
 A ==heap file== is a collection of pages with tuples that are stored in random order. A ==page directory== tracks the physical location of pages for a database file, and also records metadata about available space.
 
-Unlike a heap file organization, a ==hashing file== organization groups tuples by a hash of some attribute, so the underlying data structure is a hash table rather than a directory.
+A ==hashing file== organization groups tuples by a hash of some attribute, so the underlying data structure is a hash table. A hash table[^hash-table] is an array of values. For a given `key` and number of slots `n`, we can compute `hash(key) % n` to get an offset into the array. 
 
-A hash table is an array of values. For a given `key` and number of slots `n`, we can compute `hash(key) % n` to get an offset into the array. For a database, we want a hash function that is fast and has a low collision rate. We do not want or need cryptographic properties, like one-way or random oracle. Examples of good database hash functions include CRC-64, MurmurHash, Google CityHash, Facebook XXHash, and GoogleFarmHash.
+[^hash-table]: For more information about different hashing schemes, see [Hash Tables](/data-structures-and-algorithms#hash-tables)
 
-For more information about different hashing schemes, see [Hash Tables](/data-structures-and-algorithms#hash-tables)
+For a database, we want a hash function that is fast and has a low collision rate. We do not want or need cryptographic properties, like one-way or random oracle. Examples of good database hash functions include CRC-64, MurmurHash, Google CityHash, Facebook XXHash, and GoogleFarmHash.
 
 ### Table Indexes
 
-The file organizations above describe how the base table itself is stored. A table index is a separate, redundant data structure built on top of the base table for efficient access using some attribute.
+The file organizations above describe how the base table itself is stored. A **table index** is a separate, redundant data structure built on top of the base table for efficient access using some attribute.
 
 It is the job of the DBMS to:
 - Ensure that the table and index are synchronized
@@ -221,34 +238,38 @@ It is the job of the DBMS to:
 
 ### B+ Trees
 
-A B+ tree is a self-balancing tree that keeps data sorted and allows searches, sequential access, insertions, and deletions in O(log n). 
+The standard index implementation is the ==B+ tree==.[^b-tree] A B+ tree is a self-balancing tree that keeps data sorted and allows searches, sequential access, insertions, and deletions in O(log n). 
+
+[^b-tree]: A B+ tree is often used interchangeably with a B-tree. In a regular B-tree, keys and values are stored in all the nodes in the tree. A B+ tree stores values only in leaf nodes, and inner nodes are only used for search. While B-trees are more space-efficient, B+ trees are better for sequential or concurrent access.  
 
 It should maintain the following invariants:
-- It is perfect balanced. Every leaf node is at the same depth in the tree.
+- It is perfect balanced, and every leaf node is at the same depth in the tree
 - Every node other than the root is at least half-full
 
-Let $n$ be the number of keys on a node and let $m$ be the maximum number of children. This gives us:
+Let $n$ be the number of keys on a node and let $m$ be the maximum number of children of a node. Then it must be the case that:
 
 $$
 \lceil m / 2 \rceil - 1 \leq n \leq m - 1
 $$
 
-Every B+ tree node is comprised of an array of key-value pairs. 
-- The keys are derived from the attributes that the index is based on 
-- The value differs based on whether it is an inner node or leaf node
+Every B+ tree node holds an array of key-value pairs. The keys are always derived from the columns the index is built on.[^b-tree-keys] The values differ by node type:
+- In an inner node, the value is just a pointer to a child node
+- In a leaf node, the data is either the actual tuple (in a clustered primary index) or a pointer to the tuple (in a non-clustered secondary index)
+
+[^b-tree-keys]: For example, if you have an index on `user_id`, every node's keys are `user_id` values, kept sorted.
+
+![B+ trees](/csci-1270/b-tree.png)
 
 A B+ tree node also contains sibling pointers for the sibling pages on the left and right.
 
-In a ==clustered index== (primary index), the leaves store the full row data, ordered by the index key. Since the rows physically live in this one sorted structure, a table can only have one clustered index. In a ==non-clustered index== (secondary index), the leaves store the index key plus a pointer to the actual row.
+To insert, find the correct leaf and insert the entry in sorted order.
 
-In a regular B-tree, keys and values are stored in all the nodes in the tree. A B+ tree stores values only in leaf nodes. Inner nodes are only used for search. While B-trees are more space-efficient, B+ trees are better for sequential or concurrent access.  
+If the leaf is now over capacity, split it:
+1. Divide its entries evenly into two leaf nodes
+2. Copy the middle key up into the parent as a separator
+3. Insert a new entry for this separator into the parent
 
-To perform insertion, find the leaf node and insert the entry in sorted order. If the leaf hits its max capacity, it must split:
-1. Redistribute entries evenly between two leaf nodes
-2. Copy up the middle key into the parent as a separator
-3. Insert index entry into the parent
-
-To split an inner node, redistribute entries evenly and push up the middle key. This can propagate up to the root.
+If that insertion overflows the parent too, split it the same way, but push up (rather than copy up) the middle key. Repeat up the tree until a node doesn't overflow, or a new root is created.
 
 To perform deletion, find the leaf node and remove the entry. If the leaf node is no longer at least half-full, try to redistribute by borrowing from adjacent siblings. If redistribution fails, merge the leaf node with a sibling. If a merge occurred, we must delete the entry from the parent of the leaf node.
 
@@ -260,15 +281,15 @@ A few common operators are scans, sorts, aggregations, and joins.
 
 ### Scans
 
-As we have seen above, an access method is the way that the DBMS accesses the data stored in a table. There are two basic approaches: (1) sequential table scan and (2) index scan.
+To get a list of tuples, we can either perform a sequential table scan or an index scan.
 
-To perform a table scan, for each page in the table:
+To perform a ==table scan==, for each page in the table:
 1. Retrieve it from the buffer pool
 2. Iterate over each tuple and check whether to include it
 
 The DBMS maintains an internal cursor that tracks the last page and slot it examined.
 
-To perform an index scan, the DBMS uses the index to find the tuples that the query needs. In a multi-index scan, the DBMS needs to choose the indices it uses,[^which-index] and it may have to perform set intersection. Set intersection can be done with bitmaps, hash tables, or Bloom filters.
+To perform an ==index scan==, the DBMS uses the index to find the tuples that the query needs. In a multi-index scan, the DBMS needs to choose the indices it uses,[^which-index] and it may have to perform set intersection. Set intersection can be done with bitmaps, hash tables, or Bloom filters.
 
 [^which-index]: For example, consider the query below:
 
@@ -284,117 +305,126 @@ To perform an index scan, the DBMS uses the index to find the tuples that the qu
 
 ### Sorting
 
-We may want tuples to be sorted in a particular way to implement:
-- `ORDER BY`
-- `DISTINCT`
-- `GROUP BY`
-- Merge joins
-- Bulk loading sorted tuples into a B+ tree index is faster
+We may want our tuples to be sorted in a particular way in order to implement `ORDER BY`, `DISTINCT`, `GROUP BY`, or merge joins.
 
-If the data fits in memory, then we can use a standard in-place sorting algorithm. If the data does not fit in memory, then we need to do some kind of ==external sorting==. 
-
-One algorithm for external sorting is divide-and-conquer:
+If the data fits in memory, then we can use a standard in-place sorting algorithm. If the data does not fit in memory, then we need to do some kind of ==external sorting==. One algorithm for external sorting is the external merge sort:
 1. Sort chunks of data that fit in memory into sorted chunks (runs)
 2. Combine runs into longer runs
 
 Suppose we have $N$ pages of data to sort, but only $B$ buffer pages to work with at any time.
+
 1. In the first pass, we repeatedly load $B$ pages, sort them in memory, and write them back out as a sorted run of size $B$. After this pass, we have $\lceil N / B \rceil$  sorted runs, each of size $B$. 
 
 2. In subsequent passes, we need to merge sorted runs together. To merge $k$ runs simultaneously, we need $k$ input buffers plus $1$ output buffer to write the merged result. Because we only have $B$ buffers total, we can merge at most $B - 1$ runs at a time. 
 
-Each merge pass reduces the number of runs by a factor of $B - 1$, since every $B - 1$ run gets merged into $1$. Thus, the total number of passes is given by 
-$$
-1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil
-$$
+Each merge pass reduces the number of runs by a factor of $B - 1$, since every $B - 1$ run gets merged into $1$. Thus, the total number of passes is given by $1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil$.
 
-At each pass, we read and write each page once, so the total number of I/O operations is $2N \cdot (\text{\# runs})$.
+At each pass, we read and write each page once, so the total number of operations is 
+$$
+2N \cdot \left(1 + \lceil \log_{B - 1} \lceil N / B \rceil \rceil\right)
+$$
 
 ### Aggregations
 
-The DBMS needs a way to quickly find tuples with the same distinguishing attributes for grouping.
+We may also want to quickly find tuples with the same distinguishing attributes for grouping.
 
-There are typically two implementations of aggregations: sorting and hashing. Sorting aggregates is useful to fulfill `ORDER BY` and `DISTINCT` conditions. But if we do not need the data to be ordered, such as in `GROUP BY` or `DISTINCT`, then hashing is usually a better alternative. 
+There are typically two implementations of aggregations: sorting and hashing. Sorting aggregates is useful to fulfill `ORDER BY` and `DISTINCT` conditions. But if we do not need the data to be ordered, then hashing is usually a better alternative. 
+
+#### Hash Aggregates
 
 To perform hashing, we create a temporary hash table as the DBMS scans the table. For each record, we check whether there is already an entry in the hash table. For `DISTINCT`, we discard duplicates. For `GROUP BY` we perform the aggregate computation. 
 
 Some aggregations can be done incrementally as each tuple is seen. We store pairs of the form `(group_key, val)`. If we find a matching `group_key`, we just update the `val`. Otherwise, we insert a new `(group_key, val)` pair. Aggregations where we can just maintain a running value include `SUM`, `COUNT`, `AVG`, `MIN`, and `MAX`. 
 
-Using hashing for aggregation only works if everything fits in memory. Otherwise, we need to use an ==external hashing aggregate==.
+#### External Hash Aggregates
 
-Here is the divide-and-conquer algorithm:
-1. Divide tuples into partitions based on the grouping key and write them out to disk when memory gets full
-2. Read in each partition, build an in-memory hash table for each partition, and compute the aggregation
+Using hashing for aggregation only works if everything fits in memory. Otherwise, we need to use an ==external hash aggregate==. Here is the divide-and-conquer algorithm:
+1. **Partition phase**: Hash each row into one of several buckets based on the grouping key. Write each bucket out to disk.
+2. **Rehashing phase**: Read in each partition, build an in-memory hash table for each partition, and compute the aggregation.
 
 Suppose we have $B$ buffers. We will use $B - 1$ buffers for the partitions and $1$ buffer for the input data. We will use a hash function $h_1$ to split tuples into these partitions on the disk, and we will we flush the partition onto disk when the buffer page fills up.
 
 After we do this, for each partition on disk, we will read it into memory and build a second hash function $h_2$. Then we'll go through each bucket of this hash table to bring together matching tuples. This assumes that each partition fits in memory.
 
-Assuming we have $N$ total pages, we will need $2N$ operations to partition the initial data and $N$ operations to rehash it. This gives us a total of $3N$, plus whatever needs to be done to the aggregation results. 
+Assuming we have $N$ total pages, we will need $2N$ operations (1 read and write) to partition the initial data and $N$ operations to rehash it. This gives us a total of $3N$, plus whatever needs to be done to the aggregation results. 
 
 ### Joins
 
-In this section, we will focus on binary equijoin algorithms. Suppose we want to join $R$ and $S$. $R$ has $M$ pages with $m$ tuples, and $S$ has $N$ pages with $n$ tuples.
+There are several categories of join algorithms, including nested loop join, hash join, and sort-merge join. 
 
-There are several join algorithms, including nested loop join, hash join, and sort-merge join. 
+Suppose we want to perform a binary equijoin on $R$ and $S$, where $R$ has $M$ pages with $m$ total tuples, and $S$ has $N$ pages with $n$ total tuples.
 
-#### Nested Loop Joins
+#### Simple Nested Loop Joins
 
-There are simple, block, and index nested loop joins.
+In a simple nested join loop, we scan the outer table once ($M$) and scan the inner tables once for each tuple in the outer table ($mN$). This will cost us $M + mN$ operations. Thus, in general, we want the smaller table to be the outer table.
 
-In a simple nested join loop, we perform:
-
-```python
-for r in R: # tuple r
-    for s in S: # tuple s
-        if match(r, s):
-            emit()
+```
+foreach tuple r in R:
+    foreach tuple s in S:
+        if r and s match: output
 ```
 
-For each tuple in $R$, we will scan through $S$ once, costing us $M + mN$ I/O operations. Thus, in general, we want the smaller table to be the outer table.
+#### Block Nested Loop Joins
 
-In a block nested loop join, we perform:
+A block nested loop join improves on the simple algorithm by loading as many pages of $R$ into memory at once as the buffer allows, instead of just one page at a time.
 
-```python
-for page_r in R: # The pages are blocks
-    for page_s in S:
-        for r in page_r:
-            for s in page_s:
-                if match(r, s):
-                    emit()
+Suppose we have $B$ buffers available. We split them as:
+- $B - 2$ buffers for holding one block of $R$
+- 1 buffer for the current page of $S$ being scanned
+- 1 buffer for storing the output being written
+
+First, we need $M$ operations to read all of $R$. Because we have $B - 2$ buffers, we will need to process $\lceil M / (B - 2) \rceil$ blocks of $R$. For each block, we do one full rescan of $S$, costing $N$. This will give us a total cost of 
+$$
+M + \left(\lceil M / (B - 2) \rceil \cdot N \right)
+$$
+
+If the outer relation completely fits in memory, then the cost is just $M + N$. 
+
+```
+foreach block br in R:
+    foreach block bs in S:
+        foreach tuple r in br:
+            foreach tuple s in bs:
+                if r and s match: output
 ```
 
-For each block in $R$, we scan $S$ once, costing us $M + (MN)$ I/O operations. This performs fewer disk accesses.
+#### Index Nested Loop Joins
 
-If we have $B$ buffers available, then we have $B - 2$ buffers for scanning the outer table, 1 buffer for the inner table, and 1 buffer for storing output. This will give us a cost of $M + \left(\lceil M / (B - 2) \rceil \cdot N \right)$. If the outer relation completely fits in memory, then the cost is just $M + N$. 
+The basic nested loop join is inefficient because we need to do a sequential search over the inner table to check a match. Instead of doing a sequential search, we can also do an index nested loop join to find inner table matches.
 
-The basic nested loop join is inefficient because we need to do a sequential search over the inner table to check a match. Instead of doing a sequential search, we can use an index to find inner table matches.
+Assuming that the cost of each index probe is some $C$ per tuple, the total cost is 
+$$
+M + mC
+$$
 
-```python
-for r in R:
-    for s in index("r = s"):
-        if match(r, s):
-            emit()
 ```
-
-Assume that the cost of each index probe is some $C$ per tuple. Then the cost is $M + (mC)$.
+foreach tuple r in R:
+    foreach tuple s in index("r = s"):
+        if r and s match: output
+```
 
 #### Hash Joins
 
 For a hash join, the general algorithm is:
-1. Scan the outer table and populate a hash table using the hash function $h_1$ on the join attributes
-2. Scan the inner table and use $h_1$ on each tuple to jump to a location in the hash table and find a matching tuple
+1. **Build phase**: Scan the outer table and populate a hash table using the hash function $h_1$ on the join attributes
+2. **Probe phase**: Scan the inner table, and use $h_1$ on each tuple to jump to the matching bucket in the hash table 
 
-We can optimize this by creating a Bloom filter during the build phase. We can use this in the probe phase to decide if an actual probe is needed.
+During the build phase, we can also construct a Bloom filter.[^bloom] In the probe phase, we can check the filter first to skip probes that are guaranteed not to match.
 
-A Bloom filter is a probabilistic data structure that determines set membership. False negatives never occurs, but false positives can occur. On `insert`, we use `k` hash functions to set bits in the filter to 1. On `lookup`, we check whether the bits are 1 for each hash function. 
+[^bloom]: A Bloom filter is a probabilistic data structure that determines set membership. False negatives never occurs, but false positives can occur. On `insert`, we use `k` hash functions to set bits in the filter to 1. On `lookup`, we check whether the bits are 1 for each hash function. 
 
-If we do not have enough memory to fit the entire hash table, then we need to perform an external hash join. One algorithm is called a partitioned hash join, or a grace join.
+#### External Hash Joins
 
-First, we hash $R$ and $S$ into some number of buckets with a hash function $h_1$. We then perform a regular hash join on each pair of matching buckets between $R$ and $S$ using another hash function $h_2$. 
+If the hash table doesn't fit in memory, then we need to perform an external hash join. One algorithm is called a partitioned hash join, or a ==grace join==.
 
-If the buckets do not fit in memory, then use recursive partitioning to split the table into chunks that will fit. We need to build another hash table for the bucket (with a separate hash function $h_3$) and probe that bucket for each tuple of the other table's bucket. 
+First, we partition both $R$ and $S$ into buckets using a hash function $h_1$. We then perform a regular hash join on each pair of matching buckets using another hash function $h_2$. 
 
-In a partitioned hash join, the partitioning phase will take $2(M + n)$ operations, and the probing phase will take $M + N$ operations, for a total of $3(M + N)$ operations. 
+If a bucket pair still doesn't fit in memory, recursively partition it with a new hash function ($h_3$) until the pieces are small enough, then build a hash table on one side and probe with the other.
+
+The partitioning phase will take $2(M + N)$ operations, since we need to read and write every page of both relations. Once the data is partitioned, we go bucket pair by bucket pair, reading each page exactly once for a cost of $M + N$ operations. This gives us a total cost of:
+$$
+3(M + N)
+$$
 
 #### Sort-Merge Join
 
@@ -414,9 +444,9 @@ Sort-merge join is useful when the input tables are already sorted, if the outpu
 | Algorithm               | I/O Cost    |
 |-------------------------|-------------|
 | Simple Nested Loop Join | $M + mN$    |
-| Block Nested Loop Join  | $M + MN$    |
+| Block Nested Loop Join  | $M + \left(\lceil M / (B - 2) \rceil \cdot N \right)$ |
 | Index Nested Loop Join  | $M + mC$    |
-| Sort-Merge Join         | $M + N + S$ |
+| Sort-Merge Join         | $M + N + 2S$ |
 | Hash Join               | $3(M + N)$  |
 
 ## Query Planning
