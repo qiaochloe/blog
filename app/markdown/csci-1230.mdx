@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Sampling, Reconstruction, and Antialiasing"
+summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Digital Image Processing • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-22"
+updatedAt: "2026-10-24"
 tags:
   - "notes"
 ---
@@ -568,28 +568,68 @@ If it is blocked, then do not allow the light to contribute a specular and diffu
 
 ![Shadow rays](/csci-1230/shadows-ray-tracing.png)
 
-### Rays of Reflection and Refraction
+### Reflection and Refraction
 
-At each intersection with a surface, we perform raytracing again from that intersection point. 
+At each intersection with a surface, we perform raytracing again from that intersection point:
 - For a reflective surface, we trace the reflection ray about the normal vector at the surface intersection
-- For a refractive, we trace the refraction ray following Snell's law
+- For a refractive surface, we trace the refraction ray following Snell's law
 
-We then add the color returned by that recursive call to the color of our intersection point, scaled by a material parameter $k_s$ or $k_r$. We continue recursively spawning new rays until the contribution is negligible or maximum recursive depth is reached. 
+We then add the color returned by that recursive call to the color of our intersection point, scaled by a material parameter $k_s$ or $k_r$. We continue recursively spawning new rays until the contribution is negligible or maximum recursive depth is reached.[^path-tracing]
 
-Note that this only captures specular indirect light, not diffusion. A further extension of Whitted ray tracing is path tracing, which also bounces light around according to Lambert's cosine law.
+[^path-tracing]: Note that this only captures specular indirect light, not diffusion. A further extension of Whitted ray tracing is path tracing, which also bounces light around according to Lambert's cosine law.
 
-### Transparency
+<Extra title="Reflection Calculations">
 
-Transparent materials let light pass through, but they can do so in two ways:
+Given an incident ray direction $L$ pointing into the surface and a unit normal $N$, decompose $L$ into a component along $N$ and a component tangent to the surface. Reflection keeps the tangential component and flips the normal component:
 
-- **Non-refractive transparency**: the ray passes straight through the surface unchanged, just attenuated by the material's transmission coefficient $k_t$
-- **Refractive transparency**: the ray bends as it crosses the boundary between two media, following **Snell's law**:
+![Reflection calculation](/csci-1230/reflection-calculation.png)
+
+</Extra>
+
+<Extra title="Refraction Calculations">
+
+Let $L$ be the incident ray direction, $N$ the surface normal oriented against $L$, and $\eta = n_1/n_2$ the ratio of refractive indices. Then $\cos(\theta_1) = -L \cdot \hat{n}$.
+
+Snell's law states that 
+$$
+n_1 \sin(\theta_1) = n_2 \sin(\theta_2)
+$$
+
+Dividing both sides by $n_2$ gives $\sin(\theta_2) = \eta \sin(\theta_1)$. Squaring both sides and substituting $\sin^2(\theta_1) = 1 - \cos^2(\theta_1)$ gives:
 
 $$
-n_1 \sin\theta_1 = n_2 \sin\theta_2
+\sin^2(\theta_2) = \eta^2(1 - \cos^2(\theta_1))
 $$
 
-where $n_1, n_2$ are the refractive indices of the two media and $\theta_1, \theta_2$ are the angles of incidence and refraction, measured from the surface normal. A higher refractive index bends light more toward the normal.
+If $\sin^2(\theta_2) > 1$, no real $\theta_2$ satisfies this equation. 
+
+Otherwise, $\cos(\theta_2) = \sqrt{1 - \sin^2(\theta_2)}$.
+
+To find the transmitted ray $t$ as a vector, decompose $L$ into a component along $N$ and a component tangent to the surface. Since $\cos(\theta_1) = -L \cdot N$, the projection of $L$ onto $N$ is $(L \cdot N)N = -\cos(\theta_1)N$, so:
+
+$$
+L = \underbrace{L + \cos(\theta_1)N}_{\text{tangential}} - \cos(\theta_1)N
+$$
+
+The sines in Snell's law are exactly the tangential components of these unit vectors, so the transmitted ray's tangential component is the incident ray's tangential component scaled by $\eta$:
+
+$$
+t_\text{tangent} = \eta(L + \cos(\theta_1)N)
+$$
+
+The transmitted ray's normal component points further into the surface, the same way $L$'s does, with magnitude $\cos(\theta_2)$:
+
+$$
+t_\text{normal} = -\cos(\theta_2)N
+$$
+
+Adding these components together and simplifying gives the full transmitted ray:
+
+$$
+t = t_\text{tangent} + t_\text{normal} = \eta L + (\eta \cos(\theta_1) - \cos(\theta_2))N
+$$
+
+</Extra>
 
 ### Extended Illumination Equation
 
@@ -611,6 +651,18 @@ where:
 **References**: [An improved illumination model for shaded display](https://dl.acm.org/doi/10.1145/358876.358882) by Turner Whitted
 
 [^1]: Light changing speeds as it enters a medium
+
+### Distributed Raytracing
+
+Distributed raytracing[^dist-ray-tracing] extends Whitted raytracing by distributing ray samples across multiple domains, rather than tracing a single ray per sample point.
+- To achieve supersampling and antialiasing, multiple rays are shot through a single pixel into the scene.
+- To achieve motion blur, multiple rays are shot across time.
+- To achieve depth of field and defocus blur, multiple rays are shot through an area of the lens instead of just a point.
+- To achieve soft shadows,[^soft-shadows] glossy reflections, and translucency, multiple rays are shot across an area.
+
+[^dist-ray-tracing]: ["Distributed ray tracing"](https://dl.acm.org/doi/10.1145/964965.808590) by Cook, Porter, and Carpenter
+
+[^soft-shadows]: To implement soft shadows, we can model point lights as an area light instead. Then we can send multiple shadow rays across the area of the light, record the percentage that is blocked, and create a shadow gradient. 
 
 ### Raytracing Pipeline
 
@@ -897,15 +949,39 @@ An easing function has the following properties:
 
 ## Sampling, Reconstruction, and Antialiasing
 
-All images begin as a continuous signal. When a photograph is taken, this continuous signal is turned into a discrete signal in a process called ==sampling==. Values stored in discrete image pixels are point samples of the original continuous signal.[^little-squares] Later on, the discrete signal can be ==reconstructed== into a continuous signal. 
+All images begin as a continuous signal. When a photograph is taken, this continuous signal is turned into a discrete signal in a process called **sampling**. Values stored in discrete image pixels are point samples of the original continuous signal.[^little-squares] Later on, the discrete signal can be **reconstructed** into a continuous signal. 
 
 [^little-squares]: ["A Pixel is Not A Little Square"](https://alvyray.com/Memos/CG/Microsoft/6_pixel.pdf)
 
-When we undersample a high-frequency signal, leading to an incorrect reconstruction with a low-frequency signal, this is called ==aliasing==. Aliasing can cause issues like jaggies and crawlies. ==Anti-aliasing== smooths out pixel values around by averaging nearby values.
+When we undersample a high-frequency signal, leading to an incorrect reconstruction with a low-frequency signal, this is called **aliasing**. Aliasing can cause issues like [jaggies](https://en.wikipedia.org/wiki/Jaggies)[^jaggies] and crawlies.
+
+[^jaggies]: Here is an example of aliasing: ![Checkerboard aliasing](/csci-1230/checkerboard-aliasing.png)
+
+We can avoid aliasing by taking some techniques from digital image processing.
+
+### Digital Image Processing
+
+Digital image processing is the processing of images through algorithms in order to modify them or extract useful information from them. Their applications include noise removal, feature extraction, image compression, and image enhancement.
+
+Digital image processing is really just a form of **signal processing**. A digital image can be viewed as a discrete 2D signal which maps a 2D coordinate to a pixel value. This gives us two ways to represent the same image:
+
+- In the ==spatial domain==, the function $f(x, y)$ represents the value at each coordinate $(x, y)$.
+- In the ==frequency domain==, $F(u, v)$ describes the amplitude and phase of each 2D sinusoid needed to reconstruct the image. We get $F$ from $f$ with the Fourier transform.
+
+### The Nyquist Limit
+
+The Nyquist limit says that we can avoid aliasing only if we sample at more than twice the highest frequency present in the signal. This gives us two solutions to avoid aliasing:
+
+1. **Raise the sample rate** until it clears the signal's highest frequency. This is called supersampling.
+2. **Lower the signal's highest frequency** until it fits under a sample rate we can afford. This is called prefiltering.
+
+Note that a discontinuous signal has infinite frequency, so it is not always possible to satisfy the Nyquist limit by supersampling.
+- For geometry edges and shadow boundaries, we don't know where the discontinuity falls until we render, so we supersample. 
+- For textures we have the entire signal on disk before rendering starts, so we can prefilter.
 
 ### Supersampling
 
-One way to combat aliasing caused by undersampling is to ==supersample==. In supersampling, we sample at multiple places per pixel,[^spp] and then we combine these samples to get one final color for the pixel.
+In supersampling, we sample at multiple places per pixel,[^spp] and then we combine these samples to get one final color for the pixel. This does not eliminate aliasing on edges, but it pushes the aliased frequencies high enough that the artifacts become small.
 
 [^spp]: Most raytracing renderers will expose a "samples per pixel" (spp) parameter.
 
@@ -922,72 +998,59 @@ How many samples per pixel should we use?
 How should we combine the samples to get the final color for the pixel?
 - Average the values of the samples
 
-### Distributed Raytracing
-
-Distributed raytracing[^dist-ray-tracing] is a rendering technique that distributes ray samples across multiple domains.
-- To achieve supersampling and aliasing, mutliple rays are shot through a single pixel into the scene.
-- To achieve motion blur, multiple rays are shot across time.
-- To achieve depth of field and defocus blur, multiple rays are shot through an area of the lens instead of just a point.
-- To achieve soft shadows,[^soft-shadows] glossy reflections, and translucency, multiple rays are shot across an area.
-
-[^dist-ray-tracing]: ["Distributed ray tracing"](https://dl.acm.org/doi/10.1145/964965.808590) by Cook, Porter, and Carpenter
-
-[^soft-shadows]: To implement soft shadows, we can model point lights as an area light instead. Then we can send multiple shadow rays across the area of the light, record the percentage that is blocked, and create a shadow gradient. 
+Supersampling a pixel is one case of a more general idea: [distributed raytracing](#distributed-raytracing) spreads samples across time, lens area, and light area as well as across the pixel.
 
 ### Prefiltering
 
-Aliasing will not happen if we sample greater than twice the highest frequency in the sample (Nyquist limit]). Unfortunately, discontinuous signals[^discont-signal] have an infinite frequency, which means that we would theoretically need infinite sampling to avoid aliasing.
+Prefiltering limits the signal, so that the frequencies we cannot represent are removed from the image. A **low-pass filter** keeps frequencies below some cutoff and discards everything above it.
 
-[^discont-signals]: This shows up everywhere, from object textures to shadow boundaries.
+In the frequency domain, a low-pass filter is just multiplication of the power spectrum by a unit box function. 
 
-One solution to this is to just get rid of frequencies that are too high for our sampling process. This is called a low-pass filter. Unfortunately, we usually don't have access to the original signal, so the most we can do is run the filter on a reconstructed signal.
+Multiplication in the frequency domain is convolution in the spatial domain, so in practice we implement one as a convolution of the image with a blur kernel.[^filter-examples]
 
-### Digital Image Processing
+- A box in the frequency domain is the *ideal* low-pass filter, but its dual in the spatial domain is $\text{sinc}$, a continuous, oscillating function that is difficult to truncate.
+- The triangle filter is the linear interpolation function. The dual of the triangle filter is $\text{sinc}^2$, since a triangle is a box convolved with itself.
+- The dual of the Gaussian filter is another Gaussian function. It is usually preferred over the box filter because the Gaussian decays exponentially, so it is easy to truncate.
 
-Digital image processing is the processing of images through algorithms in order to modify them or extract useful information from them. Their applications include noise removal, feature extraction, image compression, and image enhancement.
+[^filter-examples]: ![Filters and duals](/csci-1230/filters-and-duals.png)
 
-<Extra title="Signal Processing">
+![Box and Gaussian filter](/csci-1230/box-and-gaussian-filter.png)
 
-Digital image processing is really just a form of **signal processing**. A digital image can be viewed as a discrete 2D signal which maps a 2D coordinate to a pixel value.
+### Texture Filtering
 
-In this light, there are two ways to represent images. In the **spatial domain**, the function $f(x, y)$ represents the value at each coordinate $(x, y)$. 
+Prefiltering is especially useful for textures because we have the entire original signal.
 
-We can use the Fourier transform to transform $f$ into $F$, the image's **frequency domain** representation. $F(u, v)$ describes the amplitude and phase of each 2D sinusoid needed to reconstruct the image.
+When we shade a pixel, that pixel maps to some region of texture space. There are two cases that we could face:
 
-</Extra>
+- **Magnification**: The pixel maps to less than one texel, and we are sampling the texture *faster* than it has detail. There is no aliasing, but there may be poor reconstruction.
+- **Minification**: The pixel maps to many texels, and we are sampling slower than the texture's detail. This causes undersampling and aliasing.
 
-### Convolution
+Magnification is a reconstruction problem, and minification is an aliasing problem. They need different fixes.
 
-Discrete 2D convolution takes in an image and kernel[^kernel], and produces an image.
+#### Bilinear Filtering
 
-[^kernel]: A kernel is simply a 2D matrix of values. The type definition of image and kernel is the same.
+Bilinear filtering fixes magnification. The sample point almost never lands exactly on a texel center, so we find the four texels surrounding it and interpolate between them instead of snapping to the nearest one.
 
-To do convolution:
-1. Flip the kernel[^flip][^correlation]
-2. Allocate space for an output image
-3. For each $(i, j)$ on the output image:
-    a. Do element-wise multiplication between the rotated kernel and the region of the image centered on $(i, j)$
-    b. Then compute the sum of the elements of the resulting matrix
-    c. Finally, set the value of the output image at $(i, j)$
+Let $(s, t)$ be the fractional position of the sample point within the square formed by those four texels, and let $c_{00}, c_{10}, c_{01}, c_{11}$ be their colors. Then bilinear filtering is two lerps along one axis followed by one lerp along the other:
 
-[^flip]: The flipped kernel should be rotated 180 degrees, like this:
-
-    ![Flipped kernel](/csci-1230/flipped-kernel.png)
-
-    Instead of actually flipping our kernel, we can also cleverly index into the kernel "backwards" in a way that effectively flips it.
-
-[^correlation]: If we didn't flip the kernel, we would technically be implementing correlation.
-
-For some intuition, consider what a few simple kernels do:
-- The **identity kernel** has a single `1` at the center and `0`s elsewhere.
-- The **right shift kernel** has a `1` one position to the right of center.
-- The **left shift kernel** has a `1` one position to the left of center.
 $$
-\begin{bmatrix} 0 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 0 \end{bmatrix}
-\qquad
-\begin{bmatrix} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{bmatrix}
-\qquad
-\begin{bmatrix} 0 & 0 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+c = \text{lerp}\big(\text{lerp}(c_{00}, c_{10}, s),\; \text{lerp}(c_{01}, c_{11}, s),\; t\big)
+$$
+
+![Up-scaling](/csci-1230/up-scaling.png)
+
+#### Mipmapping
+
+Texture pre-filtering fixes minification. Ahead of time we build a ==mipmap==,[^mip] a chain of successively halved, low-pass-filtered copies of the texture. At render time we measure how many texels the pixel covers, pick the level whose texels are about that size, and sample the texture.
+
+[^mip]: MIP stands for multum in parvo ("much in little") because it stores a lot of prefiltered texture information with little extra storage. In fact, it costs around $1/4 + 1/16 + \cdots = 1/3$ more storage.
+
+**Building the levels.** Each level $i + 1$ is the previous level $i$ downscaled by a factor of two.
+
+**Choosing a level.** At render time we want the level whose texels are about the size of a pixel, which is
+
+$$
+\text{level} = \log_2(\text{texels per pixel})
 $$
 
 ## Appendix: Linear Algebra
@@ -1225,3 +1288,57 @@ The formula for the cross product can be represented as a matrix, so this entire
 ==Quaternions== are the only rotation method that can correctly do linear interpolation. A quaternion represents a rotation as a point on the surface of a 4D hypersphere. Because we are moving along the sphere, we get shortest path and constant angular velocity.
 
 **References**: [Visualizing quaternions](https://eater.net/quaternions)
+
+### Convolution
+
+Discrete 2D convolution takes in an image and kernel[^kernel], and produces an image.
+
+[^kernel]: A kernel is simply a 2D matrix of values. The type definition of image and kernel is the same.
+
+$$
+(f * k)(i, j) = \sum_{m} \sum_{n} f(i - m, j - n) \, k(m, n)
+$$
+
+To do convolution:
+1. Flip the kernel[^flip][^correlation]
+2. Allocate space for an output image
+3. For each $(i, j)$ on the output image:
+    a. Do element-wise multiplication between the rotated kernel and the region of the image centered on $(i, j)$
+    b. Then compute the sum of the elements of the resulting matrix
+    c. Finally, set the value of the output image at $(i, j)$
+
+[^flip]: The flipped kernel should be rotated 180 degrees, like this:
+
+    ![Flipped kernel](/csci-1230/flipped-kernel.png)
+
+    Instead of actually flipping our kernel, we can also cleverly index into the kernel "backwards" in a way that effectively flips it.
+
+[^correlation]: If we didn't flip the kernel, we would technically be implementing correlation.
+
+For some intuition, consider what a few simple kernels do:
+- The **identity kernel** has a single `1` at the center and `0`s elsewhere.
+- The **right shift kernel** has a `1` one position to the right of center.
+- The **left shift kernel** has a `1` one position to the left of center.
+$$
+\begin{bmatrix} 0 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+\qquad
+\begin{bmatrix} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{bmatrix}
+\qquad
+\begin{bmatrix} 0 & 0 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+$$
+
+Near the border of the image the kernel hangs off the edge, so we have to decide what it reads there. The usual choices are to clamp to the nearest edge pixel, wrap around to the opposite side, or reflect across the edge.
+
+![Repeat convolution](/csci-1230/repeat-convolution.png)
+
+![Wrap convolution](/csci-1230/wrap-convolution.png)
+
+![Reflect convolution](/csci-1230/reflect-convolution.png)
+
+### Separable Kernels
+
+Some 2D convolutions can be expressed as the outer product of two 1D kernels. A 2D convolution of an image with a separable kernel is equivalent to:
+- A 1D convolution of the columns of the image by the vertical 1D kernel 
+- A 1D convolution of the rows of the image by the horizontal 1D kernel 
+
+A separable kernel can be faster than a non-separable kernel. With the 2D filter, we need to do roughly $F^2WH$ calculations. With the two 1D filters, we only need to do around $2FWH$ calculations.
