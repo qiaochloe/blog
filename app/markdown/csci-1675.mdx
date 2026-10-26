@@ -1,8 +1,8 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Measuring Performance • Performance Engineering • Network I/O"
+summary: "Measuring Performance • Performance Engineering • Network I/O • Concurrency"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-18"
+updatedAt: "2026-10-25"
 tags:
   - "notes"
 ---
@@ -386,3 +386,37 @@ One issue with 1:1 threading is the additionanl overhead of context switches:
 Because M:N is difficult to implement in the kernel, many runtimes implement it themselves in userspace.
 
 ![M:N threading](/csci-1675/m-to-n-threading.png)
+
+### Moore's Law
+
+Why do we want threads?
+- Coroutines (concurrency) makes programming easier
+- Parallelism 
+
+Moore's Law states that the number of transistors on a chip should double every two years.
+
+Dennard scaling states that as transistor density increases, their power density stays constant. As the dimensions shrinks by a factor $k$, voltage and current also scale down by $k$, so power per transistor drops by $k^2$. This offsets the $k^2$ increase in transistor density, keeping power density flat. 
+
+Smaller transistors are faster because the electron needs to travel a shorter distance and the capacitance needed to switch the transistor is lower. Thus, we can get a faster CPU clock cycle for the same amount of energy.
+
+This worked from 1976 to 2006, but then stopped. The power density started to increase as transistors got smaller, melting the silicon. The end of Dennard scaling is why we currently have 3-4 GHz CPUs instead of 8 GHz CPUs.
+
+There are multiple ways to "continue" Moore's law
+- **Very Long Instruction Word** (VLIW)[^intel] executes multiple instructions per clock cycle (IPC). This is a form of instruction-level parallelism.
+- **Vectored processors** (SIMD) processes multiple pieces of data with a single instruction. This is a form of data-level parallelism.
+- **Multicore programming** runs certain instructions in parallel. Amdahl's law states that the max speedup we can get from multicore programming is:
+    $$
+    \frac{1}{1 - p + \frac{p}{2}}
+    $$
+
+    Where:
+    - $p$ is the proportion of the task that can be parallelized or improved 
+    - $s$ is the speedup factor of the parallelized portion
+
+[^intel]: Intel Itanium was a billion-dollar investment in the VLIW architecture. Unfortunately, it eventually failed because it requires either the program or the compiler to be extremely complicated. Additionally, in IO heavy contexts, data dependencies make very high IPC impossible. But SIMD was eventually adopted into x86-64.
+
+Strong scaling is how much faster our program runs for the same input, given that we increase the number of processors. Strong scaling must obey Amdahl's law.
+
+Weak scaling is how much more work (problem size) we can do with a larger number of processors.
+
+Hyper-threading (HTT) is a form of simultaneous multi-threading (SMT) that allows a single CPU to act as two cores. It does this by duplicating parts of the core, like registers and instruction pipelines.
