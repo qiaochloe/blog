@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Digital Image Processing • Sampling, Reconstruction, and Antialiasing"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-24"
+updatedAt: "2026-10-27"
 tags:
   - "notes"
 ---
@@ -966,7 +966,9 @@ Digital image processing is the processing of images through algorithms in order
 Digital image processing is really just a form of **signal processing**. A digital image can be viewed as a discrete 2D signal which maps a 2D coordinate to a pixel value. This gives us two ways to represent the same image:
 
 - In the ==spatial domain==, the function $f(x, y)$ represents the value at each coordinate $(x, y)$.
-- In the ==frequency domain==, $F(u, v)$ describes the amplitude and phase of each 2D sinusoid needed to reconstruct the image. We get $F$ from $f$ with the Fourier transform.
+- In the ==frequency domain==, $F(u, v)$ represents the image as a sum of 2D sinusoids. Here $u$ and $v$ are spatial frequencies (cycles per unit distance) along $x$ and $y$. Low frequencies correspond to coarse, slowly-varying features, while high frequencies correspond to fine detail and edges.
+
+  We get $F$ from $f$ with the Fourier transform.
 
 ### The Nyquist Limit
 
@@ -1045,13 +1047,29 @@ Texture pre-filtering fixes minification. Ahead of time we build a ==mipmap==,[^
 
 [^mip]: MIP stands for multum in parvo ("much in little") because it stores a lot of prefiltered texture information with little extra storage. In fact, it costs around $1/4 + 1/16 + \cdots = 1/3$ more storage.
 
-**Building the levels.** Each level $i + 1$ is the previous level $i$ downscaled by a factor of two.
+We have two problems we need to solve:
+1. How do we measure how many texels the pixel covers?
+2. How do we determine the mip level from the texel coverage?
 
-**Choosing a level.** At render time we want the level whose texels are about the size of a pixel, which is
+To measure the number of texels the pixel covers, we take a differential approach.
 
-$$
-\text{level} = \log_2(\text{texels per pixel})
-$$
+We want to calculate how a small shift in $x$ or $y$ on the view plane will cause a shift in the intersection point $p$ in world space. This is represented as $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$. 
+
+If we choose $dx$ and $dy$ to be the length and width of the pixel, then $\frac{\partial p}{\partial x} dx$ and $\frac{\partial p}{\partial y} dy$ will give us the sides of the quadrilateral covered by the pixel.
+
+Then we want to calculate how a small shift in a point $p$ in world space will cause a shift in $u$ and $v$ on the UV map of the texture. Finally we want to calculate how a shift in $u$ and $v$ on the UV map will cause a shift in $s$ and $t$ on the actual texture map.  
+
+By chaining this together, we can calculate how a shift in $x$ or $y$ causes a change in $s$ and $t$, giving us the amount of pixels that a pixel on the view plane covers.
+
+![Calculating region of texture map](/csci-1230/region-of-texture-map.png)
+
+Now, suppose we have $L$ mip levels, such that at $L = n$, the scale factor is $1/2^n$. If my desired scale factor is $1/s$, then the mip level should be $L = \log_2 S$.
+
+Note that:
+- We have two scale factors $X$ and $Y$. We can use the max of the two as the actual scale factor.
+- $X$ and $Y$ are not necessarily a power of $2$, so we should also linearly interpolate between the nearest two mip levels 
+
+Because our texture lookups at each mip level are done via bilinear filtering, and then we combine them with another linear interpolation, the overall method is called trilinear filtering. 
 
 ## Appendix: Linear Algebra
 
