@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Digital Image Processing • Sampling, Reconstruction, and Antialiasing"
+summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-27"
+updatedAt: "2026-11-01"
 tags:
   - "notes"
 ---
@@ -947,7 +947,7 @@ An easing function has the following properties:
 
 **References**: [CSCI 1230 Lab 5: Terrain](https://cs1230.graphics/labs/lab5-get-normals/)
 
-## Sampling, Reconstruction, and Antialiasing
+## Antialiasing
 
 All images begin as a continuous signal. When a photograph is taken, this continuous signal is turned into a discrete signal in a process called **sampling**. Values stored in discrete image pixels are point samples of the original continuous signal.[^little-squares] Later on, the discrete signal can be **reconstructed** into a continuous signal. 
 
@@ -1071,7 +1071,97 @@ Note that:
 
 Because our texture lookups at each mip level are done via bilinear filtering, and then we combine them with another linear interpolation, the overall method is called trilinear filtering. 
 
-## Appendix: Linear Algebra
+## Real-Time Graphics
+
+The real-time graphics pipeline is also called the rasterization pipeline or scanline rendering pipeline.
+
+The main difference between raytracing and a real-time graphics pipeline is that we swap the loops.
+
+```
+# raytracing
+for each pixel:
+    for each primitive:
+        trace ray 
+        intersect object
+        compute color
+
+# real-time
+for each primitive:
+    for each pixel:
+        check if primitive covers pixel
+        compute color
+```
+
+The real-time pipeline can be parallelized better, since each object can be independently processed and each pixel can be independently shaded. However, we get less photorealistic lighting effects. 
+
+### Trimeshes
+
+Graphics platforms generally only know how to render triangles. Any shape can be decomposed into triangles; this process is called ==tessellation==, and a shape tessellated into triangles is a ==trimesh==.
+
+The naive representation stores each triangle as three raw vertices, which duplicates shared vertices. The better representation is a list of vertices plus a list of triangles that index into it:
+
+```cpp
+struct Triangle { int v[3]; }
+
+struct TriMesh {
+    std::vector<glm::vec3> verts;
+    std::vector<Triangle> faces;
+}
+```
+
+For each triangle:
+- Vertices should be specified in counter-clockwise (CCW) winding order 
+- CCW order ensures that all triangles in a mesh have consistent normals
+- CCW order also enables backface culling, a rendering optimization that skips drawing triangle backs
+
+Each vertex should store interleaved position and normal data. Normals can be:
+- Per-face: one normal per triangle, computed via the cross product of two edges, $\hat{n} = \frac{(v_2-v_1) \times (v_3-v_1)}{|(v_2-v_1) \times (v_3-v_1)|}$
+- Per-vertex: computed by interpolating the normals of the triangles touching that vertex, weighted by triangle area
+
+Meshes are commonly stored on disk in the OBJ format. It lists vertex positions (`v`), vertex normals (`vn`), and faces that reference those by index (`f 1//1 2//1 3//1`). 
+
+Meshes can also be generated from:
+- Polygon modeling (Maya or Blender)
+- Curved surface modeling with splines or Bezier
+- Digital sculpting (ZBrush)
+- Procedural modeling (L-systems, shape grammars)
+- CAD modeling 
+- Generative models
+
+### OpenGL
+
+OpenGL is an industry standard API specification for real-time graphics. An implementation of OpenGL is usually implemented in C, with bindings in other languages.
+
+There are other interfaces for programming the GPU:
+- Direct3D is Microsoft's graphics framework and runs only on Windows
+- Metal is Apple's graphics framework and optimized specifically for Apple's platforms
+- Vulkan is from the same group that maintains OpenGL (Khronos); it is a newer, lower-level API than OpenGL
+
+OpenGL manages all objects and data by their ID. Every function either returns an object ID or takes in an object ID and mutates the object. Some middleware libraries (like three.js) will sit on top of the API and provide OOP support.
+
+Furthermore, OpenGL is a state-based system. The behavior of functions depends on both the input and the state of OpenGL. OpenGL also uses the state to associate objects with one another through a process called binding. For example, to OpenGL to use a shader to render a particular mess, you need to declare the shader as the *currently-bound* shader to the object.
+
+```c
+void initialize() { ... }
+
+// Render the current scene (called every frame)
+void draw() { ... }
+
+// Free up any memory
+void finalize() { ... }
+
+// Event handlers
+void onClick() { ... }
+
+// Register all the above callbacks and start the event loop
+void main() { ... }
+```
+
+To tell OpenGL to draw triangles, we send an array with all vertex information in a Vertex Buffer Object (VBO). 
+
+We also need to provide a Vertex Array Object (VAO) that describes the scheme of the VBO. For each attribute, the VAO takes in three parameters: size, stride, and pointer. Note that because VBO is a byte array, the parameters need to be multiplied by the size of the attribute. 
+
+## Appendix
 
 ### Vectors
 
