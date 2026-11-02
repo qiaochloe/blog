@@ -1,8 +1,8 @@
 ---
 title: "Operating Systems Notes"
-summary: "Booting • I/O Devices • Processes • Display"
+summary: "Booting • I/O Devices • Processes • Display • System Calls • Virtual Memory"
 publishedAt: 2026-09-16
-updatedAt: 2026-10-21
+updatedAt: 2026-11-02
 tags:
 - notes
 todo: add notes about ARM64 instructions, SPSR layout (https://csci1670.github.io/notes/l06/)
@@ -345,7 +345,13 @@ We thus need to make sure that the process itself and the compositor are synchro
 
 [^wait-for-vsync-alt]: Double buffering again is also possible. 
 
-## Privilege Separation
+## System Calls
+
+### Calling Convention
+
+The Application Binary Interface (ABI) specifies the system calls exposed by the kernel for the userspace program.
+
+Userspace programs can make a system call by invoking `svc` with the right system call number. Arguments should be passed in registers `x0`-`x5` in order. A syscall can have at most six arguments. The return value will be returned in register `x0`.  
 
 On a system call, the hardware will:
 1. Save the current `pc` and `PSTATE`
@@ -353,9 +359,39 @@ On a system call, the hardware will:
 3. Switch to the kernel stack
 4. Mask interrupts
 
+![Syscall lifecycle](/csci-1670/syscall-lifecycle.png)
+
+### Process Descriptors
+
+In Unix, everything acts like a file with a file descriptor. To implement syscalls like `read`, `write`, `fork` and `exec`, it is necessary to also implement file descriptors.
+
+![PDs](/csci-1670/pds.png)
+
+### Shell
+
+The shell uses `fork` and `execv` to run multiple programs (and pipe them). The main idea is to `fork` the shell program, modify FD 0 and 1 so that the new program reads and writes to the right FDs, and then `execv` the program.
+
+![Shell](/csci-1670/shell.png)
+
+## Virtual Memory
+
+We want to prevent one process from reading or writing into the memory of another process.
+
+### Base and Bounds
+
+One early memory protection mechanism was called **base and bounds**. In base and bounds, there is a `BASE` and `BOUNDS` register which holds the range of memory that the process can access. On each memory access, the CPU checks whether the memory falls within `[BASE, BASE + BOUNDS]`. 
+
+One issue with this scheme is that it requires that the process is contiguous in memory. To grow a process, we may need to copy the entire process space to a new place in memory. 
+
+### Segmentation
+
+As we have more processes, the physical memory may quickly grow small holes of free space, leading to **external fragmentation**. One solution to this problem is to give each memory *segment* in a process (stack, heap, code and data) a separate `BASE` and `BOUNDS` register. This idea is called **segmentation**.[^segfault]
+
+[^segfault]: The term "segmentation fault" comes from trying to access a memory address that does not fall inside the process's segment.
+
 ## Appendix
 
-This appendix contains specific details about the projects in [CSCI 1670](https://csci1670.github.io) and about ARM64 architecture.
+The appendix contains specific details about Raspberry Pi architecture, ARM64 architecture, and [CSCI 1670](https://csci1670.github.io) projects.
 
 ### Raspberry Pi Architecture
 
