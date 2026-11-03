@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics"
 publishedAt: "2026-09-10"
-updatedAt: "2026-11-01"
+updatedAt: "2026-11-02"
 tags:
   - "notes"
 ---
@@ -1160,6 +1160,16 @@ void main() { ... }
 To tell OpenGL to draw triangles, we send an array with all vertex information in a Vertex Buffer Object (VBO). 
 
 We also need to provide a Vertex Array Object (VAO) that describes the scheme of the VBO. For each attribute, the VAO takes in three parameters: size, stride, and pointer. Note that because VBO is a byte array, the parameters need to be multiplied by the size of the attribute. 
+
+OpenGL shaders are written in a DSL called GLSL. The shader programs are compiled on the CPU, and the compiled bytecode is sent to the GPU to be executed.  
+
+The vertex shader runs in parallel on every vertex contained in whatever VBO is bound when an OpenGL draw command is issued. 
+- The inputs are the attributes contained in the VBO, as specified by the VAO, as well as the uniform variables declared and bound by the user
+- The outputs are the output vertex positions and and any other per-vertex outputs the user wants to compute
+
+The fragment shader runs in parallel on every fragment produced by the rasterization stage
+- The inputs are the interpolated outputs from the vertex shader, as well as the uniform variables declared and bound by the user
+- The outputs are the depth of the fragment and any color outputs
 
 ## Appendix
 
