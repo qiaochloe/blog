@@ -744,23 +744,9 @@ The naive cost of constructing the kd-tree is $O(n^2 \log n)$ because for each o
 
 Other than shading, we may also want to add texture to an object. One way to do this is with ==texture mapping==. 
 
-Pros of texture maps:
-- Can be stored once and reused
-- Can be easily compressed to reduce size
-- Can be rendered quickly
-- Fairly intuitive to work with for artists
-- Can be used for far-away objects (billboarding)
-
-Cons of texture maps:
-- Surfaces still look smooth because geometry is unchanged 
-
 Texture mapping has two subproblems:
-- Surface parameterization: mapping the 3D surface to a 2D plane (UV plane)
-- Texturing: assigning a value to each point on the UV plane
-
-There are two main types of texturing:
-- Image texturing: use $(u, v)$ to index into an image
-- Procedural texturing: use $(u, v)$ as input to some function which computes the texture
+- Surface parameterization involves mapping the 3D surface to a 2D plane (UV plane)
+- Texturing involves assigning a value to each point on the UV plane
 
 ### Surface Parameterization
 
@@ -779,8 +765,6 @@ Consider a unit cube spanning $[-0.5, 0.5]^3$.
 To find the UV coordinate of a point $p$ on a cube, given its normal $n$:
 1. Use the sign of each component of $n$ to determine which of the six faces $p$ lies on
 2. Map the two coordinates of $p$ that aren't fixed by $n$ linearly into $[0, 1]$, negating one where needed to keep the texture consistently oriented across faces
-
-Drag the point around the shape below to see where it lands in the UV square. The checkerboard is the texture, drawn on the surface through the parameterization itself.
 
 <UVMappingDemo shape="cube" />
 
@@ -893,8 +877,6 @@ In manual UV mapping, the artist cuts seams into the object to unfold it into UV
 
 Once each vertex of a triangle has a $(u, v)$ value, the $(u, v)$ for any point inside the triangle is found by interpolating the three vertex values, using the same barycentric-coordinate technique used to interpolate colors below. This is what lets a texture stretch smoothly across a triangle instead of being constant per-face.
 
-![Triangle UV mapping](/csci-1230/triangle-uv-mapping.png)
-
 If we can find the color on every vertex of the object, then we can find the color for any point on the surface. 
 
 First, let's consider interpolating between two values along a line. Given two colors $A$ and $B$, we can compute any value along the line by evaluating 
@@ -907,7 +889,7 @@ $t$ and $1 - t$ are the barycentric coordinates of the line segment. This techni
 
 ### Image Texturing
 
-In most cases, the image coordinates will be different from texture (UV) coordinates. Suppose that the image has a width $W$ and height $H$, and the UV plane is the unit plane. Then the mapping is:
+THe UV coordinates are usually given as a float from $0$ to $1$. The image coordinates will usually be different from texture (UV) coordinates. Suppose that the image has a width $W$ and height $H$. Then the mapping is:
 
 $$
 (u, v) \mapsto \left(\lfloor uW \rfloor, \lfloor (1 - v)H \rfloor\right)
@@ -1043,27 +1025,74 @@ $$
 
 #### Mipmapping
 
-Texture pre-filtering fixes minification. Ahead of time we build a ==mipmap==,[^mip] a chain of successively halved, low-pass-filtered copies of the texture. At render time we measure how many texels the pixel covers, pick the level whose texels are about that size, and sample the texture.
+Texture pre-filtering fixes minification. First, we build a ==mipmap==,[^mip] a chain of successively halved, low-pass-filtered copies of the texture. At render time we measure how many texels the pixel covers, pick the level whose texels are about that size, and sample the texture.
 
 [^mip]: MIP stands for multum in parvo ("much in little") because it stores a lot of prefiltered texture information with little extra storage. In fact, it costs around $1/4 + 1/16 + \cdots = 1/3$ more storage.
 
-We have two problems we need to solve:
-1. How do we measure how many texels the pixel covers?
-2. How do we determine the mip level from the texel coverage?
+We have 3 problems we need to solve:
+1. How do we build the mipmap?
+2. How do we measure how many texels the pixel covers?
+3. How do we determine the mip level from the texel coverage?
+
+#### Downsampling
+
+To build the mipmap, we need to be able to downsample an image by an arbitrary scale factor $s$, where $s > 1$ means we are shrinking. Because the filter is separable, we can do this one dimension at a time.
+
+Downsampling lowers the sample rate, which lowers the Nyquist frequency. This means that we need to run a low-pass filter on the input before we resample it.
+
+Suppose the original image samples once per pixel. Its Nyquist frequency is $1/2$, one signal period every two pixels. After downsampling by $s$, we sample once every $s$ pixels, so the Nyquist frequency drops to $1/(2s)$. To kill everything above that, we need to multiply the frequency domain by a box with cutoff $1/(2s)$.
+
+Filter widths in the frequency domain are inversely proportional to filter widths in the spatial domain, so this means that we need to convolve by a filter of width $2s$. A kernel with native radius $r$, which is $1$ for a triangle and $2$ for a bicubic, becomes
+
+$$
+R = r \cdot \max(1, s)
+$$
+
+After the filter, we need to resample. For each output pixel $i$, we need to:
+
+1. Map its center back into the input space. Pixel $i$ covers $[i, i + 1)$ in the output coordinates, so its center is $i + 0.5$, and
+
+$$
+c = (i + 0.5)s - 0.5
+$$
+
+2. Take the filter radius $R$ from above.
+
+3. For every input pixel $j$ from $\lceil c - R \rceil$ to $\lfloor c + R \rfloor$, evaluate the kernel.
+
+    $$
+    w_j = k\!\left(\frac{j - c}{\max(1, s)}\right)
+    $$
+
+    Here $k$ is whatever kernel we picked. For a triangle, $k(x) = \max(0, 1 - |x|)$. 
+
+4. Normalize the result.
+
+    $$
+    f'(i) = \frac{\sum_j w_j f(j)}{\sum_j w_j}
+    $$
+
+<TriangleFilterDemo />
+
+#### Determining Texel Coverage
 
 To measure the number of texels the pixel covers, we take a differential approach.
 
-We want to calculate how a small shift in $x$ or $y$ on the view plane will cause a shift in the intersection point $p$ in world space. This is represented as $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$. 
+First, we want to calculate how a small shift in $x$ or $y$ on the view plane will cause a shift in the intersection point $p$ in world space. This is represented as $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$.
 
 If we choose $dx$ and $dy$ to be the length and width of the pixel, then $\frac{\partial p}{\partial x} dx$ and $\frac{\partial p}{\partial y} dy$ will give us the sides of the quadrilateral covered by the pixel.
 
-Then we want to calculate how a small shift in a point $p$ in world space will cause a shift in $u$ and $v$ on the UV map of the texture. Finally we want to calculate how a shift in $u$ and $v$ on the UV map will cause a shift in $s$ and $t$ on the actual texture map.  
+Next, we want to calculate how a small shift in a point $p$ in world space will cause a shift in $u$ and $v$ on the UV map of the texture. Note that this will likely be in object space coordinates, since texture coordinates are defined on the object itself.
+
+Finally we want to calculate how a shift in $u$ and $v$ on the UV map will cause a shift in $s$ and $t$ on the actual texture map.  
 
 By chaining this together, we can calculate how a shift in $x$ or $y$ causes a change in $s$ and $t$, giving us the amount of pixels that a pixel on the view plane covers.
 
 ![Calculating region of texture map](/csci-1230/region-of-texture-map.png)
 
-Now, suppose we have $L$ mip levels, such that at $L = n$, the scale factor is $1/2^n$. If my desired scale factor is $1/s$, then the mip level should be $L = \log_2 S$.
+#### Determining Mipmap Level
+
+Suppose we have $L$ mip levels, such that at $L = n$, the scale factor is $1/2^n$. If my desired scale factor is $1/s$, then the mip level should be $L = \log_2 S$.
 
 Note that:
 - We have two scale factors $X$ and $Y$. We can use the max of the two as the actual scale factor.
