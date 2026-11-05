@@ -2,7 +2,7 @@
 title: High-Performance Network Systems Notes
 summary: "Measuring Performance • Performance Engineering • Network I/O • Concurrency"
 publishedAt: "2026-09-10"
-updatedAt: "2026-10-25"
+updatedAt: "2026-11-05"
 tags:
   - "notes"
 ---
@@ -420,3 +420,58 @@ Strong scaling is how much faster our program runs for the same input, given tha
 Weak scaling is how much more work (problem size) we can do with a larger number of processors.
 
 Hyper-threading (HTT) is a form of simultaneous multi-threading (SMT) that allows a single CPU to act as two cores. It does this by duplicating parts of the core, like registers and instruction pipelines.
+
+### Load Balancing and Core Reallocation
+
+Datacenters want to be able to use spare CPU cycles for batch processes without hurting the performance of latency-sensitive applications. To do this, they need a policy to load-balance tasks across cores and a policy to reallocate cores across tasks.
+
+For large tasks, the overhead of load-balancing and core reallocation doesn't matter very much. For small tasks, if the average load is fixed, it is difficult to achieve better performance by reallocating cores than by allocating a fixed number of cores. The only benefit would be to adapt to changes in average load.
+
+Load-balancing policies:
+- Single queue[^cont] 
+- No load balancing
+- Power of two choices: pick two random queues and enqueue in shorter queue
+- Work stealing: if queue is empty, take half of a random queue
+- Work shedding: if queue is full, donate half to a random queue
+
+[^cont]: Single queue will eventually will be limited by contention in a single queue
+
+Core allocation policies
+- Static
+- Per-task
+- Queuing-based
+- CPU utilization-based
+- Failure to find work
+
+Mclure found that the best load-balancing policy is work stealing, while many core-allocation policies can work similarly well.
+
+References: 
+- [Scheduling Policies, McClure et al, USENIX NSDI 2022](https://www.usenix.org/conference/nsdi22/presentation/mcclure)
+
+### Network Caches
+
+To handle `get` requests, there are two types of caching: 
+1. In a look-aside cache, the client talks to both the cache and the backing store
+2. In look-through cache, the client talks only to the cache
+
+![Get cache strategies](/csci-1675/get-caches.png)
+
+To handle `set` requests, there are three types of caching:
+1. In a write-through cache, the write goes to the cache and the backing store synchronously
+2. In a read-only cache, writes go directly to the backing store, bypassing the cache
+3. In a write-back cache, the write only goes to teh cache, which is then asynchronously flushed to the backing store later
+
+![Set cache strategies](/csci-1675/set-caches.png)
+
+In 2013, Facebook had a caching problem with their look-aside cache with a read-only invalidate-on-write.[^memcache]
+- For a read-only cache, there can be a **thundering herd** problem. If there are many clients reading from a cache, a single `set` request can invalidate the cache entry, causing all the clients to request the entry from the backing store.
+
+    ![Thundering herd](/csci-1675/thundering-herd.md)
+
+- For the read-only cache, there can also be a problem with a **stale set**. If the backing store processes set 1 and then set 2, the cache can instead receive set 2 and then set 1 from the store.
+
+    ![Stale set](/csci-1675/stale-set.png)
+
+Facebook solved this problem by using leases, which is a token that is handed out by the cache server when a client experiences a cache miss. Only the client holding the lease token is permitted to query the backing store to fetch the missing value, solving the thundering herd problem. Additionally, only the client holding the latest version of the lease is permitted to write to the cache, solving the stale set problem. 
+
+[^memcache]: [Scaling Memcache at Facebook](https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala)
