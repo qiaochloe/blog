@@ -223,7 +223,7 @@ $P$ should be set to the camera's coordinates $(p_x, p_y, p_z)$ in world space.
 We can calculate $d$ in three steps: 
 1. Given a coordinate of a pixel $(i, j)$ on the view plane, convert it into the corresponding 3D point $(u, v, k)$ on the view plane in camera space.
 2. Transform $(u, v, k)$ into world space using the inverse view matrix, creating $(q_x, q_y, q_z)$.
-3. Then $d$ is simply $(p_x, p_y, p_z) - (q_x, q_y, q_z)$.
+3. Then $d$ is simply $(q_x, q_y, q_z) - (p_x, p_y, p_z)$.
 
 The first step is given by
 $$
@@ -1078,17 +1078,92 @@ $$
 
 To measure the number of texels the pixel covers, we take a differential approach.
 
-First, we want to calculate how a small shift in $x$ or $y$ on the view plane will cause a shift in the intersection point $p$ in world space. This is represented as $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$.
+1. First, we want to calculate how a small shift in $x$ or $y$ on the view plane will cause a shift in the intersection point $p$ in world space. This is represented as $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$. If we choose $dx$ and $dy$ to be the length and width of the pixel, then $\frac{\partial p}{\partial x} dx$ and $\frac{\partial p}{\partial y} dy$ will give us the sides of the quadrilateral covered by the pixel.
 
-If we choose $dx$ and $dy$ to be the length and width of the pixel, then $\frac{\partial p}{\partial x} dx$ and $\frac{\partial p}{\partial y} dy$ will give us the sides of the quadrilateral covered by the pixel.
+2. Next, we want to calculate how a small shift in a point $p$ in world space will cause a shift in $u$ and $v$ on the UV map of the texture. We will call this $\frac{\partial u}{\partial p}$ and $\frac{\partial v}{\partial p}$.[^du-dp]. 
 
-Next, we want to calculate how a small shift in a point $p$ in world space will cause a shift in $u$ and $v$ on the UV map of the texture. Note that this will likely be in object space coordinates, since texture coordinates are defined on the object itself.
+[^du-dp]: In reality, there should be six derivative values here, since $p$ consists of the $x$, $y$, and $z$ dimensions. Note that this will likely be in object space coordinates, since texture coordinates are defined on the object itself.
 
-Finally we want to calculate how a shift in $u$ and $v$ on the UV map will cause a shift in $s$ and $t$ on the actual texture map.  
+3. Finally we want to calculate how a shift in $u$ and $v$ on the UV map will cause a shift in $s$ and $t$ on the actual texture map. We will call this $\frac{\partial s}{\partial u}$, $\frac{\partial t}{\partial u}$, $\frac{\partial s}{\partial v}$, and $\frac{\partial t}{\partial v}$.
 
-By chaining this together, we can calculate how a shift in $x$ or $y$ causes a change in $s$ and $t$, giving us the amount of pixels that a pixel on the view plane covers.
+By chaining this together, we can calculate how a shift in $x$ or $y$ causes a change in $s$ and $t$, giving us the amount of pixels that a pixel on the view plane covers. For example,
+
+$$
+\frac{\partial s}{\partial x} = \frac{\partial p}{\partial x} \cdot \frac{\partial u}{\partial p} \cdot \frac{\partial s}{\partial u}
+$$
 
 ![Calculating region of texture map](/csci-1230/region-of-texture-map.png)
+
+<Extra title="Ray Derivative Calculations" >
+To find $\frac{\partial p}{\partial x}$, recall from [Primary Rays](#primary-rays) that a ray takes the form $p = P + td$. Since $P$ is constant, the product rule gives:
+
+$$
+\frac{\partial p}{\partial x} = \frac{\partial}{\partial x}[P + td] = t\frac{\partial d}{\partial x} + \frac{\partial t}{\partial x}d
+$$
+
+This leaves two unknowns to solve for, $\frac{\partial d}{\partial x}$ and $\frac{\partial t}{\partial x}$.
+
+Recall that $d = xu + yv - kw$, where $x$ and $y$ are the view plane pixel coordinates and $u$, $v$, $w$ are the camera axes in world space. Differentiating with respect to $x$ holds every term fixed except $xu$:
+
+$$
+\frac{\partial d}{\partial x} = u
+$$
+
+For $\frac{\partial t}{\partial x}$, treat the intersected surface as locally planar. It has a constant unit normal $\hat n$ and lies at perpendicular distance $\delta$, so $\hat n \cdot p = \delta$. Differentiating both sides with respect to $x$ and substituting the product rule result above:
+
+$$
+\begin{aligned}
+\hat n \cdot \frac{\partial p}{\partial x} &= 0 \\
+t\left(\hat n \cdot \frac{\partial d}{\partial x}\right) + \frac{\partial t}{\partial x}(\hat n \cdot d) &= 0 \\
+\frac{\partial t}{\partial x} &= -\frac{t\left(\hat n \cdot \frac{\partial d}{\partial x}\right)}{\hat n \cdot d}
+\end{aligned}
+$$
+
+Since $\hat n$ is constant for a plane, it doesn't vary with $x$. Plugging $\frac{\partial t}{\partial x}$ and $\frac{\partial d}{\partial x} = u$ back into the product rule result gives $\frac{\partial p}{\partial x}$ in full.
+
+</Extra>
+
+<Extra title="Texture Coordinate Derivative">
+
+We want $\frac{\partial u}{\partial p}$ and $\frac{\partial v}{\partial p}$. Note that these texture coordinates $u$ and $v$ are unrelated to the camera axes $u$, $v$, $w$ used above.
+
+This step happens in object space, since texture coordinates are defined on the object itself. So before combining it with $\frac{\partial p}{\partial x}$, which is in world space, multiply $\frac{\partial p}{\partial x}$ by the object's [inverse CTM](#scenes) to bring it into object space first.
+
+ As a worked example, recall the [sphere](#spheres)'s parameterization: $\theta = \text{atan2}(p_z, p_x)$ and $\phi = \sin^{-1}(p_y/r)$. Then $v = \phi/\pi + 0.5$, and $u = -\theta/(2\pi)$ if $\theta < 0$, or $u = 1 - \theta/(2\pi)$ if $\theta \geq 0$.
+
+We want all six partials, $\frac{\partial u}{\partial p_x}$, $\frac{\partial u}{\partial p_y}$, $\frac{\partial u}{\partial p_z}$, $\frac{\partial v}{\partial p_x}$, $\frac{\partial v}{\partial p_y}$, $\frac{\partial v}{\partial p_z}$. Since $\text{atan2}(p_z, p_x)$ behaves like $\arctan(p_z/p_x)$ for differentiation, and $r$ is constant:
+
+$$
+\frac{\partial}{\partial p_x}[\text{atan2}(p_z, p_x)] = \frac{1}{1 + (p_z/p_x)^2}\left(-\frac{p_z}{p_x^2}\right) = -\frac{p_z}{p_x^2 + p_z^2}
+$$
+
+$$
+\frac{\partial}{\partial p_z}[\text{atan2}(p_z, p_x)] = \frac{1}{1 + (p_z/p_x)^2}\left(\frac{1}{p_x}\right) = \frac{p_x}{p_x^2 + p_z^2}
+$$
+
+$$
+\frac{\partial}{\partial p_y}\left[\sin^{-1}(p_y/r)\right] = \frac{1}{\sqrt{1 - (p_y/r)^2}}\left(\frac{1}{r}\right) = \frac{1}{\sqrt{r^2 - p_y^2}}
+$$
+
+Since $u$ depends only on $\theta$ and $v$ depends only on $\phi$, our six partials are:
+
+$$
+\frac{\partial u}{\partial p_x} = \frac{1}{2\pi}\frac{p_z}{p_x^2 + p_z^2}
+\qquad
+\frac{\partial u}{\partial p_y} = 0
+\qquad
+\frac{\partial u}{\partial p_z} = -\frac{1}{2\pi}\frac{p_x}{p_x^2 + p_z^2}
+$$
+
+$$
+\frac{\partial v}{\partial p_x} = 0
+\qquad
+\frac{\partial v}{\partial p_y} = \frac{1}{\pi\sqrt{r^2 - p_y^2}}
+\qquad
+\frac{\partial v}{\partial p_z} = 0
+$$
+
+</Extra>
 
 #### Determining Mipmap Level
 
