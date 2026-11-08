@@ -1175,6 +1175,62 @@ Note that:
 
 Because our texture lookups at each mip level are done via bilinear filtering, and then we combine them with another linear interpolation, the overall method is called trilinear filtering. 
 
+#### Ray Differentials
+
+The derivation in [Determining Texel Coverage](#determining-texel-coverage) only works for primary rays, since it assumes a ray takes the simple form $p = o + td$ with constant origin $o$. Once a ray reflects or refracts off a surface, both its origin and direction change, so $\frac{\partial p}{\partial x}$ for the child ray depends on how the parent ray's differentials were disturbed at the surface.
+
+==Ray differentials== solve this by tracking four derivatives alongside every ray: $\frac{\partial o}{\partial x}$, $\frac{\partial o}{\partial y}$, $\frac{\partial d}{\partial x}$, $\frac{\partial d}{\partial y}$, where $o$ is the ray origin and $d$ its direction. For a primary ray, $o = P$ is constant and $d = xu + yv - kw$ as in [Primary Rays](#primary-rays), so
+
+$$
+\frac{\partial o}{\partial x} = \frac{\partial o}{\partial y} = 0 \qquad \frac{\partial d}{\partial x} = u \qquad \frac{\partial d}{\partial y} = v
+$$
+
+At each intersection, we propagate these four derivatives onto the child ray, whether it is a reflection or refraction ray.
+
+<Extra title="Propagating Through Intersection">
+
+The hit point is $p = o + td$. Differentiating with respect to $x$ with the product rule, the only new term compared to [before](#determining-texel-coverage) is $\frac{\partial o}{\partial x}$, which is $0$ for a primary ray but nonzero once a ray has already bounced:
+
+$$
+\frac{\partial p}{\partial x} = \frac{\partial o}{\partial x} + t\frac{\partial d}{\partial x} + \frac{\partial t}{\partial x}d
+$$
+
+Solving for $\frac{\partial t}{\partial x}$ against the surface's local plane $\hat n \cdot p = \delta$ the same way as before, but now keeping $\frac{\partial o}{\partial x}$:
+
+$$
+\begin{aligned}
+\hat n \cdot \frac{\partial p}{\partial x} &= 0 \\
+\hat n \cdot \frac{\partial o}{\partial x} + t\left(\hat n \cdot \frac{\partial d}{\partial x}\right) + \frac{\partial t}{\partial x}(\hat n \cdot d) &= 0 \\
+\frac{\partial t}{\partial x} &= -\frac{\hat n \cdot \frac{\partial o}{\partial x} + t\left(\hat n \cdot \frac{\partial d}{\partial x}\right)}{\hat n \cdot d}
+\end{aligned}
+$$
+
+$\frac{\partial p}{\partial y}$ follows the same way, swapping $x$ for $y$. With $\frac{\partial p}{\partial x}$ and $\frac{\partial p}{\partial y}$ at the hit point in hand, we can plug directly into the [texture coordinate chain rule](#determining-texel-coverage) from before to get the texel footprint, and also use them to find the differential of the surface normal $\hat n$, needed below.
+
+</Extra>
+
+<Extra title="Propagating Through Reflection">
+
+For a mirror reflection about normal $\hat n$, the child ray's direction is $d' = d - 2(d \cdot \hat n)\hat n$, [as before](#reflection-and-refraction). Differentiating with respect to $x$, where both $d$ and $\hat n$ now vary:
+
+$$
+\frac{\partial d'}{\partial x} = \frac{\partial d}{\partial x} - 2\left[\left(\frac{\partial d}{\partial x} \cdot \hat n\right)\hat n + (d \cdot \hat n)\frac{\partial \hat n}{\partial x}\right]
+$$
+
+The child ray's origin is just the hit point, so $\frac{\partial o'}{\partial x} = \frac{\partial p}{\partial x}$ from above. This gives the full set of differentials to recurse with on the reflected ray.
+
+</Extra>
+
+<Extra title="Propagating Through Refraction">
+
+The same approach applies to the transmitted ray $t = \eta L + (\eta\cos\theta_1 - \cos\theta_2)N$ [derived above](#reflection-and-refraction): differentiate $\eta$, $\cos\theta_1$, and $\cos\theta_2$ with respect to $x$ by chaining back through Snell's law, the same way $\hat n$ was differentiated above. The origin differential is again $\frac{\partial o'}{\partial x} = \frac{\partial p}{\partial x}$.
+
+</Extra>
+
+Recursing this way, every ray in the tree carries its own $\frac{\partial o}{\partial x}, \frac{\partial o}{\partial y}, \frac{\partial d}{\partial x}, \frac{\partial d}{\partial y}$, which at the hit point gives $\frac{\partial s}{\partial x}, \frac{\partial t}{\partial x}, \frac{\partial s}{\partial y}, \frac{\partial t}{\partial y}$ via the [texture coordinate chain rule](#determining-texel-coverage).
+
+**References**: ["Tracing Ray Differentials"](https://dl.acm.org/doi/10.1145/311535.311555) by Homan Igehy
+
 ## Real-Time Graphics
 
 The real-time graphics pipeline is also called the rasterization pipeline or scanline rendering pipeline.
