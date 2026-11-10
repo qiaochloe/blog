@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics"
 publishedAt: "2026-09-10"
-updatedAt: "2026-11-02"
+updatedAt: "2026-11-09"
 tags:
   - "notes"
 ---
@@ -1290,16 +1290,14 @@ Meshes can also be generated from:
 
 ### OpenGL
 
-OpenGL is an industry standard API specification for real-time graphics. An implementation of OpenGL is usually implemented in C, with bindings in other languages.
+OpenGL is an industry standard API specification[^graphics-frameworks] for real-time graphics. An implementation of OpenGL is usually implemented in C, with bindings in other languages.
 
-There are other interfaces for programming the GPU:
-- Direct3D is Microsoft's graphics framework and runs only on Windows
-- Metal is Apple's graphics framework and optimized specifically for Apple's platforms
-- Vulkan is from the same group that maintains OpenGL (Khronos); it is a newer, lower-level API than OpenGL
+[^graphics-frameworks]: There are other interfaces for programming the GPU:
+    - Direct3D is Microsoft's graphics framework and runs only on Windows
+    - Metal is Apple's graphics framework and optimized specifically for Apple's platforms
+    - Vulkan is from the same group that maintains OpenGL (Khronos); it is a newer, lower-level API than OpenGL
 
-OpenGL manages all objects and data by their ID. Every function either returns an object ID or takes in an object ID and mutates the object. Some middleware libraries (like three.js) will sit on top of the API and provide OOP support.
-
-Furthermore, OpenGL is a state-based system. The behavior of functions depends on both the input and the state of OpenGL. OpenGL also uses the state to associate objects with one another through a process called binding. For example, to OpenGL to use a shader to render a particular mess, you need to declare the shader as the *currently-bound* shader to the object.
+An OpenGL program typically has the following shape:
 
 ```c
 void initialize() { ... }
@@ -1317,9 +1315,106 @@ void onClick() { ... }
 void main() { ... }
 ```
 
-To tell OpenGL to draw triangles, we send an array with all vertex information in a Vertex Buffer Object (VBO). 
+OpenGL manages all objects and data by their ID. Every function either returns an object ID or takes in an object ID and mutates the object. Some middleware libraries (like three.js) will sit on top of the API and provide OOP support.
 
-We also need to provide a Vertex Array Object (VAO) that describes the scheme of the VBO. For each attribute, the VAO takes in three parameters: size, stride, and pointer. Note that because VBO is a byte array, the parameters need to be multiplied by the size of the attribute. 
+#### OpenGL State Machine
+
+OpenGL functions like a state machine. The behavior of functions depends on both the input and the state of OpenGL. 
+
+There are two strategies for managing state:
+1. **Assume nothing.** When using an OpenGL function, explicitly set the values of the state parameters you depend on.
+2. **Default configuration.** Decide on a set of reasonable default values. Anytime you change one of these parameters, make sure to restore the parameter to its previous value after you're done using it. 
+
+#### VBOs and VAOs
+
+To tell OpenGL to draw triangles, we send an array with all vertex information in a ==Vertex Buffer Object== (VBO). To create a VBO, we need to:
+1. Declare a `GLuint` to store the buffer ID
+2. Generate the buffer object with `glGenBuffers`
+3. Bind the buffer to the context with `glBindBuffer`
+4. Fill the buffer with data using `glBufferData`
+
+<Extra title="VBO Code Snippet">
+
+```cpp
+GLuint vboID; // Declare a variable to store the buffer ID
+glGenBuffers(1, &vboID); // Generate 1 buffer object
+glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind the buffer
+
+// Fill the buffer with vertex data
+GLfloat vertices[] = {
+  0.5,  0.5,  0.0, // vertex 1
+  1.0,  0.0,  0.0, // color 1
+  -0.5, 0.5,  0.0, // vertex 2
+  1.0,  0.0,  0.0, // color 2
+  -0.5, -0.5, 0.0, // vertex 3
+  1.0,  0.0,  0.0, // color 3
+};
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+             GL_STATIC_DRAW)
+```
+
+Note that if you use a dynamic vector instead, the code needs to change like this:
+
+```cpp
+auto vertices = std::vector<GLfloat>{
+  0.5,  0.5,  0.0,
+  1.0,  0.0,  0.0,
+  -0.5, 0.5,  0.0,
+  1.0,  0.0,  0.0,
+  -0.5, -0.5, 0.0,
+  1.0,  0.0,  0.0,
+};
+glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(),
+           vertices.data(), GL_STATIC_DRAW);
+```
+
+</Extra>
+
+We also need to provide a ==Vertex Array Object== (VAO) that describes the scheme of the VBO. 
+
+![VBOs and VAOs](/csci-1230/vbo-and-vao.png)
+
+To create a VAO object, we need to:
+1. Declare a `GLuint` to store the VAO ID
+2. Generate the VAO with `glGenVertexArrays`
+3. Bind the VAO to the context with `glBindVertexArray`
+4. Let OpenGL know about each attribute with `glEnableVertexAttribArray`
+5. Specify the location and layout of each attribute in the VBO with `glVertexAttribPointer`
+
+The location and layout of the attribute is described by:
+- `size`: the length of one instance of the attribute. For a vertex of 3 floats, this would simply be `3`.
+- `type`: the type of variable used in the attribute. For Glfloats, this would be `GL_FLOAT`
+- `stride`: the size (in bytes) between two instances of the attribute
+- `offset`: the offset (in bytes) of the first instance of the attribute in the VBO
+
+![VAO components](/csci-1230/vao-components.png)
+
+<Extra title="VAO Code Snippet">
+
+```cpp
+GLuint vaoID; // Declare a variable to store the VAO ID
+glGenVertexArrays(1, &vaoID); // Generate a VAO
+glBindVertexArray(vaoID); // Bind the VAO
+
+// Let OpenGL know about two attributes
+glEnableVertexAttribArray(0);
+glEnableVertexAttribArray(1);
+
+// Specify location and layout 
+// (attribute index, size, type, normalized, stride, offset)
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24,
+                    reinterpret_cast<void *>(0));
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24,
+                    reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+// Clean up VBO and VAO memory
+glDeleteBuffers(1, &vboID);
+glDeleteVertexArrays(1, &vaoID);
+```
+
+</Extra>
+
+#### OpenGL Shaders
 
 OpenGL shaders are written in a DSL called GLSL. The shader programs are compiled on the CPU, and the compiled bytecode is sent to the GPU to be executed.  
 
@@ -1330,6 +1425,10 @@ The vertex shader runs in parallel on every vertex contained in whatever VBO is 
 The fragment shader runs in parallel on every fragment produced by the rasterization stage
 - The inputs are the interpolated outputs from the vertex shader, as well as the uniform variables declared and bound by the user
 - The outputs are the depth of the fragment and any color outputs
+
+**References**:
+- [CSCI 1230 Lab 9](https://cs1230.graphics/labs/lab9)
+- [OpenGL 3.1 specification](https://registry.khronos.org/OpenGL-Refpages/es3.1/)
 
 ## Appendix
 
