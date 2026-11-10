@@ -1,8 +1,8 @@
 ---
 title: Graphics Notes
-summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics"
+summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics • OpenGL • Projection and Clipping"
 publishedAt: "2026-09-10"
-updatedAt: "2026-11-09"
+updatedAt: "2026-11-10"
 tags:
   - "notes"
 ---
@@ -512,7 +512,7 @@ where:
 - $\textcolor{#d97706}{k_a O_{a\lambda}}$ is the ambient term
 - $\textcolor{#e11d48}{f_\text{att}}$ is the attenuation factor[^att]
 - $\textcolor{#6b7280}{I_{\lambda,i}}$ is the intensity of light
-- $\textcolor{#2563eb}{k_d O_{d\lambda} (\hat{N} \cdot \hat{L}_i)}$ is the diffuse term created by the Lambertian BRDF[^lamb-brdf]
+- $\textcolor{#2563eb}{k_d O_{d\lambda} (\hat{N} \cdot \hat{L}_i)}$ is the **diffuse** term created by the Lambertian BRDF[^lamb-brdf]
 - $\textcolor{#059669}{k_s O_{s\lambda} (\hat{R}_i \cdot \hat{V})^n}$ is the **specular** term created by the the Phong BRDF[^phong-brdf]
 
 [^att]: See [Light Attenuation](#light-attenuation)
@@ -872,8 +872,6 @@ An arbitrary polygonal mesh has no closed-form parametric function, so UV coordi
 - Manual UV mapping
 
 In manual UV mapping, the artist cuts seams into the object to unfold it into UV space. Seams are placed on portions of the model that are less visible or sections that could have discontinuities.
-
-![Manual UV mapping](/csci-1230/manual-uv-mapping.png)
 
 Once each vertex of a triangle has a $(u, v)$ value, the $(u, v)$ for any point inside the triangle is found by interpolating the three vertex values, using the same barycentric-coordinate technique used to interpolate colors below. This is what lets a texture stretch smoothly across a triangle instead of being constant per-face.
 
@@ -1254,7 +1252,7 @@ for each primitive:
 
 The real-time pipeline can be parallelized better, since each object can be independently processed and each pixel can be independently shaded. However, we get less photorealistic lighting effects. 
 
-### Trimeshes
+## Trimeshes
 
 Graphics platforms generally only know how to render triangles. Any shape can be decomposed into triangles; this process is called ==tessellation==, and a shape tessellated into triangles is a ==trimesh==.
 
@@ -1288,7 +1286,7 @@ Meshes can also be generated from:
 - CAD modeling 
 - Generative models
 
-### OpenGL
+## OpenGL
 
 OpenGL is an industry standard API specification[^graphics-frameworks] for real-time graphics. An implementation of OpenGL is usually implemented in C, with bindings in other languages.
 
@@ -1317,7 +1315,7 @@ void main() { ... }
 
 OpenGL manages all objects and data by their ID. Every function either returns an object ID or takes in an object ID and mutates the object. Some middleware libraries (like three.js) will sit on top of the API and provide OOP support.
 
-#### OpenGL State Machine
+### OpenGL State Machine
 
 OpenGL functions like a state machine. The behavior of functions depends on both the input and the state of OpenGL. 
 
@@ -1325,7 +1323,7 @@ There are two strategies for managing state:
 1. **Assume nothing.** When using an OpenGL function, explicitly set the values of the state parameters you depend on.
 2. **Default configuration.** Decide on a set of reasonable default values. Anytime you change one of these parameters, make sure to restore the parameter to its previous value after you're done using it. 
 
-#### VBOs and VAOs
+### VBOs and VAOs
 
 To tell OpenGL to draw triangles, we send an array with all vertex information in a ==Vertex Buffer Object== (VBO). To create a VBO, we need to:
 1. Declare a `GLuint` to store the buffer ID
@@ -1414,7 +1412,7 @@ glDeleteVertexArrays(1, &vaoID);
 
 </Extra>
 
-#### OpenGL Shaders
+### OpenGL Shaders
 
 OpenGL shaders are written in a DSL called GLSL. The shader programs are compiled on the CPU, and the compiled bytecode is sent to the GPU to be executed.  
 
@@ -1429,6 +1427,80 @@ The fragment shader runs in parallel on every fragment produced by the rasteriza
 **References**:
 - [CSCI 1230 Lab 9](https://cs1230.graphics/labs/lab9)
 - [OpenGL 3.1 specification](https://registry.khronos.org/OpenGL-Refpages/es3.1/)
+
+## Projection and Clipping
+
+he projection matrix takes the camera's view volume (a frustum) and warps it into the ==canonical view volume==, which is a cube bounded by $x,y \in [-1,1]$ and $z \in [0,-1]$. Working in a standard cube means later pipeline stages (like clipping) don't need special cases for different view volume shapes.
+
+There are two kinds of projection:
+- **Parallel**: projectors are parallel
+- **Perspective**: prallel lines converge and far objects shrink
+
+### Parallel Projection
+
+Given the view volume's width, height, and far distance, scale directly to the canonical cube:
+
+$$
+\begin{bmatrix}
+2/\text{width} & 0 & 0 & 0 \\
+0 & 2/\text{height} & 0 & 0 \\
+0 & 0 & 1/(\text{far} - \text{near}) & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+### Perspective Projection
+
+Perspective is harder because the transform also needs to make far-away things shrink. There are two steps.
+
+1. Scale the frustum. Given the angles $\theta_w$ and $\theta_h$, we can get the width and height of the frustum at the far plane. This allows us to scale x, y, z to fit into a canonical frustum, which has the far plane at $z=-1$ and corners at $\pm 1$.
+
+    $$
+    \begin{bmatrix}
+    1/(\text{far}\tan(\theta_w/2)) & 0 & 0 & 0 \\
+    0 & 1/(\text{far}\tan(\theta_h/2)) & 0 & 0 \\
+    0 & 0 & 1/\text{far} & 0 \\
+    0 & 0 & 0 & 1
+    \end{bmatrix}
+    $$
+
+    This also moves the near plane to $z = -\text{near}/\text{far}$. Let's call this value $c$.
+
+2. "Unhinge" the frustum into a cuboid. Instead of keeping the bottom row of the matrix as $[0\ 0\ 0\ 1]$, we put $-1$ in the bottom row. Dividing by $w$ ("homogenizing") implements perspective.[^homogenize]
+
+    $$
+    M_{pp} = \begin{bmatrix}
+    1 & 0 & 0 & 0 \\
+    0 & 1 & 0 & 0 \\
+    0 & 0 & 1/(1+c) & -c/(1+c) \\
+    0 & 0 & -1 & 0
+    \end{bmatrix}
+    $$
+
+[^homogenize]: Applying $M_{pp}$ to $(x,y,z,1)$ and homogenizing gives $(-x/z, -y/z, (c-z)/(z+zc), 1)$. Since x and y are divided by z, points closer to the camera (z near 0) get scaled up more, which produces perspective foreshortening.
+
+Finally, OpenGL expects z to be $[-1, 1]$, but our standard frustrum is $[0, -1]$. To map $[0, -1]$ to $[-1, 1]$, we need a matrix that will:
+1. Scale by -2 along z, bringing $[0, -1]$ to $[0, 2]$[^scale-2]
+2. Translate by -1 along z, bringing $[0, 2]$ to $[-1, 1]$
+
+[^scale-2]: Note that our camera originally looked down the $-w$ axis, but OpenGL will look up the $+w$ axis.
+
+$$
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & -2 & -1 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+Multiplying the frustum-scaling matrix, the unhinging matrix, and the OpenGL z-remap matrix together gives the final `glm::perspective` matrix.
+
+### Clipping
+
+Clipping discards the geometry outside the view volume. In 2D this is done edge-by-edge against a rectangle (Sutherland-Hodgman algorithm). In 3D, this is done face-by-face against a cuboid.
+
+The perspective divide (by $w$) is only well-defined for points inside the view volume; dividing by a negative or near-zero $z$ produces garbage for geometry behind the camera. Thus, clipping must happen **after** multiplying by the projection matrix but **before** the divide by $w$.
 
 ## Appendix
 
