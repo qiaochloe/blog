@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getFootnoteBodyHtml } from "app/utils/footnote-dom";
 
@@ -108,24 +108,47 @@ export function Sidenotes() {
     };
   }, []);
 
-  // After layout, push notes down by their actual rendered height so
-  // multi-line notes in close proximity don't overlap.
+  // Push notes down by their actual rendered height so multi-line notes in
+  // close proximity don't overlap. Reads current heights fresh each call, so
+  // it can be re-run whenever a note's height changes after its initial
+  // measurement (e.g. an image inside it finishing loading).
+  const reposition = useCallback(() => {
+    setNotes((current) => {
+      if (current.length === 0) return current;
+
+      let prevBottom = -Infinity;
+      let changed = false;
+      const adjusted = current.map((note) => {
+        const el = nodeRefs.current.get(note.id);
+        const height = el?.getBoundingClientRect().height ?? 0;
+        const top = Math.max(note.baseTop, prevBottom + MIN_GAP);
+        prevBottom = top + height;
+        if (Math.abs(top - note.top) > 0.5) changed = true;
+        return { ...note, top };
+      });
+
+      return changed ? adjusted : current;
+    });
+  }, []);
+
   useLayoutEffect(() => {
+    reposition();
+  }, [notes, reposition]);
+
+  // A note's height can change after this pass (e.g. an image inside it
+  // finishing loading) without the article itself resizing, so watch each
+  // note element directly and reposition everything when that happens.
+  useEffect(() => {
     if (notes.length === 0) return;
 
-    let prevBottom = -Infinity;
-    let changed = false;
-    const adjusted = notes.map((note) => {
+    const observer = new ResizeObserver(() => reposition());
+    for (const note of notes) {
       const el = nodeRefs.current.get(note.id);
-      const height = el?.getBoundingClientRect().height ?? 0;
-      const top = Math.max(note.baseTop, prevBottom + MIN_GAP);
-      prevBottom = top + height;
-      if (Math.abs(top - note.top) > 0.5) changed = true;
-      return { ...note, top };
-    });
+      if (el) observer.observe(el);
+    }
 
-    if (changed) setNotes(adjusted);
-  }, [notes]);
+    return () => observer.disconnect();
+  }, [notes, reposition]);
 
   if (!portalTarget || notes.length === 0) return null;
 

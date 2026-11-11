@@ -267,7 +267,33 @@ pre code.hljs {
 }
 
 .prose blockquote {
-  @apply border-l-4 border-neutral-200 pl-4 my-4;
+  @apply my-5 pl-5 text-neutral-500;
+  border-left: 2px solid var(--color-sap-green-300);
+}
+
+.prose blockquote > :first-child {
+  @apply mt-0;
+}
+
+.prose blockquote > :last-child {
+  @apply mb-0;
+}
+
+.prose blockquote p {
+  @apply my-2;
+}
+
+/* Nested quotes sit closer in, since there is no panel to clear */
+.prose blockquote blockquote {
+  @apply my-3 pl-4;
+}
+
+.prose blockquote cite {
+  @apply block mt-2 text-sm not-italic text-neutral-500;
+}
+
+.prose blockquote cite::before {
+  content: "— ";
 }
 
 .extra-summary {
@@ -292,14 +318,18 @@ pre code.hljs {
   display: inline;
 }
 /* Only the first paragraph flows inline; later paragraphs (and any code
-   block) break onto their own line within the flex row. */
+   block or list) break onto their own line within the flex row. */
 .prose .footnotes .footnote-item p:not(:first-child),
-.prose .footnotes .footnote-item pre {
+.prose .footnotes .footnote-item pre,
+.prose .footnotes .footnote-item ul,
+.prose .footnotes .footnote-item ol {
   display: block;
   flex-basis: 100%;
   margin-top: 0.4em;
 }
-.prose .footnotes .footnote-item pre:first-child {
+.prose .footnotes .footnote-item pre:first-child,
+.prose .footnotes .footnote-item ul:first-child,
+.prose .footnotes .footnote-item ol:first-child {
   margin-top: 0;
 }
 .prose .footnotes .footnote-item .footnote-back {
@@ -344,6 +374,26 @@ pre code.hljs {
 .sidenote p:not(:first-child) {
   display: block;
   margin-top: 0.4em;
+}
+/* Sidenotes render outside .prose/.prose-notes, so they don't inherit the
+   usual list styling; repeat it here, scaled down for the narrow column. */
+.sidenote ul {
+  @apply list-disc pl-4;
+}
+.sidenote ol {
+  @apply list-decimal pl-4;
+}
+.sidenote ul,
+.sidenote ol {
+  display: block;
+  margin-top: 0.4em;
+}
+.sidenote ul:first-child,
+.sidenote ol:first-child {
+  margin-top: 0;
+}
+.sidenote li > p {
+  display: inline;
 }
 /* Sidenotes render outside .prose/.prose-notes (a sibling grid column), so
    they don't inherit the usual inline-code pill styling; repeat it here. */
@@ -547,12 +597,16 @@ pre code.hljs {
   display: inline;
 }
 .prose-notes .footnotes .footnote-item p:not(:first-child),
-.prose-notes .footnotes .footnote-item pre {
+.prose-notes .footnotes .footnote-item pre,
+.prose-notes .footnotes .footnote-item ul,
+.prose-notes .footnotes .footnote-item ol {
   display: block;
   flex-basis: 100%;
   margin-top: 0.4em;
 }
-.prose-notes .footnotes .footnote-item pre:first-child {
+.prose-notes .footnotes .footnote-item pre:first-child,
+.prose-notes .footnotes .footnote-item ul:first-child,
+.prose-notes .footnotes .footnote-item ol:first-child {
   margin-top: 0;
 }
 .prose-notes .footnotes .footnote-item .footnote-back {
@@ -576,6 +630,37 @@ pre code.hljs {
 .prose-notes pre {
   @apply text-xs bg-neutral-100 px-3 py-2 overflow-x-auto my-2 rounded-sm font-mono leading-normal;
   border: initial;
+}
+
+/* Block quotes */
+.prose-notes blockquote {
+  @apply my-4 pl-4 text-sm text-neutral-500;
+  border-left: 2px solid var(--color-sap-green-300);
+}
+
+.prose-notes blockquote > :first-child {
+  @apply mt-0;
+}
+
+.prose-notes blockquote > :last-child {
+  @apply mb-0 pb-0;
+}
+
+.prose-notes blockquote p {
+  @apply my-1.5;
+}
+
+/* Nested quotes sit closer in, since there is no panel to clear */
+.prose-notes blockquote blockquote {
+  @apply my-2 pl-3;
+}
+
+.prose-notes blockquote cite {
+  @apply block mt-1.5 text-xs not-italic text-neutral-500;
+}
+
+.prose-notes blockquote cite::before {
+  content: "— ";
 }
 
 /* Highlighted text (==text==) */

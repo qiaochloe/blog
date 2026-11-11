@@ -32,7 +32,9 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 
 export function TableOfContents({ headings, variant = "sidebar" }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(
+    () => new Set(groupHeadings(headings).filter((s) => s.children.length > 0).map((s) => s.heading.id))
+  );
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
