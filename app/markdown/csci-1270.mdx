@@ -1,8 +1,8 @@
 ---
 title: "Databases Notes"
-summary: "Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning"
+summary: "Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning • Query Optimization"
 publishedAt: "2026-09-13"
-updatedAt: "2026-10-22"
+updatedAt: "2026-11-11"
 tags:
   - "notes"
 ---
@@ -262,12 +262,13 @@ Every B+ tree node holds an array of key-value pairs. The keys are always derive
 
 A B+ tree node also contains sibling pointers for the sibling pages on the left and right.
 
+To search for a value, start at the root node and use binary search to descend to the right leaf node.
+
 To insert, find the correct leaf and insert the entry in sorted order.
 
-If the leaf is now over capacity, split it:
-1. Divide its entries evenly into two leaf nodes
-2. Copy the middle key up into the parent as a separator
-3. Insert a new entry for this separator into the parent
+If the leaf is now over capacity, then:
+1. Create a new leaf node and transfer half of the values (including the median) over to it
+2. Copy the median key up into the parent as a separator for the two nodes
 
 If that insertion overflows the parent too, split it the same way, but push up (rather than copy up) the middle key. Repeat up the tree until a node doesn't overflow, or a new root is created.
 
@@ -289,7 +290,7 @@ To perform a ==table scan==, for each page in the table:
 
 The DBMS maintains an internal cursor that tracks the last page and slot it examined.
 
-To perform an ==index scan==, the DBMS uses the index to find the tuples that the query needs. In a multi-index scan, the DBMS needs to choose the indices it uses,[^which-index] and it may have to perform set intersection. Set intersection can be done with bitmaps, hash tables, or Bloom filters.
+To perform an ==index scan==, the DBMS uses the index to find the tuples that the query needs. In a multi-index scan, the DBMS needs to choose the indices it uses,[^which-index] and it may have to perform set intersection. Set intersection can be done with bitmaps, hash tables, or Bloom filters.[^bloom]
 
 [^which-index]: For example, consider the query below:
 
@@ -302,6 +303,8 @@ To perform an ==index scan==, the DBMS uses the index to find the tuples that th
     If there is an index on `age` and an index on `dept`, one way to run the query is to use the indices to fetch records where `age < 30` and records where `dept = 'cs'`, and then take their intersection.
 
     We could also instead only use the `age` index and manually filter the `dept` condition. Or vice-versa. Or use neither indices.
+
+[^bloom]: [Bloom Filters by Example](https://llimllib.github.io/bloomfilter-tutorial)
 
 ### Sorting
 
@@ -453,10 +456,74 @@ Sort-merge join is useful when the input tables are already sorted, if the outpu
 
 A DBMS converts a query into a plan comprised of logical operators. Data flows from the leaves up toward the root, which is the result of the query. 
 
-A DBMS's ==processing model== defines how the system executes a query plan. 
+A DBMS's ==processing model== defines how the system executes a query plan. There are three main models: (1) iterator model, (2) materialization model, and (3) vectorized or batch model. 
 
 ### Iterator Model
 
-In the iterator model, each query plan operator implements three functions: `open()`, `next()`, and `close()`. The operator implements a loop that calls `next()` on its children to retrieve their tuples and then process them. On each invocation, the operator returns either a single tuple or a `null`. 
+In the iterator model, each query plan operator implements three functions: `open()`, `next()`, and `close()`. 
 
-The iterator model allows for tuple pipelining. However, some operators like hash joins and `ORDER BY` must block until their child emit all their tuples.
+The model pulls tuples one at a time through a chain of `next()` calls. Each operator produces a single tuple on demand and passes it immediately to its parent, which processes it before asking for the next one.
+
+This model allows for tuple pipelining. However, some operators like hash joins, hash aggregates, and `ORDER BY` must block until their child emit all their tuples. These are called pipeline breakers. 
+
+Because only one tuple exists in flight per operator at any moment, there is no need to materialize a whole intermediate result set between operators. Furthermore, it is easy to implement `LIMIT`. 
+
+![Iterator model](/csci-1270/iterator-model.png)
+
+### Materialization Model
+
+In the materialization model, each operator fully computes its output and passes the complete result to the next operator. 
+
+Compared to the iterator model, materialization is simpler and can be efficient when each operator processes data in batches, since it avoids function call overhead. 
+
+It is less memory efficient for large intermediate results, since the full output of every stage must be stored before the next stage starts. We can push down hints (e.g. `LIMIT`) to avoid scanning too many tuples.
+
+![Materialization model](/csci-1270/materialization-model.png)
+
+### Vectorization Model
+
+The vectorized execution model is a middle ground between the iterator model and the materialization model. Instead of passing one row at a time (iterator model) or the entire result set at once (materialization model), each operator processes a **batch** of rows at a time. Typical batch sizes are in the thousands of rows.
+
+Each operator pulls a batch from its input, processes the whole batch, and passes that batch to the next operator. This repeats until all batches are consumed.
+
+Processing in batches amortizes the per-call overhead of the iterator model, since a function call now handles many rows instead of one. It also enables SIMD optimizations and better cache locality, since a batch of column values fits in cache.
+
+It avoids the memory issues in the materialization model, since only one batch is held in memory at a time instead of a full intermediate result.
+
+![Vectorization model](/csci-1270/vectorization-model.png)
+
+## Query Optimization
+
+Query optimization turns a query into an executable plan in two phases.
+
+1. The ==logical plan== is a tree of relational algebra operators. The DBMS uses **heuristic** rewrite rules to transform the tree into an equivalent tree. The goal is the increase the likelihood of finding the optimal plan in the cost-based optimization phase.
+
+2. The ==physical plan== assigns algorithms and access methods to each logical operator. Using a **cost model**, the optimizer searches the space of possible physical plans for the cheapest plan.
+
+### Logical Plan Heuristics
+
+Some examples of logical plan heuristics are:
+- **Split conjunctive predicates**. Decompose  a compound `AND` predicate into separate, individual filters so that it is easier for the optimizer to move them around.
+- **Predicate pushdown**. Move the predicate to the lowest applicable point in the plan.
+- **Replace Cartesian products** with inner joins using join predicates.[^replace-cart]
+- **Projection pushdown**. Eliminate redundant attributes.
+
+[^replace-cart]: For example, a query like `SELECT * FROM R, S WHERE R.id = S.id` will naively translate to a Cartesian product followed by a filter. We can instead do an inner join between `R` and `S` on the condition that `R.id = S.id`.
+
+### Physical Plan Cost Model
+
+The components of the cost model include:
+- Physical costs, like I/O, CPU cycles, cache misses, RAM usage, and network usage
+- Logical costs, like operator output sizes based on table sizes, column cardinality, and index selectivity
+- Algorithmic costs, which come from the operator implementation
+
+In Postgres, `EXPLAIN` prints the plan chosen for a given query, plus the estimated cost and result set size. `ANALYZE` runs the query and prints the actual values.
+
+### Statistics
+
+The DBMS stores internal statistics about tables, attributes, and indexes in its internal catalog. This data may be used for optimizing logical or physical plans.
+
+There are three common ways to store statistics:
+- Histograms maintain an occurrence count per value in a column
+- Sketches are probabilistic data structures that approximate a count for a given value
+- Sampling involves maintaining a subset of each table that is used to compute selectivity
