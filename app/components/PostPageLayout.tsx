@@ -24,7 +24,7 @@ export function PostPageLayout({
   return (
     <>
       <BackToTopButton />
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_36rem_1fr] gap-x-16 gap-y-8 items-stretch">
+      <div className="post-layout-grid grid grid-cols-1 lg:grid-cols-[1fr_36rem_1fr] gap-x-16 gap-y-8 items-stretch">
         <div
           id={TOC_PORTAL_ID}
           className="hidden lg:block min-w-0"

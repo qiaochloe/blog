@@ -5,6 +5,7 @@ import { TableOfContents } from "app/components/TableOfContents";
 import { TocPortal } from "app/components/TocPortal";
 import { Sidenotes } from "app/components/Sidenotes";
 import { MobileFootnotes } from "app/components/MobileFootnotes";
+import { PrintView } from "app/components/PrintView";
 import { getPosts } from "app/posts";
 import { formatDate } from "app/utils";
 import { preprocessGfmTables } from "app/utils/gfm-tables";
@@ -138,7 +139,8 @@ export default async function Page({
       {showToc && <TocPortal headings={headings} />}
       {hasFootnotes && <Sidenotes />}
       {hasFootnotes && <MobileFootnotes />}
-      <div className="min-w-0 max-w-xl overflow-x-hidden px-2">
+      <PrintView />
+      <div className="post-body min-w-0 max-w-xl overflow-x-hidden px-2">
         <div className={isNotes ? "prose-notes" : undefined}>
           {headerContent}
         </div>

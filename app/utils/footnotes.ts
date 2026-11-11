@@ -119,10 +119,18 @@ function flattenOutsidePre(html: string): string {
     .join("");
 }
 
-/** Replace [^id] with superscript link; refOrder gives id -> display number. */
+/**
+ * Replace [^id] with superscript link; refOrder gives id -> display number.
+ *
+ * Refs inside a footnote definition get no `id`, so they stay out of the
+ * `a[id^="ref-"]` queries the sidenote and print enhancements run over the
+ * article (a note anchored to a ref that only exists inside another note has
+ * nowhere sensible to sit), and so they can't collide with the real ref's id.
+ */
 function replaceRefs(
   content: string,
   refOrder: string[],
+  { anchored = true }: { anchored?: boolean } = {},
 ): string {
   const idToNum = new Map<string, number>();
   refOrder.forEach((id, idx) => idToNum.set(id, idx + 1));
@@ -130,7 +138,8 @@ function replaceRefs(
   return content.replace(FOOTNOTE_REF, (_, id) => {
     const num = idToNum.get(id);
     if (num == null) return `[^${id}]`;
-    return `<sup className="footnote-ref"><a href="#fn-${num}" id="ref-${num}">${num}</a></sup>`;
+    const anchor = anchored ? ` id="ref-${num}"` : "";
+    return `<sup className="footnote-ref"><a href="#fn-${num}"${anchor}>${num}</a></sup>`;
   });
 }
 
@@ -147,7 +156,11 @@ export function preprocessFootnotes(content: string): string {
     '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 4v7a4 4 0 0 1-4 4H4"/><path d="m9 10-5 5 5 5"/></svg>';
   const footnoteItems = refOrder.map((id, idx) => {
     const num = idx + 1;
-    const body = definitions.get(id) ?? "(missing definition)";
+    const body = replaceRefs(
+      definitions.get(id) ?? "(missing definition)",
+      refOrder,
+      { anchored: false },
+    );
     const html = optimizeFootnoteImages(flattenOutsidePre(md.render(body)));
     return `<li id="fn-${num}" className="footnote-item"><div className="flex flex-wrap items-baseline">${html}<a href="#ref-${num}" className="footnote-back shrink-0" aria-label="Back to reference">${cornerDownLeftSvg}</a></div></li>`;
   });

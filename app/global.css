@@ -405,6 +405,9 @@ pre code.hljs {
   border: initial;
   white-space: pre;
 }
+.sidenote .footnote-ref a {
+  @apply text-neutral-400 no-underline;
+}
 .sidenote a {
   @apply text-tangerine-700 hover:underline hover:text-tangerine-900 decoration-tangerine-300 underline-offset-2 decoration-[0.1em];
 }
@@ -415,6 +418,21 @@ pre code.hljs {
   border-radius: 0.25em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+/* PrintView builds a copy of every footnote next to the line that cites it
+   on mount, so printing needs no script. It stays hidden until print media
+   applies. The column it floats into is sized here rather than inside
+   `@media print` so the values resolve the same everywhere. */
+:root {
+  --print-sidenote-width: 2in;
+  --print-sidenote-gap: 0.25in;
+  --print-sidenote-pull: calc(
+    -1 * (var(--print-sidenote-width) + var(--print-sidenote-gap))
+  );
+}
+.sidenote-print {
+  display: none;
 }
 
 /* Each enhancement hides the bottom list only via its own class, so
@@ -742,4 +760,120 @@ hr {
   border-top: 1px solid #dbdbdb;
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+/* Print: show the table of contents inline above the post, and move the
+   footnotes into the right margin beside the text they annotate. PrintView
+   does the DOM half (expanding the collapsed <Extra> panels, building the
+   notes); the rules below reserve the margin column for them. */
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  .post-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .toc-mobile {
+    display: none !important;
+  }
+
+  #toc-portal {
+    display: block !important;
+  }
+
+  .toc-sidebar {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: auto !important;
+    margin-bottom: 2rem;
+  }
+
+  /* The screen sidenotes are absolutely positioned from measurements of the
+     live layout, which pagination invalidates; PrintView floats its own. */
+  #sidenotes-portal {
+    display: none !important;
+  }
+
+  .footnotes.sidenotes-hidden,
+  .footnotes.mobile-footnotes-hidden {
+    display: block !important;
+  }
+
+  /* PrintView put every footnote in the margin, so the bottom list and any
+     box left open by the mobile tap-to-expand are both redundant. */
+  .footnotes.print-footnotes-hidden,
+  .footnote-inline-box {
+    display: none !important;
+  }
+
+  /* Give up the column the margin notes float into. Without max-width the
+     text column would otherwise be the narrower of the two. */
+  .post-body {
+    max-width: none !important;
+    overflow: visible !important;
+    padding-right: calc(
+      var(--print-sidenote-width) + var(--print-sidenote-gap)
+    ) !important;
+  }
+
+  /* A right float whose negative margin cancels its own width leaves the
+     line boxes full width, so the text runs straight past it rather than
+     wrapping around. `clear` is what keeps two close notes from colliding. */
+  .sidenote-print {
+    display: block;
+    float: right;
+    clear: right;
+    width: var(--print-sidenote-width);
+    max-width: none;
+    margin-right: var(--print-sidenote-pull);
+    margin-bottom: 0.6em;
+    break-inside: avoid;
+  }
+
+  /* On screen the notes live in their own grid column, outside the prose.
+     Here they sit inside it, where .prose/.prose-notes element rules tie with
+     .sidenote's on specificity and win on order, so restore what matters. */
+  .sidenote-print p {
+    display: inline;
+    margin: 0;
+  }
+  .sidenote-print p:not(:first-child) {
+    display: block;
+    margin-top: 0.4em;
+  }
+  .sidenote-print ul,
+  .sidenote-print ol {
+    padding-left: 1rem;
+    padding-bottom: 0;
+  }
+
+  /* Notes inside a gray panel float from its padding box, not the page's, so
+     pull them out by the panel's own padding to keep the column aligned. */
+  .extra-content .sidenote-print {
+    margin-right: calc(var(--print-sidenote-pull) - 1rem);
+  }
+
+  /* Print defaults drop background graphics, which would leave the gray
+     panels indistinguishable from the body text. */
+  .extra-content {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* PrintView opens the panels on beforeprint; this reveals them without
+     script wherever ::details-content is supported, in case it doesn't run. */
+  details::details-content {
+    content-visibility: visible !important;
+  }
+
+  /* The disclosure triangle means nothing on paper. */
+  .extra-summary {
+    list-style: none;
+  }
+  .extra-summary::-webkit-details-marker {
+    display: none;
+  }
 }

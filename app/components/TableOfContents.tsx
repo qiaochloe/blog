@@ -46,6 +46,19 @@ export function TableOfContents({ headings, variant = "sidebar" }: TableOfConten
   };
 
   useEffect(() => {
+    const expandAll = () =>
+      setExpandedIds(
+        new Set(
+          groupHeadings(headings)
+            .filter((s) => s.children.length > 0)
+            .map((s) => s.heading.id),
+        ),
+      );
+    window.addEventListener("beforeprint", expandAll);
+    return () => window.removeEventListener("beforeprint", expandAll);
+  }, [headings]);
+
+  useEffect(() => {
     const ids = headings.map((h) => h.id);
     const elements = ids
       .map((id) => document.getElementById(id))
