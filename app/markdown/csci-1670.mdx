@@ -462,6 +462,44 @@ Each pagetable entry contains the physical address of the next pagetable or the 
 
 ![Pagetable entry](/csci-1670/pagetable-entry.png)
 
+### Translation Lookaside Buffer
+
+The TLB needs to be flushed on:
+- Pagetable switch
+- MMU enabled
+- GPU interaction (because the GPU does not understand VAs)
+
+A memory barrier prevents the compiler and the CPU from reordering memory accesses. Memory barriers are placed where the kernel wants to be very sure about the order and timing of events.
+
+When we make a syscall, we want to continue using the process pagetable (instead of the kernel pagetable) in order to avoid flushing the TLB. To do this, we need to map the entire physical address to the process's pagetable so that the kernel can access its code, data, and stack region when it is runnning with the process's pagetable.
+
+### Physical Page Allocation
+
+The kernel must be able to decide which physical pages can be allocated to processes. This pool of physical pages is called the ==kalloc region pool==.
+
+A physical page allocator will always allocate pages from the kalloc region pool at the granularity of a page. The `kalloc()` function finds the next available physical page and reserves it for use.
+
+```c
+void* kalloc(void) {
+    for (uint64 n = 0; n < NPAGES; n++) {
+        uint64 i = (next + n) % NPAGES;
+        if (!use[i]) {
+            used[i] = true;
+            next = (i + 1) % NPAGES;
+            void* page = mm_pa_to_ptr(KALLOC_BASE + (i << PAGE_SHIFT));
+            mmset(page, 0, PAGE_SIZE);
+            return page;
+        }
+    }
+    return nullptr;
+}
+```
+
+This physical page allocator may suffer from external fragmentation. In Linux, the buddy allocator divides physical memory into blocks of powers of 2, so that each block has a "buddy." When memory is freed, it is checked whether they could be merged with their buddy.
+
+**References**:
+- [The Buddy Allocator Algorithm Visualization](https://cuuduongthancong.com/~galles/visualization/BuddyAllocator.html)
+
 ## Appendix
 
 The appendix contains specific details about Raspberry Pi architecture, ARM64 architecture, and [CSCI 1670](https://csci1670.github.io) projects.
