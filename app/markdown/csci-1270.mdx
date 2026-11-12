@@ -1,6 +1,6 @@
 ---
 title: "Databases Notes"
-summary: "Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning • Query Optimization"
+summary: "Storage Manager • Buffer Pool Manager • Access Methods • Operator Execution • Query Planning • Query Optimization • Concurrency Control • Transactions"
 publishedAt: "2026-09-13"
 updatedAt: "2026-11-11"
 tags:
@@ -456,6 +456,8 @@ Sort-merge join is useful when the input tables are already sorted, if the outpu
 
 A DBMS converts a query into a plan comprised of logical operators. Data flows from the leaves up toward the root, which is the result of the query. 
 
+![Query planning](/csci-1270/query-planning.png)
+
 A DBMS's ==processing model== defines how the system executes a query plan. There are three main models: (1) iterator model, (2) materialization model, and (3) vectorized or batch model. 
 
 ### Iterator Model
@@ -498,7 +500,9 @@ Query optimization turns a query into an executable plan in two phases.
 
 1. The ==logical plan== is a tree of relational algebra operators. The DBMS uses **heuristic** rewrite rules to transform the tree into an equivalent tree. The goal is the increase the likelihood of finding the optimal plan in the cost-based optimization phase.
 
-2. The ==physical plan== assigns algorithms and access methods to each logical operator. Using a **cost model**, the optimizer searches the space of possible physical plans for the cheapest plan.
+2. The ==physical plan==[^phys-plan] assigns algorithms and access methods to each logical operator. Using a **cost model**, the optimizer searches the space of possible physical plans for the cheapest plan.
+
+[^phys-plan]: In Postgres, `EXPLAIN` prints the plan chosen for a given query, plus the estimated cost and result set size. `ANALYZE` runs the query and prints the actual values.
 
 ### Logical Plan Heuristics
 
@@ -510,6 +514,25 @@ Some examples of logical plan heuristics are:
 
 [^replace-cart]: For example, a query like `SELECT * FROM R, S WHERE R.id = S.id` will naively translate to a Cartesian product followed by a filter. We can instead do an inner join between `R` and `S` on the condition that `R.id = S.id`.
 
+### Enumerating Physical Plans
+
+First, the DBMS needs to estimate different plans:
+1. For each table, we need to pick the best access path
+2. Then we need to enumerate all possible join orderings for the tables
+3. For each ordering we need to enumerate possible join implementations
+
+To choose the join ordering and implement, one common approach is to use a ==left-deep join tree==, where every join's right input is a base table rather than an intermediate result:
+1. Pick two tables to join
+2. Pick a third one to join with the results as the right relation
+3. Repeat until all tables are joined
+
+Restricting the right input to a base table has two advantages
+1. Enumerating orderings becomes a permutation problem (n! for n tables) instead of also enumerating tree shapes
+2. Dynamic programming optimizers can cache and reuse overlapping subproblems
+3. It also enables pipelining, since the base table on the right can be streamed without materializing intermediate results
+
+A bushy join tree allows both inputs to a join to be intermediate results. This explodes the search space, but it can expose more parallelism, since independent subtrees can be computed concurrently. Occasionally it finds cheaper plans, like joining two medium tables before touching a huge one. 
+
 ### Physical Plan Cost Model
 
 The components of the cost model include:
@@ -517,9 +540,10 @@ The components of the cost model include:
 - Logical costs, like operator output sizes based on table sizes, column cardinality, and index selectivity
 - Algorithmic costs, which come from the operator implementation
 
-In Postgres, `EXPLAIN` prints the plan chosen for a given query, plus the estimated cost and result set size. `ANALYZE` runs the query and prints the actual values.
-
-### Statistics
+To calculate the cost of the plan:
+1. We first use stats to estimate the input size to each operator
+2. Then we estimate the cost of each operator given its input size
+3. Then we sum the costs of all the operators in the plan
 
 The DBMS stores internal statistics about tables, attributes, and indexes in its internal catalog. This data may be used for optimizing logical or physical plans.
 
@@ -527,3 +551,88 @@ There are three common ways to store statistics:
 - Histograms maintain an occurrence count per value in a column
 - Sketches are probabilistic data structures that approximate a count for a given value
 - Sampling involves maintaining a subset of each table that is used to compute selectivity
+
+One problem is correlated attributes; each attribute is not independent and uniform. One solution to this is to have multi-dimensional histograms.
+
+## Concurrency Control
+
+A concurrency control protocol is the method used to ensure "correct" results for concurrent operations on a shared object.
+
+For example, we may want to allow multiple threads to read and update a B+ tree at the same time. We need to protect against two types of problems:
+- Threads read and modify the contents of a single node at the same time
+- Threads traverse and split or merge the tree structure at the same time
+
+The solution to this is ==latch crabbing==, also called latch coupling or hand-over-hand latching. A ==latch== is a concurrency primitive which protects data structures in memory. Similar to a rwlock, a latch in read mode allows multiple threads to read from the same object at the same time, while a latch in write mode only allows one thread to access the object. 
+
+To access or modify a B+ tree, a process needs to:
+1. Get latch for parent
+2. Get latch for child
+3. Release latch for parent and all ancestors if the child is "safe." A safe node is a node that will not split or merge when updated, so it is not full (on insertion) or more than half-full (on deletion).
+
+However, if there are many threads that want to update the B+ tree, taking a write latch on the root every time can become a bottleneck. One solution to this is to use an ==optimistic latching algorithm==. Instead of assuming that there will be a split or merge, we optimistically traverse the three using read latches, and then set a write latch on the leaf. If the leaf is not safe, then we need to release all the latches and restart the traversal with the pessimistic algorithm.
+
+It is also possible to use latch crabbing when we do a scan through the leaf nodes. There will be no deadlocks because all threads will go in the same direction. 
+
+## Transactions
+
+A transaction is the atomic execution of a sequence of multiple executions on a database. It must be ACID, or:
+1. Atomic: all actions happen or none happen
+2. Consistent: if the DB is consistent before the transaction, it must be consistent after the transaction
+3. Isolated: execution of one transaction is isolated from that of other transactions
+4. Durable: if a transaction is committed, it is persistent
+
+In SQL, a transaction starts with the `BEGIN` command and stops either with `COMMIT` or `ABORT`. If `ABORT`, all changes are undone so it is like the transaction was never executed at all. If `COMMIT`, the DBMS either saves all of the transaction's changes or aborts it. 
+
+### Conflict Serializability
+
+Even though we want the end result to be as if there is isolation between transactions, we also want to interleave transactions to increase concurrency. Formally, a **serial schedule** is some schedule that does not interleave the actions of different transactions. (There can be multiple serial schedules for multiple concurrent transactions.) An **equivalent schedule** is one where the effect of executing the schedule is identical to the effect of executing another schedule. A **serializable schedule** is a schedule that is equivalent to some serial schedule, such that the resulting state is equivalent to any one of the possible serial executions.
+
+To determine serializability, we check if there are conflicting operations. Two operations conflict if they are by different transactions, they are on the same object, and one of them is a write. If that happens, we can have the following conflicts:
+- **Read-write** conflicts result in **unrepeatable reads** (transaction gets different values when reading the same object multiple times)
+- **Write-read** conflicts result in **dirty reads**, where one transaction reads data written by another transaction that has not been committed yet
+- **Write-write** conflicts leads to **lost updates** where one transaction overwrites uncommitted data from another uncommitted transaction
+
+Two schedules are **conflict equivalent** if they involves the same actions of the same transactions, and every pair of conflicting actions is ordered the same way. A schedule is **conflict serializable** if it is conflict equivalent to some serial schedule. 
+
+We can construct a dependency (precedence) graph where each node represents a transaction. There is an edge from $T_i$ to $T_j$ if an operation $O_i$ conflicts with an operation $O_j$, and $O_i$ appears earlier than $O_j$ in the schedule. A schedule is conflict serializable iff its dependency graph is acyclic.
+
+![Dependency graph](/csci-1270/dependency-graph.png)
+
+### Two-Phase Locking
+
+In practice, we need a way to guarantee that all schedules are serializable without knowing the entire schedule ahead of time. The solution to this is to not allow interleavings that yield non-serializable schedules by using ==locks== to protect resources. 
+
+Transactions request locks, the ==lock manager== grants or blocks requests, and then transactions release locks. The lock manager updates its internal lock table to keep track of what transactions hold what locks and what transactions are waiting to acquire any locks.
+
+==Two-phase locking== (2PL) is a concurrency control protocol that determines whether a transaction can access an object **without** needing to know all the queries that a transaction will execute ahead of time. 
+
+1. In the growing phase, each transaction requests the locks it needs from the lock manager.
+
+2. In the shrinking phase, the transaction is only allowed to release or downgrade locks it has acquired. It cannot acquire new locks or upgrade locks. The shrinking phase is denoted by the first release or downgrade.
+
+2PL guarantees conflict-serializability. This is because at the end of the growth phase (==lock point==), the transaction has acquired all the locks it will acquire, and any conflicting transaction must have released the relevant earlier or must wait. The order of lock points gives us the equivalent serial order. 
+
+There are potential schedules that are serializable but would not be allowed by 2PL because locking limits concurrency. 
+
+Furthermore, 2PL can still lead to dirty reads which may require cascading aborts. Suppose transaction $T_1$ acquires the lock, writes, and then releases the lock to $T_2$. Then $T_2$ would be performing a dirty read on the uncommitted data. If we need to abort $T_1$, then we also need to abort $T_2$.  
+
+This can be fixed by ==strong strict two-phase locking==. The transaction is only allowed to release locks after it has been committed or aborted. This allows only conflict serializable schedules, but it is often stronger than needed.
+
+![Schedule types](/csci-1270/schedule-types.png)
+
+2PL can also result in deadlocks, where there are transactions waiting for locks to be released by each other. There are two ways to deal with deadlocks:
+
+1. The DBMS can detect deadlocks by creating a **waits-for** graph to keep track of what locks each transaction is waiting to acquire. In this graph, transactions are nodes, and there is an edge from $T_i$ to $T_j$ if $T_i$ is waiting for $T_j$ to release a lock. 
+
+    When the DBMS detects a deadlock, it should select a transaction to abort to break the cycle.
+    It can select the transaction depending on age, progress, number of items already locked, and number of transactions it has to rollback with it. It should also consider the number of times it was rolled back in order to prevent starvation.
+
+2. The DBMS can also instead prevent deadlocks directly. When a transaction tries to acquire a lock that is held by another transaction, the DBMS can just terminate one of them. 
+
+    There are two common approaches to determining which transaction to terminate. First, transactions have a higher priority if they have an older timestamp. We have a requesting transaction $T_r$ and a holding transaction $T_h$.
+
+    In ==wait-die== (old-waits-for-young), if $T_r$ has a higher priority than $T_h$, then $T_r$ waits for $T_h$. If $T_r$ has a younger timestamp, then it aborts.
+
+    In ==wound-wait== (young-waits-for-old), if $T_r$ has a higher priority than $T_h$, then $T_h$ is aborted and releases the lock. If $T_r$ has a younger timestamp, then it waits.
+
+    When a transaction restarts, its priority is set to its original timestamp to prevent it from getting starved for resources.
