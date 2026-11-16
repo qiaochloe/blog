@@ -2,7 +2,7 @@
 title: "Operating Systems Notes"
 summary: "Booting • I/O Devices • Program Loaders • Processes • Display • Privilege Separation System Calls • Virtual Memory"
 publishedAt: 2026-09-16
-updatedAt: 2026-11-11
+updatedAt: 2026-11-16
 tags:
 - notes
 todo: add notes about ARM64 instructions, SPSR layout (https://csci1670.github.io/notes/l06/)
@@ -462,17 +462,6 @@ Each pagetable entry contains the physical address of the next pagetable or the 
 
 ![Pagetable entry](/csci-1670/pagetable-entry.png)
 
-### Translation Lookaside Buffer
-
-The TLB needs to be flushed on:
-- Pagetable switch
-- MMU enabled
-- GPU interaction (because the GPU does not understand VAs)
-
-A memory barrier prevents the compiler and the CPU from reordering memory accesses. Memory barriers are placed where the kernel wants to be very sure about the order and timing of events.
-
-When we make a syscall, we want to continue using the process pagetable (instead of the kernel pagetable) in order to avoid flushing the TLB. To do this, we need to map the entire physical address to the process's pagetable so that the kernel can access its code, data, and stack region when it is runnning with the process's pagetable.
-
 ### Physical Page Allocation
 
 The kernel must be able to decide which physical pages can be allocated to processes. This pool of physical pages is called the ==kalloc region pool==.
@@ -499,6 +488,36 @@ This physical page allocator may suffer from external fragmentation. In Linux, t
 
 **References**:
 - [The Buddy Allocator Algorithm Visualization](https://cuuduongthancong.com/~galles/visualization/BuddyAllocator.html)
+
+### Translation Lookaside Buffer
+
+The ==translation lookaside buffer== (TLB) is a cache of the pagetable. The TLB needs to be flushed on (1) pagetable switch, (2) enabling the MMU, and (3) interacting with the GPU (because the GPU does not understand VAs).
+
+When we make a syscall, we want to continue using the process pagetable (instead of the kernel pagetable) in order to avoid flushing the TLB. To do this, we need to map the entire physical address to the process's pagetable so that the kernel can access its code, data, and stack region when it is runnning with the process's pagetable.
+
+![TLB and kalloc memory diagram](/csci-1670/tlb-and-kalloc-memory-diagram.png)
+
+### Virtual Memory Optimizations
+
+You might be thinking that mapping the entire physical address will make the pagetable very large. ==Demand paging== is a technique to reduce physical page allocation and pagetable size. The kernel keep track of what virtual addresses should be logically mapped in a separate data structure.[^vma] When there is a page fault, physical pages are lazily assigned, and the kernel installs the actual mappings in the pagetable.
+
+==Copy-on-write== allows multiple processes to share a physical page, even if they can all write to the page. First, all pages are marked as read-only. If the process tries to write to the read-only page, a page fault will occur. Then kernel copies the page to a new physical page, and remap the virtual address to a new, writable physical page. 
+
+[^vma]: In Linux, this data structure is called the virtual memory area (VMA).
+
+==Swap== is a technique where we write pages to disk and unmap in pagetable when we are out of physical RAM. When the process tries to access the page again, there is a page fault and the kernel loads it back into RAM. If this evicts another page, this is called thrashing.
+
+### Direct Memory Access
+
+A DMA engine is a piece of hardware that can directly copy from one physical address to another physical address.
+
+### Persistent Storage
+
+A ==hard disk drive== (HDD) is a bunch of magnetizable platters on top of each other. A read-write head lies on top of the platter and either magnetizes it (write) or reads off of it.
+
+Modern computers most likely use ==solid-state drive== (SSD). A SSD is a grid of non-volatile transistors which store memory. However, transistors only work for a limited number of times and can wear out.
+
+Both HDD and SSD are called ==block devices==. A block device is split into sectors (512 bytes). A file system defines blocks (>= sector) so that we only read and write into storage in blocks. 
 
 ## Appendix
 
