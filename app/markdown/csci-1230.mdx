@@ -2,7 +2,7 @@
 title: Graphics Notes
 summary: "Raster Graphics • Vector Graphics • Raytracing • Lighting • Spatial Data Structures • Texture Mapping • Antialiasing • Real-Time Graphics • OpenGL • Projection and Clipping"
 publishedAt: "2026-09-10"
-updatedAt: "2026-11-10"
+updatedAt: "2026-11-16"
 tags:
   - "notes"
 ---
@@ -1416,21 +1416,102 @@ glDeleteVertexArrays(1, &vaoID);
 
 OpenGL shaders are written in a DSL called GLSL. The shader programs are compiled on the CPU, and the compiled bytecode is sent to the GPU to be executed.  
 
-The vertex shader runs in parallel on every vertex contained in whatever VBO is bound when an OpenGL draw command is issued. 
-- The inputs are the attributes contained in the VBO, as specified by the VAO, as well as the uniform variables declared and bound by the user
-- The outputs are the output vertex positions and and any other per-vertex outputs the user wants to compute
+A vertex shader runs in parallel on every vertex contained in whatever VBO is bound when an OpenGL draw command is issued. 
+- The input is the attributes in the VAO, as well as the uniform variables declared and bound by the user
+- The output is the output vertex positions and any other per-vertex outputs the user wants to compute
 
-The fragment shader runs in parallel on every fragment produced by the rasterization stage
-- The inputs are the interpolated outputs from the vertex shader, as well as the uniform variables declared and bound by the user
-- The outputs are the depth of the fragment and any color outputs
+A fragment[^fragment] shader runs in parallel on every fragment produced by the rasterization stage
+- The input is the interpolated outputs from the vertex shader, as well as the uniform variables declared and bound by the user
+- The output is the final color of the fragment and any color outputs
+
+[^fragment]: A fragment is a unit of color produced by the rasterizer.
+
+<Extra title="Vertex Shader Code Snippet">
+
+To use a shader program, register the program and then call `glUseProgram(shaderID)`.
+
+**Vertex Attributes**
+
+To allow the vertex shader read data from the VA, we need to declare an "input variable" at the top of the file:
+
+```c
+layout(location = <index>) in <data_type> <variable_name>;
+```
+
+- `<index>` tells OpenGL which VAO attribute you would like to associate with this variable. It's the same as the index used in `glVertexAttribPointer` and `glEnableVertexAttribArray`.
+- `<data_type>` can be any GLSL data type (`float`, `vec3`, etc)
+- `variable_name` is the variable name that the data is bound to within the shader
+
+**Passing Data Between Shaders**
+
+To pass data from the vertex to the fragment shader, we need to declare:
+1. An `out` variable in the vertex shader
+2. A corresponding `in` variable in the fragment shader
+
+In order for OpenGL to correctly link a pair of input and output variables, they must have the same `<data_type>` and `<variable_name>`.
+
+```c
+// At the top of the vertex shader
+out <data_type> <variable_name>;
+
+// Later in the main function
+<variable_name> = <value>;
+```
+
+```c
+// At the top of the fragment shader
+in <data_type> <variable_name>;
+```
+
+**Uniforms**
+
+To provide data that applies to all vertices or fragments, we can use uniforms. They can be declared like this:
+
+```c
+uniform <data_type> <variable_name>;
+```
+
+To declare uniforms in the CPU, we need to find the location of the uniform with `glGetUniformLocation` and then register data with `glUniform`:
+
+```c
+// Get location
+GLuint location = glGetUniformLocation(<program_id>, <var_name>);
+
+// Register uniform scalar and vector data
+glUniformXXX(location, <params>);
+
+// Register uniform matrix data
+glUniformMatrixXXX(location, <params>);
+```
+
+**Default Outputs**
+
+GLSL also has predefined output variables implicitly defined by OpenGL. For the vertex shader, there is a full list of them [here](https://www.khronos.org/opengl/wiki/Vertex_Shader#Outputs).
+
+For example, `gl_Position` is a `vec4` that represents the vertex's output position in **clip space**.
+
+</Extra>
+
+<Extra title="Fragment Shader Code Snippet">
+
+All fragment shader outputs are explicitly specified with `out` declarations instead of using a default output. OpenGL detects the `out` declaration and assumes that it will be the final output pixel color.
+
+```c
+out vec4 fragColor;
+```
+
+</Extra>
 
 **References**:
 - [CSCI 1230 Lab 9](https://cs1230.graphics/labs/lab9)
+- [CSCI 1230 Lab 10](https://cs1230.graphics/labs/lab10)
 - [OpenGL 3.1 specification](https://registry.khronos.org/OpenGL-Refpages/es3.1/)
 
 ## Projection and Clipping
 
-he projection matrix takes the camera's view volume (a frustum) and warps it into the ==canonical view volume==, which is a cube bounded by $x,y \in [-1,1]$ and $z \in [0,-1]$. Working in a standard cube means later pipeline stages (like clipping) don't need special cases for different view volume shapes.
+The projection matrix takes the camera's view volume (a frustum) and warps it into the ==canonical view volume==, which is a cube bounded by $x,y \in [-1,1]$ and $z \in [0,-1]$. Working in a standard cube means later pipeline stages (like clipping) don't need special cases for different view volume shapes.
+
+![Projection matrix](/csci-1230/projection-matrix.png)
 
 There are two kinds of projection:
 - **Parallel**: projectors are parallel
