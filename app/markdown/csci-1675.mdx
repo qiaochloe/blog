@@ -1,13 +1,15 @@
 ---
 title: High-Performance Network Systems Notes
-summary: "Measuring Performance • Performance Engineering • Network I/O • Concurrency"
+summary: "Measuring Performance • Performance Engineering • Network I/O • Concurrency • Microservices"
 publishedAt: "2026-09-10"
-updatedAt: "2026-11-05"
+updatedAt: "2026-11-17"
 tags:
   - "notes"
 ---
 
-## Performance
+## Measuring Performance
+
+### Performance
 
 What is performance?
 - Throughput
@@ -21,8 +23,6 @@ Why do we care about performance?
 Specialization can improve performance. For example, Google designed TPUs to better perform matrix multiplication and convolutions. 
 
 On the other hand, "premature optimization is the root of all evil" (Donald Knuth). We should also make sure to evaluate the *costs* of improving our performance.
-
-## Measuring Performance
 
 ### Open, Closed, and Partially-Open Systems
 
@@ -363,7 +363,7 @@ The benefits of `io_uring` is that it:
 
 ![io_uring](/csci-1675/io_uring.png)
 
-## Concurrency
+## Concurrency and Parallelism
 
 ### Threads
 
@@ -393,9 +393,9 @@ Why do we want threads?
 - Coroutines (concurrency) makes programming easier
 - Parallelism 
 
-Moore's Law states that the number of transistors on a chip should double every two years.
+==Moore's Law== states that the number of transistors on a chip should double every two years.
 
-Dennard scaling states that as transistor density increases, their power density stays constant. As the dimensions shrinks by a factor $k$, voltage and current also scale down by $k$, so power per transistor drops by $k^2$. This offsets the $k^2$ increase in transistor density, keeping power density flat. 
+==Dennard scaling== states that as transistor density increases, their power density stays constant. As the dimensions shrinks by a factor $k$, voltage and current also scale down by $k$, so power per transistor drops by $k^2$. This offsets the $k^2$ increase in transistor density, keeping power density flat. 
 
 Smaller transistors are faster because the electron needs to travel a shorter distance and the capacitance needed to switch the transistor is lower. Thus, we can get a faster CPU clock cycle for the same amount of energy.
 
@@ -404,7 +404,7 @@ This worked from 1976 to 2006, but then stopped. The power density started to in
 There are multiple ways to "continue" Moore's law
 - **Very Long Instruction Word** (VLIW)[^intel] executes multiple instructions per clock cycle (IPC). This is a form of instruction-level parallelism.
 - **Vectored processors** (SIMD) processes multiple pieces of data with a single instruction. This is a form of data-level parallelism.
-- **Multicore programming** runs certain instructions in parallel. Amdahl's law states that the max speedup we can get from multicore programming is:
+- **Multicore programming** runs certain instructions in parallel. ==Amdahl's law== states that the max speedup we can get from multicore programming is:
     $$
     \frac{1}{1 - p + \frac{p}{2}}
     $$
@@ -415,15 +415,15 @@ There are multiple ways to "continue" Moore's law
 
 [^intel]: Intel Itanium was a billion-dollar investment in the VLIW architecture. Unfortunately, it eventually failed because it requires either the program or the compiler to be extremely complicated. Additionally, in IO heavy contexts, data dependencies make very high IPC impossible. But SIMD was eventually adopted into x86-64.
 
-Strong scaling is how much faster our program runs for the same input, given that we increase the number of processors. Strong scaling must obey Amdahl's law.
+==Strong scaling== is how much faster our program runs for the same input, given that we increase the number of processors. Strong scaling must obey Amdahl's law. 
 
-Weak scaling is how much more work (problem size) we can do with a larger number of processors.
+==Weak scaling== is how much more work (problem size) we can do with a larger number of processors.
 
-Hyper-threading (HTT) is a form of simultaneous multi-threading (SMT) that allows a single CPU to act as two cores. It does this by duplicating parts of the core, like registers and instruction pipelines.
+==Hyper-threading== (HTT) is a form of simultaneous multi-threading (SMT) that allows a single CPU to act as two cores. It does this by duplicating parts of the core, like registers and instruction pipelines.
 
 ### Load Balancing and Core Reallocation
 
-Datacenters want to be able to use spare CPU cycles for batch processes without hurting the performance of latency-sensitive applications. To do this, they need a policy to load-balance tasks across cores and a policy to reallocate cores across tasks.
+Datacenters want to be able to use spare CPU cycles for batch processes without hurting the performance of latency-sensitive applications. To do this, they need a policy to **load-balance** tasks across cores and a policy to **reallocate cores** across tasks.
 
 For large tasks, the overhead of load-balancing and core reallocation doesn't matter very much. For small tasks, if the average load is fixed, it is difficult to achieve better performance by reallocating cores than by allocating a fixed number of cores. The only benefit would be to adapt to changes in average load.
 
@@ -448,30 +448,114 @@ Mclure found that the best load-balancing policy is work stealing, while many co
 References: 
 - [Scheduling Policies, McClure et al, USENIX NSDI 2022](https://www.usenix.org/conference/nsdi22/presentation/mcclure)
 
-### Network Caches
+## Caching
+
+### Types of Caches
 
 To handle `get` requests, there are two types of caching: 
-1. In a look-aside cache, the client talks to both the cache and the backing store
-2. In look-through cache, the client talks only to the cache
+1. In a **look-aside cache**, the client talks to both the cache and the backing store
+2. In **look-through cache**, the client talks only to the cache
 
 ![Get cache strategies](/csci-1675/get-caches.png)
 
 To handle `set` requests, there are three types of caching:
-1. In a write-through cache, the write goes to the cache and the backing store synchronously
-2. In a read-only cache, writes go directly to the backing store, bypassing the cache
-3. In a write-back cache, the write only goes to teh cache, which is then asynchronously flushed to the backing store later
+1. In a **write-through cache**, the write goes to the cache and the backing store synchronously
+2. In a **read-only cache**, writes go directly to the backing store, bypassing the cache
+3. In a **write-back cache**, the write only goes to the cache, which is then asynchronously flushed to the backing store later
 
 ![Set cache strategies](/csci-1675/set-caches.png)
 
+### Issues in Caching
+
 In 2013, Facebook had a caching problem with their look-aside cache with a read-only invalidate-on-write.[^memcache]
-- For a read-only cache, there can be a **thundering herd** problem. If there are many clients reading from a cache, a single `set` request can invalidate the cache entry, causing all the clients to request the entry from the backing store.
+- For a read-only cache, there can be a ==thundering herd== problem. If there are many clients reading from a cache, a single `set` request can invalidate the cache entry, causing all the clients to request the entry from the backing store.
 
     ![Thundering herd](/csci-1675/thundering-herd.md)
 
-- For the read-only cache, there can also be a problem with a **stale set**. If the backing store processes set 1 and then set 2, the cache can instead receive set 2 and then set 1 from the store.
+- For the read-only cache, there can also be a problem with a ==stale set== If the backing store processes set 1 and then set 2, the cache can instead receive set 2 and then set 1 from the store.
 
     ![Stale set](/csci-1675/stale-set.png)
 
-Facebook solved this problem by using leases, which is a token that is handed out by the cache server when a client experiences a cache miss. Only the client holding the lease token is permitted to query the backing store to fetch the missing value, solving the thundering herd problem. Additionally, only the client holding the latest version of the lease is permitted to write to the cache, solving the stale set problem. 
+Facebook solved this problem by issuing ==leases==, which is a token that is handed out by the cache server when a client experiences a cache miss. Only the client holding the lease token is permitted to query the backing store to fetch the missing value, solving the thundering herd problem. Additionally, only the client holding the latest version of the lease is permitted to write to the cache, solving the stale set problem. 
 
 [^memcache]: [Scaling Memcache at Facebook](https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala)
+
+### Caching Replacement Policies
+
+When the cache is full, we need to evict an element to make room for a new one. What is the best policy for evicting elements?  
+
+- **FIFO-reinsertion** evicts entries in the order they arrived
+- **Least-recently used** (LRU) best matches real workloads, but it requires expensive book-keeping on hits
+- **Bélády’s algorithm** is the theoretical optimal policy. It evicts the entry whose next use is farthest in the future.[^clair]
+
+[^clair]: As you can see, this requires an element of clairvoyance...
+
+**SIEVE**[^SIEVE] gives each entry one visited bit and keeps track of a "hand" pointer. The hand only moves during eviction, never during `get` or `put`.
+- New items are inserted with the visited bit unset. 
+- On a cache hit, the visited bit is set to true. 
+- On eviction, the hand scans from the tail toward the head. If an entry's visited bit is false, it gets evicted. If true, the bit is cleared and the hand moves on.
+
+[^SIEVE]: [Sieve is Simpler than LRU: an Efficient Turn-Key Eviction Algorithm for Web Caches](https://www.usenix.org/conference/nsdi24/presentation/zhang-yazhuo) (NSDI '24')
+
+```python
+def evict():
+    node = hand
+    while node.visited == true:
+        node.visited = false
+        node = node.prev   # move toward head
+        if node is None:
+            node = tail of cache
+    hand = node.prev       # or tail, if node.prev is null
+    remove node from cache
+```
+
+There are two main design principles behind SIEVE:
+- **Lazy promotion** means that the cache does not reorder or prioritize an object the moment it is accessed. Instead, promotion decisions are only applied lazily and checked later at eviction time. In contrast, LRU does "eager promotion" because it moves an object to the head on every hit.
+- **Quick demotion** means that new objects are evicted quickly if they are not reaccessed. This avoids entries which are one-time-use or from large scans.
+
+## Microservices
+
+Microservices are a distributed services architecture that reduces the human coordination overheads in exchange for some performance overheads in networking and serialization.[^microservices]
+
+[^microservices]: See [CSCI 2680 notes](/csci-2680#microservices) for more details about the pros and cons of microservices compared to monoliths. 
+
+### RPCs
+
+RPCs are an interface that allows developers to make network calls as a function call. To make RPCs work, we need:
+- Client stubs
+- Server stubs
+- An RPC interface definition (e.g. Protobuf) that is language-agnostic
+- An underlying transport (e.g. HTTP/2)
+
+### Containers 
+
+What unit of software should microservices use?
+- Raw **processes** are convenient but lack resource isolation, dependency management, or deployment management
+- **Virtual machines** are isolated and easy to allocate resources to. However, each microservice needs its own operating system, which adds overhead.
+- **Containers** are more isolated than processes and more light-weight than VMs. 
+    - Namespaces offer isolated PIDs and filesystem mounts. 
+    - Cgroups offer CPU and memory accounting. 
+    - Images offer reproducible environments.
+
+When we have thousands of microservices, we might face problems with:
+- Resource allocation coordination
+- Failure-handling
+- Service discovery
+- Logging and observability
+
+==Container orchestrators== like Kubernetes solve this problem.
+- The control plane handles resource allocation and cluster state. 
+    - `kube-scheduler` assigns resources
+    - `etcd` stores cluster data
+    - `kube-controller-manager` runs control loops
+    - `kube-api-server` exposes the API
+- The data plane runs on each node. 
+    - `kubelet` enforces policies
+    - `kube-proxy` handles service discovery
+    - `containerd` runs the containers
+
+Terminology:
+- Nodes are actual hardware
+- Pods are the basic unit of computing
+- Services routes network traffic to pods
+- Namespaces are logical units with isolation
