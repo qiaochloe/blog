@@ -419,6 +419,26 @@ pre code.hljs {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+/* Sidenotes render outside .prose/.prose-notes, so they don't inherit the
+   usual blockquote styling; repeat it here, scaled down for the narrow
+   column, since browser default margins/indents don't fit. */
+.sidenote blockquote {
+  @apply my-2 pl-3;
+  display: block;
+  border-left: 2px solid var(--color-sap-green-300);
+}
+.sidenote blockquote > :first-child {
+  margin-top: 0;
+}
+.sidenote blockquote > :last-child {
+  margin-bottom: 0;
+}
+.sidenote blockquote cite {
+  @apply block mt-1 text-xs not-italic text-neutral-500;
+}
+.sidenote blockquote cite::before {
+  content: "— ";
+}
 
 /* PrintView builds a copy of every footnote next to the line that cites it
    on mount, so printing needs no script. It stays hidden until print media
