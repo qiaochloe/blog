@@ -559,3 +559,46 @@ Terminology:
 - Pods are the basic unit of computing
 - Services routes network traffic to pods
 - Namespaces are logical units with isolation
+
+### DeathStarBench
+
+According to the [DeathStarBench paper](https://dl.acm.org/doi/10.1145/3297858.3304013), microservices are strongly affected by the hardware, OS and networking systems, cluster managers, and programming frameworks.
+
+Microservices require less computation than monolithic services, but they have stricter latency requirements. This means predictable single-thread performance matters more.
+
+Microservices spend a large fraction of the time in the kernel sending and processing network requests (over RPCs or REST APIs). In the chart below, the microservice Social Network spends much more time in network (red) than in application processing (green) compared to the three monolithic services (NGINX, memcached, MongoDB). The authors found that offloading network processing to an FPGA can improve network performance by 10-60x.
+
+![Network costs](/csci-1675/network-costs.png)
+
+Cluster management is harder with microservices. When scaling, dependencies between microservices create backpressure effects. These effects cascade into QoS violations that propagate through the system, making performance unpredictable.
+
+Tail-at-scale effects also grow more severe. A single slow microservice can delay the entire end-to-end request.
+
+### The Tail At Scale
+
+["The Tail at Scale" paper](https://dl.acm.org/doi/pdf/10.1145/2408776.2408794) discusses the challenges of keeping the tail latency low for interactive services. 
+
+First, variability can be caused by:
+- Contention for shared resources (CPU cores and caches, memory bandwidth, network bandwidth)
+- Contention for global resources (network switches, NFS)
+- Maintenance activities (data reconstruction, log compaction, garbage collection)
+- Queueing (in the server, intermediate servers, and network switches)
+
+Some techniques to reduce latency include:
+- **Differentiate service classes** to prioritize scheduling interactive requests over non-interactive requests
+- **Reduce head-of-line-block** by breaking long-running requests into a sequence of smaller requests to allow interleaving execution 
+- **Manage background tasks** by throttling, breaking them up, or triggering them at lower loads
+- **Synchronize machines** for a brief burst of activity for large fan-outs
+- **Replicate data** for operations that are read-only and loosely consistent
+
+Within a short-term request:
+- Clients can make ==hedged requests== by issuing the same request to multiple replicas if the first one takes too long. Once it gets a response, it can cancel its other pending requests.
+- Clients can make ==tied requests== by sending the same requests to multiple servers, and having servers communicate updates on the status of these copies to each other. 
+- Clients can probe remote queues and submit the request to the least-loaded server.
+
+In the long-term:
+- The system can generate many **micropartitions** and do dynamic load balance of partitions to machines. This enables machines to do more granular load-shedding and better failure-recovery.
+- The system can **selectively replicate** more of the "hot" micropartitions
+- The system can identify intermediate servers which are temporarily slow (because of resource contention or network issues) and place them on **probation** until the latency improves
+- The server can return **"good-enough" results** rather than perfect results
+- The server can use **"canary requests"** to test the time it takes to get a response on a query. If the server hangs while the canary request is outstanding, then the server flags it
