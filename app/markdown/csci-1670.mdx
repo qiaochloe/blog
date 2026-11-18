@@ -2,7 +2,7 @@
 title: "Operating Systems Notes"
 summary: "Booting • I/O Devices • Program Loaders • Processes • Display • Privilege Separation System Calls • Virtual Memory"
 publishedAt: 2026-09-16
-updatedAt: 2026-11-16
+updatedAt: 2026-11-18
 tags:
 - notes
 todo: add notes about ARM64 instructions, SPSR layout (https://csci1670.github.io/notes/l06/)
@@ -421,7 +421,7 @@ A shell uses `fork` and `execv` to run multiple programs (and pipe them). The ma
 
 ## Virtual Memory
 
-We want to prevent one process from reading or writing into the memory of another process.
+We want to prevent one process from reading or writing into memory it shouldn't be able to access. We also want processes to be able to use non-contiguous and variable-size physical memory.
 
 ### Base and Bounds
 
@@ -437,9 +437,17 @@ As we have more processes, the physical memory may quickly grow small holes of f
 
 ![Base and bounds and segmentation](/csci-1670/base-bounds-segmentation.png)
 
-### Pagetables
+### Address Translation
 
-To implement virtual memory, we need some mechanism to translate virtual addresses into physical addresses. This is done with pagetables.
+To implement virtual memory, we need some mechanism to translate virtual addresses into physical addresses. The ==memory management unit== (MMU) in the CPU does this automatically once pagetables are set up. The kernel is responsible for creating and maintaining pagetables and handling page faults.
+
+The kernel usually has functions to:
+1. Create a pagetable 
+2. Map a virtual page to a physical page 
+3. Map a range of virtual pages to a contiguous range of physical pages
+4. Translate a VA to a PA in software (to handle page faults)
+
+### Pagetables
 
 In most devices, there are four levels[^levels] of pagetables. The first, second, and third-level each contain 512 entries. Each entry points to the next level pagetable. The final fourth-level pagetable contains the physical address of the page, plus some additional information. 
 
@@ -466,7 +474,7 @@ Each pagetable entry contains the physical address of the next pagetable or the 
 
 The kernel must be able to decide which physical pages can be allocated to processes. This pool of physical pages is called the ==kalloc region pool==.
 
-A physical page allocator will always allocate pages from the kalloc region pool at the granularity of a page. The `kalloc()` function finds the next available physical page and reserves it for use.
+A ==physical page allocator== will always allocate pages from the kalloc region pool at the granularity of a page. The `kalloc()` function finds the next available physical page and reserves it for use.
 
 ```c
 void* kalloc(void) {
@@ -511,13 +519,38 @@ You might be thinking that mapping the entire physical address will make the pag
 
 A DMA engine is a piece of hardware that can directly copy from one physical address to another physical address.
 
-### Persistent Storage
+![DMA](/csci-1670/dma.png)
+
+## Persistent Storage
 
 A ==hard disk drive== (HDD) is a bunch of magnetizable platters on top of each other. A read-write head lies on top of the platter and either magnetizes it (write) or reads off of it.
 
 Modern computers most likely use ==solid-state drive== (SSD). A SSD is a grid of non-volatile transistors which store memory. However, transistors only work for a limited number of times and can wear out.
 
 Both HDD and SSD are called ==block devices==. A block device is split into sectors (512 bytes). A file system defines blocks (>= sector) so that we only read and write into storage in blocks. 
+
+### File systems
+
+The first sector on a disk is a ==master boot record== (MBR), which may also contain bootloader code. The sectors contains a disk partition table which describes out the disk is partitioned across different file systems.
+
+A Unix-like file system generally contains:
+1. Boot block
+2. Superblock containing metadata
+3. Inode and block bitmaps describing free inodes and blocks
+4. Inode table
+4. Data blocks
+
+![Disk layout](/csci-1670/disk-layout.png)
+
+### Inodes
+
+An inode typically contains metadata and a diskmap describing where the data blocks are.
+
+![Inode](/csci-1670/inode.png)
+
+A diskmap is composed of direct pointers, indirect pointers, and double indirect pointers.
+
+![Diskmap](/csci-1670/diskmap.png)
 
 ## Appendix
 
